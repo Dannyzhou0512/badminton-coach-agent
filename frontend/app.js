@@ -428,12 +428,21 @@
     showPrecheckPanel();
     const statusEl = elements.precheckStatus;
     statusEl.className = "precheck-status " + (result.overall || (result.ok ? "pass" : "fail"));
+    const scene = result.scene_type;
     if (result.overall === "pass" || result.ok) {
-      statusEl.textContent = "视频质量良好，可以分析";
+      if (scene === "match_wide") {
+        statusEl.textContent = "检测到比赛远景视频，可以分析";
+      } else {
+        statusEl.textContent = "视频质量良好，可以分析";
+      }
     } else if (result.overall === "warn") {
-      statusEl.textContent = "视频存在小问题，仍可分析但可能影响精度";
+      if (scene === "match_wide") {
+        statusEl.textContent = "比赛远景视频，将自动适配参数进行分析";
+      } else {
+        statusEl.textContent = "视频存在小问题，仍可分析，部分精度可能受影响";
+      }
     } else {
-      statusEl.textContent = "视频质量不佳，建议重新拍摄";
+      statusEl.textContent = "视频质量不佳，请检查后重新上传";
     }
 
     elements.precheckItems.innerHTML = "";
@@ -453,7 +462,13 @@
     elements.precheckActions.hidden = false;
     state.precheckPassed = result.ok || result.overall !== "fail";
     if (elements.btnProceedAnalyze) {
-      elements.btnProceedAnalyze.textContent = result.ok ? "开始分析" : "继续分析（结果可能不准确）";
+      if (result.overall === "pass") {
+        elements.btnProceedAnalyze.textContent = "开始分析";
+      } else if (result.scene_type === "match_wide") {
+        elements.btnProceedAnalyze.textContent = "开始分析（比赛远景模式）";
+      } else {
+        elements.btnProceedAnalyze.textContent = "继续分析";
+      }
       elements.btnProceedAnalyze.disabled = !state.precheckPassed;
     }
   }

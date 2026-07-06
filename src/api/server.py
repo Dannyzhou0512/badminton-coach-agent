@@ -187,18 +187,25 @@ def precheck_video(video_path, pose_model_path, conf_threshold=0.25):
 
     items.append({
         "name": "视频时长",
-        "status": "pass" if 5 <= duration <= 300 else "warn",
+        "status": "pass" if 3 <= duration <= 600 else "warn",
         "value": f"{duration:.1f}秒",
-        "detail": None if 5 <= duration <= 300 else ("视频过短，建议至少5秒" if duration < 5 else "视频较长，分析时间会较久，建议控制在5分钟以内"),
+        "detail": None if 3 <= duration <= 600 else ("视频过短，建议至少3秒" if duration < 3 else "视频较长（>10分钟），分析时间会较久"),
     })
 
     model = get_yolo_model(str(pose_model_path))
 
-    sample_indices = sorted(set(
-        [int(i * total_frames / 8) for i in range(1, 8)] if total_frames > 8 else list(range(min(total_frames, 3)))
-    ))
+    sample_count = min(10, max(3, total_frames // 30 if total_frames > 0 else 3))
+    sample_indices = []
+    if total_frames > sample_count:
+        for i in range(1, sample_count + 1):
+            sample_indices.append(int(i * total_frames / (sample_count + 1)))
+    else:
+        sample_indices = list(range(min(total_frames, 3)))
+    sample_indices = sorted(set(sample_indices))
+
     person_sizes = []
     person_detected_frames = 0
+    person_counts_per_frame = []
     blurry_scores = []
     checked_frames = 0
 
@@ -213,8 +220,7 @@ def precheck_video(video_path, pose_model_path, conf_threshold=0.25):
         blurry_scores.append(laplacian_var)
 
         results = model(frame, conf=conf_threshold, verbose=False)
-        best_area = 0
-        best_box = None
+        persons_in_frame = []
         for r in results:
             if r.boxes is None:
                 continue
@@ -222,49 +228,108 @@ def precheck_video(video_path, pose_model_path, conf_threshold=0.25):
                 if int(box.cls[0]) == 0:
                     x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
                     area = (x2 - x1) * (y2 - y1)
-                    if area > best_area:
-                        best_area = area
-                        best_box = (x1, y1, x2, y2)
+                    persons_in_frame.append(area)
         frame_area = width * height if width * height > 0 else 1
-        ratio = best_area / frame_area if best_area > 0 else 0
-        person_sizes.append(ratio)
-        if ratio > 0:
+        if persons_in_frame:
+            best_area = max(persons_in_frame)
+            ratio = best_area / frame_area
+            person_sizes.append(ratio)
             person_detected_frames += 1
+        else:
+            person_sizes.append(0)
+        person_counts_per_frame.append(len(persons_in_frame))
 
     cap.release()
 
     detection_ratio = person_detected_frames / max(checked_frames, 1)
     avg_person_ratio = float(np.mean(person_sizes)) if person_sizes else 0
+    max_person_ratio = float(np.max(person_sizes)) if person_sizes else 0
+    avg_person_count = float(np.mean(person_counts_per_frame)) if person_counts_per_frame else 0
     avg_blur = float(np.mean(blurry_scores)) if blurry_scores else 0
+
+    scene_type = "closeup"
+    scene_label = "近景训练"
+    if avg_person_ratio < 0.04 and avg_person_count >= 2 and detection_ratio >= 0.5:
+        scene_type = "match_wide"
+        scene_label = "比赛远景"
+    elif avg_person_ratio < 0.06 and detection_ratio >= 0.5:
+        scene_type = "wide"
+        scene_label = "远景拍摄"
 
     items.append({
         "name": "人物检测",
-        "status": "pass" if detection_ratio >= 0.7 else ("warn" if detection_ratio >= 0.3 else "fail"),
+        "status": "pass" if detection_ratio >= 0.5 else ("warn" if detection_ratio >= 0.2 else "fail"),
         "value": f"{person_detected_frames}/{checked_frames}帧检测到人",
-        "detail": None if detection_ratio >= 0.7 else "多帧未检测到人物，请确认视频中有人物且画面清晰",
+        "detail": None if detection_ratio >= 0.5 else (
+            "部分帧未检测到人物，可能存在遮挡或画面问题" if detection_ratio >= 0.2
+            else "大多数帧未检测到人物，请确认视频拍摄的是羽毛球活动场景"
+        ),
     })
 
-    items.append({
-        "name": "人物大小",
-        "status": "pass" if avg_person_ratio >= 0.08 else ("warn" if avg_person_ratio >= 0.03 else "fail"),
-        "value": f"占画面{avg_person_ratio*100:.1f}%",
-        "detail": None if avg_person_ratio >= 0.08 else ("人物在画面中偏小，建议靠近拍摄" if avg_person_ratio >= 0.03 else "人物太小，关键点检测可能不准确，请靠近场地拍摄"),
-    })
+    if avg_person_ratio >= 0.005:
+        if avg_person_ratio >= 0.06:
+            size_status = "pass"
+            size_detail = None
+        elif avg_person_ratio >= 0.02:
+            size_status = "warn"
+            size_detail = f"人物在画面中偏小（{scene_label}），系统将使用远景优化模式进行分析，建议靠近拍摄可获得更高精度"
+        else:
+            size_status = "warn"
+            size_detail = "人物较小，关键点精度可能下降，建议在播放后检查标注视频确认跟踪是否正确"
+        items.append({
+            "name": "人物大小",
+            "status": size_status,
+            "value": f"占画面{avg_person_ratio*100:.1f}%",
+            "detail": size_detail,
+        })
+    else:
+        items.append({
+            "name": "人物大小",
+            "status": "fail",
+            "value": f"占画面{avg_person_ratio*100:.1f}%",
+            "detail": "人物在画面中极小或未检测到，请确认拍摄距离合适",
+        })
 
     items.append({
         "name": "画面清晰度",
-        "status": "pass" if avg_blur >= 80 else ("warn" if avg_blur >= 40 else "fail"),
+        "status": "pass" if avg_blur >= 50 else ("warn" if avg_blur >= 20 else "fail"),
         "value": f"清晰度{avg_blur:.0f}",
-        "detail": None if avg_blur >= 80 else "画面较模糊，建议提高光线或使用支架避免晃动",
+        "detail": None if avg_blur >= 50 else (
+            "画面存在一定压缩/模糊，可能影响关键点精度" if avg_blur >= 20
+            else "画面严重模糊，请确保拍摄时对焦清晰、光线充足"
+        ),
+    })
+
+    items.append({
+        "name": "场景识别",
+        "status": "pass" if scene_type != "closeup" or avg_person_ratio >= 0.04 else "warn",
+        "value": scene_label,
+        "detail": None if scene_type != "match_wide" else (
+            "检测到比赛远景视频：人物较小但可识别，系统将自动适配分析参数"
+            if avg_person_ratio >= 0.01 else
+            "检测到极远景比赛视频，球员可能在画面中过小，建议选择更近的视角"
+        ) if scene_type == "match_wide" else None,
     })
 
     has_fail = any(i["status"] == "fail" for i in items)
     has_warn = any(i["status"] == "warn" for i in items)
     overall = "fail" if has_fail else ("warn" if has_warn else "pass")
 
+    if overall == "fail" and detection_ratio >= 0.2 and avg_person_ratio >= 0.005:
+        overall = "warn"
+        for item in items:
+            if item["name"] == "人物大小" and item["status"] == "fail":
+                item["status"] = "warn"
+                item["detail"] = "人物较小，但已成功检测到人体，将尝试分析"
+            elif item["status"] == "fail" and item["name"] != "视频可打开":
+                item["status"] = "warn"
+        has_fail = any(i["status"] == "fail" for i in items)
+        overall = "fail" if has_fail else "warn"
+
     return {
         "ok": overall != "fail",
         "overall": overall,
+        "scene_type": scene_type,
         "items": items,
         "summary": {
             "resolution": f"{width}x{height}",
@@ -272,7 +337,11 @@ def precheck_video(video_path, pose_model_path, conf_threshold=0.25):
             "fps": round(fps, 1),
             "person_detection_ratio": round(detection_ratio, 2),
             "avg_person_ratio": round(avg_person_ratio, 3),
+            "max_person_ratio": round(max_person_ratio, 3),
+            "avg_person_count": round(avg_person_count, 1),
             "avg_blur_score": round(avg_blur, 1),
+            "scene_type": scene_type,
+            "scene_label": scene_label,
         },
     }
 
@@ -689,7 +758,6 @@ async def api_precheck(video: UploadFile = File(...)):
     video_path = save_upload(video)
     try:
         result = precheck_video(video_path, DEFAULT_POSE_MODEL, conf_threshold=0.25)
-        result["video_url"] = to_media_url(video_path)
         return result
     except Exception as exc:
         import traceback
@@ -950,6 +1018,19 @@ def analyze_video(video: UploadFile = File(...), config: str = Form("{}")):
             target_bbox = tuple(float(item) for item in target_bbox)
 
         target_roi = config_roi(cfg.get("target_roi"))
+
+        try:
+            quick_check = precheck_video(video_path, DEFAULT_POSE_MODEL, conf_threshold=0.2)
+            auto_scene = quick_check.get("scene_type", "closeup")
+            if auto_scene == "match_wide" and not cfg.get("conf_threshold"):
+                cfg["conf_threshold"] = 0.2
+                print(f"[INFO] Auto-detected match_wide scene, using conf_threshold=0.2 for better small-person detection")
+            if auto_scene == "match_wide" and target_player == "near" and not cfg.get("target_player"):
+                target_player = "largest"
+                print(f"[INFO] Auto-detected match_wide scene, using largest target selection")
+        except Exception:
+            pass
+
         pose_seq, sampled_indices, video_fps = cached_pose_result(
             str(video_path.resolve()),
             str(DEFAULT_POSE_MODEL.resolve()),
