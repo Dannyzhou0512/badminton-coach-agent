@@ -7,7 +7,9 @@ Run:
 
 import hashlib
 import json
+import sqlite3
 import sys
+from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
 
@@ -54,6 +56,7 @@ UPLOAD_DIR = ROOT / "outputs" / "api_uploads"
 ANNOTATED_DIR = ROOT / "outputs" / "api_annotated"
 SHOT_CLIP_DIR = ROOT / "outputs" / "api_shot_clips"
 PREVIEW_DIR = ROOT / "outputs" / "api_previews"
+DB_PATH = ROOT / "outputs" / "history.db"
 DEFAULT_CHECKPOINT = ROOT / "models" / "pose_sequence_tcn_gru.pt"
 DEFAULT_POSE_MODEL = ROOT / "yolov8s-pose.pt"
 
@@ -66,6 +69,212 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+def init_db():
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(str(DB_PATH))
+    conn.execute(
+        """CREATE TABLE IF NOT EXISTS history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            created_at TEXT NOT NULL,
+            video_name TEXT,
+            duration_seconds REAL,
+            total_shots INTEGER,
+            avg_quality_score REAL,
+            dominant_action TEXT,
+            report_json TEXT NOT NULL,
+            annotated_video_url TEXT,
+            annotated_preview_url TEXT
+        )"""
+    )
+    conn.commit()
+    conn.close()
+
+
+def save_history(video_name, report, annotated_video_url=None, annotated_preview_url=None):
+    init_db()
+    conn = sqlite3.connect(str(DB_PATH))
+    shots = report.get("shot_events", []) or []
+    scores = [s.get("quality", {}).get("overall", 0) for s in shots if s.get("quality")]
+    avg_score = round(float(np.mean(scores)), 1) if scores else None
+    action_counts = {}
+    for s in shots:
+        name = s.get("action_name", "unknown")
+        action_counts[name] = action_counts.get(name, 0) + 1
+    dominant = max(action_counts, key=action_counts.get) if action_counts else None
+    conn.execute(
+        """INSERT INTO history
+           (created_at, video_name, duration_seconds, total_shots, avg_quality_score,
+            dominant_action, report_json, annotated_video_url, annotated_preview_url)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+        (
+            datetime.now().isoformat(),
+            video_name,
+            report.get("duration_seconds"),
+            len(shots),
+            avg_score,
+            dominant,
+            json.dumps(report, ensure_ascii=False),
+            annotated_video_url,
+            annotated_preview_url,
+        ),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_history_list(limit=50):
+    init_db()
+    conn = sqlite3.connect(str(DB_PATH))
+    conn.row_factory = sqlite3.Row
+    rows = conn.execute(
+        """SELECT id, created_at, video_name, duration_seconds, total_shots,
+                  avg_quality_score, dominant_action, annotated_video_url, annotated_preview_url
+           FROM history ORDER BY id DESC LIMIT ?""",
+        (limit,),
+    ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def get_history_detail(session_id):
+    init_db()
+    conn = sqlite3.connect(str(DB_PATH))
+    conn.row_factory = sqlite3.Row
+    row = conn.execute("SELECT * FROM history WHERE id = ?", (session_id,)).fetchone()
+    conn.close()
+    if not row:
+        return None
+    result = dict(row)
+    result["report"] = json.loads(result.pop("report_json"))
+    return result
+
+
+def delete_history(session_id):
+    init_db()
+    conn = sqlite3.connect(str(DB_PATH))
+    conn.execute("DELETE FROM history WHERE id = ?", (session_id,))
+    conn.commit()
+    conn.close()
+
+
+@lru_cache(maxsize=1)
+def get_yolo_model(pose_model_path):
+    from ultralytics import YOLO
+    return YOLO(str(pose_model_path))
+
+
+def precheck_video(video_path, pose_model_path, conf_threshold=0.25):
+    cap = cv2.VideoCapture(str(video_path))
+    if not cap.isOpened():
+        return {"ok": False, "items": [{"name": "视频可打开", "status": "fail", "value": "无法打开视频文件", "detail": "请检查视频格式是否为MP4/MOV/AVI"}]}
+
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0)
+    fps = float(cap.get(cv2.CAP_PROP_FPS) or 30.0)
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH) or 0)
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT) or 0)
+    duration = total_frames / fps if fps > 0 else 0
+
+    items = []
+
+    items.append({
+        "name": "视频分辨率",
+        "status": "pass" if min(width, height) >= 360 else "warn",
+        "value": f"{width}x{height}",
+        "detail": None if min(width, height) >= 360 else "分辨率过低，建议至少480p以保证关键点检测精度",
+    })
+
+    items.append({
+        "name": "视频时长",
+        "status": "pass" if 5 <= duration <= 300 else "warn",
+        "value": f"{duration:.1f}秒",
+        "detail": None if 5 <= duration <= 300 else ("视频过短，建议至少5秒" if duration < 5 else "视频较长，分析时间会较久，建议控制在5分钟以内"),
+    })
+
+    model = get_yolo_model(str(pose_model_path))
+
+    sample_indices = sorted(set(
+        [int(i * total_frames / 8) for i in range(1, 8)] if total_frames > 8 else list(range(min(total_frames, 3)))
+    ))
+    person_sizes = []
+    person_detected_frames = 0
+    blurry_scores = []
+    checked_frames = 0
+
+    for idx in sample_indices:
+        cap.set(cv2.CAP_PROP_POS_FRAMES, idx)
+        ret, frame = cap.read()
+        if not ret:
+            continue
+        checked_frames += 1
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        laplacian_var = float(cv2.Laplacian(gray, cv2.CV_64F).var())
+        blurry_scores.append(laplacian_var)
+
+        results = model(frame, conf=conf_threshold, verbose=False)
+        best_area = 0
+        best_box = None
+        for r in results:
+            if r.boxes is None:
+                continue
+            for box in r.boxes:
+                if int(box.cls[0]) == 0:
+                    x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
+                    area = (x2 - x1) * (y2 - y1)
+                    if area > best_area:
+                        best_area = area
+                        best_box = (x1, y1, x2, y2)
+        frame_area = width * height if width * height > 0 else 1
+        ratio = best_area / frame_area if best_area > 0 else 0
+        person_sizes.append(ratio)
+        if ratio > 0:
+            person_detected_frames += 1
+
+    cap.release()
+
+    detection_ratio = person_detected_frames / max(checked_frames, 1)
+    avg_person_ratio = float(np.mean(person_sizes)) if person_sizes else 0
+    avg_blur = float(np.mean(blurry_scores)) if blurry_scores else 0
+
+    items.append({
+        "name": "人物检测",
+        "status": "pass" if detection_ratio >= 0.7 else ("warn" if detection_ratio >= 0.3 else "fail"),
+        "value": f"{person_detected_frames}/{checked_frames}帧检测到人",
+        "detail": None if detection_ratio >= 0.7 else "多帧未检测到人物，请确认视频中有人物且画面清晰",
+    })
+
+    items.append({
+        "name": "人物大小",
+        "status": "pass" if avg_person_ratio >= 0.08 else ("warn" if avg_person_ratio >= 0.03 else "fail"),
+        "value": f"占画面{avg_person_ratio*100:.1f}%",
+        "detail": None if avg_person_ratio >= 0.08 else ("人物在画面中偏小，建议靠近拍摄" if avg_person_ratio >= 0.03 else "人物太小，关键点检测可能不准确，请靠近场地拍摄"),
+    })
+
+    items.append({
+        "name": "画面清晰度",
+        "status": "pass" if avg_blur >= 80 else ("warn" if avg_blur >= 40 else "fail"),
+        "value": f"清晰度{avg_blur:.0f}",
+        "detail": None if avg_blur >= 80 else "画面较模糊，建议提高光线或使用支架避免晃动",
+    })
+
+    has_fail = any(i["status"] == "fail" for i in items)
+    has_warn = any(i["status"] == "warn" for i in items)
+    overall = "fail" if has_fail else ("warn" if has_warn else "pass")
+
+    return {
+        "ok": overall != "fail",
+        "overall": overall,
+        "items": items,
+        "summary": {
+            "resolution": f"{width}x{height}",
+            "duration_seconds": round(duration, 1),
+            "fps": round(fps, 1),
+            "person_detection_ratio": round(detection_ratio, 2),
+            "avg_person_ratio": round(avg_person_ratio, 3),
+            "avg_blur_score": round(avg_blur, 1),
+        },
+    }
 
 
 @app.middleware("http")
@@ -475,6 +684,42 @@ def health():
     }
 
 
+@app.post("/api/precheck")
+async def api_precheck(video: UploadFile = File(...)):
+    video_path = save_upload(video)
+    try:
+        result = precheck_video(video_path, DEFAULT_POSE_MODEL, conf_threshold=0.25)
+        result["video_url"] = to_media_url(video_path)
+        return result
+    except Exception as exc:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Precheck failed: {exc}") from exc
+
+
+@app.get("/api/history")
+def api_history_list(limit: int = 50):
+    items = get_history_list(limit=min(limit, 200))
+    for item in items:
+        item["created_at_display"] = item["created_at"].replace("T", " ")[:19] if item.get("created_at") else ""
+    return {"items": items}
+
+
+@app.get("/api/history/{session_id}")
+def api_history_detail(session_id: int):
+    detail = get_history_detail(session_id)
+    if not detail:
+        raise HTTPException(status_code=404, detail="Session not found")
+    detail["created_at_display"] = detail["created_at"].replace("T", " ")[:19] if detail.get("created_at") else ""
+    return detail
+
+
+@app.delete("/api/history/{session_id}")
+def api_history_delete(session_id: int):
+    delete_history(session_id)
+    return {"ok": True}
+
+
 @app.post("/api/coach/chat")
 def coach_chat(payload: dict = Body(...)):
     question = str(payload.get("question", "")).strip()
@@ -809,7 +1054,17 @@ def analyze_video(video: UploadFile = File(...), config: str = Form("{}")):
             "analysis_preset": cfg.get("analysis_preset", "adaptive"),
             "footwork_map_mode": cfg.get("footwork_map_mode", "image"),
         }
-        return format_frontend_report(report)
+        frontend_report = format_frontend_report(report)
+        try:
+            save_history(
+                video_name=video.filename,
+                report=frontend_report,
+                annotated_video_url=frontend_report.get("annotated_video_url"),
+                annotated_preview_url=frontend_report.get("annotated_preview_url"),
+            )
+        except Exception as hist_exc:
+            print(f"[WARN] Failed to save history: {hist_exc}")
+        return frontend_report
     except HTTPException:
         raise
     except Exception as exc:

@@ -1890,4 +1890,331 @@ input[type="range"]::-moz-range-thumb {
 
 .w-full { width: 100%; }
 .text-center { text-align: center; }
+
+/* ============================================================
+   拍摄引导 Shooting Guide
+   ============================================================ */
+.shooting-guide {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.guide-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s;
+}
+
+.guide-header:hover {
+  background: var(--surface-2);
+}
+
+.guide-icon {
+  font-size: 20px;
+}
+
+.guide-header h3 {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.guide-toggle {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+  transition: transform 0.3s;
+}
+
+.shooting-guide.collapsed .guide-toggle {
+  transform: rotate(-90deg);
+}
+
+.shooting-guide.collapsed .guide-body {
+  display: none;
+}
+
+.guide-body {
+  padding: 0 18px 18px;
+}
+
+.guide-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.guide-item {
+  background: var(--bg2);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  padding: 14px;
+  text-align: center;
+  transition: all 0.25s;
+}
+
+.guide-item:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 12px rgba(94, 255, 159, 0.1);
+}
+
+.guide-item-icon {
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+
+.guide-item-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+
+.guide-item-desc {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  .guide-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ============================================================
+   视频预检 Precheck Panel
+   ============================================================ */
+.precheck-panel {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  margin-bottom: 20px;
+  padding: 18px;
+  animation: fadeIn 0.3s ease;
+}
+
+.precheck-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.precheck-icon {
+  font-size: 20px;
+}
+
+.precheck-header h3 {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.precheck-status {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 20px;
+  background: var(--bg2);
+  color: var(--muted);
+}
+
+.precheck-status.ok {
+  background: rgba(94, 255, 159, 0.15);
+  color: var(--accent);
+}
+
+.precheck-status.warn {
+  background: rgba(255, 223, 112, 0.15);
+  color: var(--warm);
+}
+
+.precheck-status.fail {
+  background: rgba(255, 75, 75, 0.15);
+  color: var(--danger);
+}
+
+.precheck-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.precheck-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--bg2);
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.precheck-item .check-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.precheck-item .check-icon.pass { color: var(--accent); }
+.precheck-item .check-icon.warn { color: var(--warm); }
+.precheck-item .check-icon.fail { color: var(--danger); }
+
+.precheck-item .check-label {
+  flex: 1;
+  color: var(--ink);
+}
+
+.precheck-item .check-value {
+  color: var(--muted);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px;
+}
+
+.precheck-item .check-detail {
+  font-size: 11px;
+  color: var(--muted);
+  width: 100%;
+  margin-top: 4px;
+  padding-left: 26px;
+}
+
+.precheck-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+/* ============================================================
+   训练历史 History
+   ============================================================ */
+.history-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.history-stat {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 20px;
+  text-align: center;
+}
+
+.history-stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--accent);
+  font-family: "JetBrains Mono", monospace;
+  margin-bottom: 4px;
+}
+
+.history-stat-label {
+  font-size: 12px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.history-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.history-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 18px;
+  background: var(--bg2);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.history-item:hover {
+  border-color: var(--accent);
+  background: var(--surface);
+}
+
+.history-item-date {
+  font-size: 13px;
+  color: var(--muted);
+  font-family: "JetBrains Mono", monospace;
+  min-width: 140px;
+}
+
+.history-item-info {
+  flex: 1;
+}
+
+.history-item-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+
+.history-item-meta {
+  font-size: 12px;
+  color: var(--muted);
+  display: flex;
+  gap: 16px;
+}
+
+.history-item-score {
+  font-size: 22px;
+  font-weight: 700;
+  font-family: "JetBrains Mono", monospace;
+  min-width: 60px;
+  text-align: right;
+}
+
+.history-item-score.high { color: var(--accent); }
+.history-item-score.mid { color: var(--warm); }
+.history-item-score.low { color: var(--danger); }
+
+@media (max-width: 768px) {
+  .history-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .history-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .history-item-date {
+    min-width: auto;
+  }
+  .history-item-score {
+    text-align: left;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 .font-mono { font-family: "JetBrains Mono", monospace; }

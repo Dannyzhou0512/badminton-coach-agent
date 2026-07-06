@@ -12,6 +12,8 @@
     detecting: false,
     realVideoLoaded: false,
     videoFile: null,
+    precheckPassed: false,
+    precheckResult: null,
     analysisReport: null,
     frameImage: null,
     bbox: null,
@@ -43,6 +45,7 @@
       analysis: document.getElementById("panel-analysis"),
       report: document.getElementById("panel-report"),
       coach: document.getElementById("panel-coach"),
+      history: document.getElementById("panel-history"),
       settings: document.getElementById("panel-settings"),
     },
 
@@ -72,6 +75,25 @@
     btnExport: document.getElementById("btnExport"),
     btnSaveSettings: document.getElementById("btnSaveSettings"),
     btnResetSettings: document.getElementById("btnResetSettings"),
+
+    // Shooting guide & precheck
+    guideToggle: document.getElementById("guideToggle"),
+    shootingGuide: document.getElementById("shootingGuide"),
+    precheckPanel: document.getElementById("precheckPanel"),
+    precheckStatus: document.getElementById("precheckStatus"),
+    precheckItems: document.getElementById("precheckItems"),
+    precheckActions: document.getElementById("precheckActions"),
+    btnProceedAnalyze: document.getElementById("btnProceedAnalyze"),
+    btnReupload: document.getElementById("btnReupload"),
+
+    // History page
+    historyList: document.getElementById("historyList"),
+    historyTotalSessions: document.getElementById("historyTotalSessions"),
+    historyAvgScore: document.getElementById("historyAvgScore"),
+    historyTotalShots: document.getElementById("historyTotalShots"),
+    historyLastDate: document.getElementById("historyLastDate"),
+    trendChart: document.getElementById("trendChart"),
+    btnRefreshHistory: document.getElementById("btnRefreshHistory"),
 
     // Inputs
     modelSelect: document.getElementById("modelSelect"),
@@ -180,6 +202,7 @@
       analysis: "动作分析",
       report: "训练报告",
       coach: "AI教练",
+      history: "训练历史",
       settings: "系统设置",
     };
     document.querySelector(".topbar-left h1").textContent = titles[tabName] || "羽动智练";
@@ -188,12 +211,18 @@
   // Tab click handlers
   elements.mainTabs.addEventListener("click", (e) => {
     const tab = e.target.closest(".tab");
-    if (tab && tab.dataset.tab) switchTab(tab.dataset.tab);
+    if (tab && tab.dataset.tab) {
+      switchTab(tab.dataset.tab);
+      if (tab.dataset.tab === "history") loadHistoryList();
+    }
   });
 
   document.querySelector(".sidebar-nav").addEventListener("click", (e) => {
     const item = e.target.closest(".nav-item");
-    if (item && item.dataset.tab) switchTab(item.dataset.tab);
+    if (item && item.dataset.tab) {
+      switchTab(item.dataset.tab);
+      if (item.dataset.tab === "history") loadHistoryList();
+    }
   });
 
   elements.btnSettings.addEventListener("click", () => switchTab("settings"));
@@ -341,10 +370,14 @@
     state.analysisReport = null;
     state.realVideoLoaded = true;
     state.bbox = null;
+    state.precheckPassed = false;
+    state.precheckResult = null;
+    hidePrecheckPanel();
     showUploadHint("正在读取视频画面...");
     if (window.location.protocol.startsWith("http")) {
       try {
         await loadFrameFromBackend(file);
+        await runPrecheck(file);
         return;
       } catch (error) {
         showUploadHint(`后端抽帧失败：${formatFetchError(error)}，正在尝试浏览器预览...`);
@@ -376,6 +409,81 @@
       cleanup();
       showUploadHint("视频读取失败，请换一个 MP4 文件重试");
     }, { once: true });
+  }
+
+  function showPrecheckPanel() {
+    if (elements.precheckPanel) elements.precheckPanel.hidden = false;
+  }
+
+  function hidePrecheckPanel() {
+    if (elements.precheckPanel) {
+      elements.precheckPanel.hidden = true;
+      elements.precheckItems.innerHTML = "";
+      elements.precheckActions.hidden = true;
+    }
+  }
+
+  function renderPrecheckResult(result) {
+    state.precheckResult = result;
+    showPrecheckPanel();
+    const statusEl = elements.precheckStatus;
+    statusEl.className = "precheck-status " + (result.overall || (result.ok ? "pass" : "fail"));
+    if (result.overall === "pass" || result.ok) {
+      statusEl.textContent = "视频质量良好，可以分析";
+    } else if (result.overall === "warn") {
+      statusEl.textContent = "视频存在小问题，仍可分析但可能影响精度";
+    } else {
+      statusEl.textContent = "视频质量不佳，建议重新拍摄";
+    }
+
+    elements.precheckItems.innerHTML = "";
+    (result.items || []).forEach((item) => {
+      const div = document.createElement("div");
+      div.className = "precheck-item";
+      const iconMap = { pass: "✅", warn: "⚠️", fail: "❌" };
+      div.innerHTML = `
+        <span class="check-icon ${item.status}">${iconMap[item.status] || "•"}</span>
+        <span class="check-label">${item.name}</span>
+        <span class="check-value">${item.value || ""}</span>
+        ${item.detail ? `<div class="check-detail">${item.detail}</div>` : ""}
+      `;
+      elements.precheckItems.appendChild(div);
+    });
+
+    elements.precheckActions.hidden = false;
+    state.precheckPassed = result.ok || result.overall !== "fail";
+    if (elements.btnProceedAnalyze) {
+      elements.btnProceedAnalyze.textContent = result.ok ? "开始分析" : "继续分析（结果可能不准确）";
+      elements.btnProceedAnalyze.disabled = !state.precheckPassed;
+    }
+  }
+
+  async function runPrecheck(file) {
+    if (!window.location.protocol.startsWith("http")) return;
+    showPrecheckPanel();
+    elements.precheckStatus.textContent = "检测中...";
+    elements.precheckStatus.className = "precheck-status";
+    elements.precheckItems.innerHTML = '<div class="precheck-item"><span class="check-icon">⏳</span><span class="check-label">正在检测视频质量...</span></div>';
+    elements.precheckActions.hidden = true;
+
+    try {
+      const fd = new FormData();
+      fd.append("video", file);
+      const resp = await fetch("/api/precheck", { method: "POST", body: fd });
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({ detail: resp.statusText }));
+        throw new Error(err.detail || "Precheck failed");
+      }
+      const result = await resp.json();
+      renderPrecheckResult(result);
+    } catch (err) {
+      elements.precheckStatus.textContent = "检测失败，可直接尝试分析";
+      elements.precheckStatus.className = "precheck-status warn";
+      elements.precheckItems.innerHTML = `<div class="precheck-item"><span class="check-icon warn">⚠️</span><span class="check-label">预检失败</span><span class="check-value">${err.message}</span></div>`;
+      elements.precheckActions.hidden = false;
+      state.precheckPassed = true;
+      if (elements.btnProceedAnalyze) elements.btnProceedAnalyze.disabled = false;
+    }
   }
 
   function buildAnalyzeConfig() {
@@ -454,6 +562,7 @@
       state.analysisReport = report;
       stopAnalysisTimer("分析完成，已生成训练结果", elapsedMs);
       renderBackendReport(report, elapsedMs);
+      loadHistoryList();
     } catch (error) {
       setConnected(false);
       stopAnalysisTimer("分析失败，请检查后端服务或视频格式");
@@ -1873,8 +1982,35 @@ ${footworkText || "暂无步伐评分数据"}
 
   elements.btnStart.addEventListener("click", async () => {
     if (state.detecting) return;
+    if (!state.precheckPassed && state.precheckResult && state.precheckResult.overall === "fail") {
+      showUploadHint("视频预检未通过，请重新拍摄后上传，或点击\"继续分析\"强制分析");
+      return;
+    }
     await runBackendAnalysis();
   });
+
+  if (elements.btnProceedAnalyze) {
+    elements.btnProceedAnalyze.addEventListener("click", async () => {
+      if (state.detecting) return;
+      await runBackendAnalysis();
+    });
+  }
+
+  if (elements.btnReupload) {
+    elements.btnReupload.addEventListener("click", () => {
+      elements.videoUploadInput.click();
+    });
+  }
+
+  if (elements.guideToggle && elements.shootingGuide) {
+    elements.guideToggle.addEventListener("click", () => {
+      elements.shootingGuide.classList.toggle("collapsed");
+    });
+  }
+
+  if (elements.btnRefreshHistory) {
+    elements.btnRefreshHistory.addEventListener("click", loadHistoryList);
+  }
 
   elements.emptyMedia.addEventListener("click", () => {
     if (elements.videoSource.value === "camera") {
@@ -1947,7 +2083,11 @@ ${footworkText || "暂无步伐评分数据"}
     state.shotEvents = [];
     state.footworkTrace = [];
     state.radarData = [0, 0, 0, 0, 0, 0];
+    state.precheckPassed = false;
+    state.precheckResult = null;
+    state.videoFile = null;
 
+    hidePrecheckPanel();
     updateMetrics();
     elements.historyTable.innerHTML =
       '<tr><td colspan="5" style="text-align:center; color:var(--muted); padding:32px;">暂无检测记录</td></tr>';
@@ -2101,6 +2241,174 @@ ${footworkText || "暂无步伐评分数据"}
   }
 
   // ---- Init ----
+  async function loadHistoryList() {
+    if (!window.location.protocol.startsWith("http")) return;
+    try {
+      const resp = await fetch("/api/history?limit=50");
+      if (!resp.ok) throw new Error("Failed to load history");
+      const data = await resp.json();
+      renderHistoryList(data.items || []);
+      drawTrendChart(data.items || []);
+    } catch (err) {
+      console.error("Load history failed:", err);
+    }
+  }
+
+  function renderHistoryList(items) {
+    // Summary stats
+    const totalSessions = items.length;
+    const scores = items.filter((i) => i.avg_quality_score != null).map((i) => i.avg_quality_score);
+    const avgScore = scores.length > 0 ? (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1) : "--";
+    const totalShots = items.reduce((sum, i) => sum + (i.total_shots || 0), 0);
+    const lastDate = items.length > 0 ? (items[0].created_at_display || items[0].created_at || "").slice(5, 16) : "--";
+
+    elements.historyTotalSessions.textContent = totalSessions;
+    elements.historyAvgScore.textContent = avgScore;
+    elements.historyTotalShots.textContent = totalShots;
+    elements.historyLastDate.textContent = lastDate;
+
+    // List
+    if (items.length === 0) {
+      elements.historyList.innerHTML = '<div class="history-empty">暂无训练记录，完成一次视频分析后会显示在这里。</div>';
+      return;
+    }
+
+    elements.historyList.innerHTML = "";
+    items.forEach((item) => {
+      const score = item.avg_quality_score;
+      let scoreClass = "mid";
+      if (score >= 75) scoreClass = "high";
+      else if (score < 55) scoreClass = "low";
+      const scoreDisplay = score != null ? Math.round(score) : "--";
+      const duration = item.duration_seconds ? `${item.duration_seconds.toFixed(0)}秒` : "";
+      const dateStr = (item.created_at_display || item.created_at || "").slice(5, 16);
+
+      const div = document.createElement("div");
+      div.className = "history-item";
+      div.innerHTML = `
+        <div class="history-item-date">${dateStr}</div>
+        <div class="history-item-info">
+          <div class="history-item-title">${item.video_name || "训练视频"}</div>
+          <div class="history-item-meta">
+            <span>击球 ${item.total_shots || 0} 次</span>
+            ${duration ? `<span>时长 ${duration}</span>` : ""}
+            ${item.dominant_action ? `<span>主要动作 ${item.dominant_action}</span>` : ""}
+          </div>
+        </div>
+        <div class="history-item-score ${scoreClass}">${scoreDisplay}</div>
+      `;
+      if (item.annotated_video_url) {
+        div.style.cursor = "pointer";
+        div.addEventListener("click", () => {
+          switchTab("report");
+        });
+      }
+      elements.historyList.appendChild(div);
+    });
+  }
+
+  function drawTrendChart(items) {
+    const canvas = elements.trendChart;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = 200 * dpr;
+    canvas.style.height = "200px";
+    ctx.scale(dpr, dpr);
+    const w = rect.width;
+    const h = 200;
+    const pad = { top: 20, right: 20, bottom: 30, left: 40 };
+    const cw = w - pad.left - pad.right;
+    const ch = h - pad.top - pad.bottom;
+
+    ctx.clearRect(0, 0, w, h);
+
+    // Background grid
+    ctx.strokeStyle = "rgba(94,255,159,0.08)";
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) {
+      const y = pad.top + (ch / 4) * i;
+      ctx.beginPath();
+      ctx.moveTo(pad.left, y);
+      ctx.lineTo(pad.left + cw, y);
+      ctx.stroke();
+    }
+
+    // Y-axis labels
+    ctx.fillStyle = "#a8c9bb";
+    ctx.font = '11px "JetBrains Mono", monospace';
+    ctx.textAlign = "right";
+    for (let i = 0; i <= 4; i++) {
+      const val = 100 - i * 25;
+      const y = pad.top + (ch / 4) * i;
+      ctx.fillText(String(val), pad.left - 8, y + 4);
+    }
+
+    const scoredItems = items.filter((i) => i.avg_quality_score != null).reverse();
+    if (scoredItems.length < 2) {
+      ctx.fillStyle = "#a8c9bb";
+      ctx.font = "13px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("完成至少2次训练后显示评分趋势", w / 2, h / 2);
+      return;
+    }
+
+    const n = scoredItems.length;
+    const points = scoredItems.map((item, idx) => {
+      const x = pad.left + (cw / Math.max(n - 1, 1)) * idx;
+      const score = Math.max(0, Math.min(100, item.avg_quality_score));
+      const y = pad.top + ch - (ch * score / 100);
+      return { x, y, score, item };
+    });
+
+    // Gradient fill
+    const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + ch);
+    grad.addColorStop(0, "rgba(94,255,159,0.3)");
+    grad.addColorStop(1, "rgba(94,255,159,0.0)");
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, pad.top + ch);
+    points.forEach((p) => ctx.lineTo(p.x, p.y));
+    ctx.lineTo(points[points.length - 1].x, pad.top + ch);
+    ctx.closePath();
+    ctx.fill();
+
+    // Line
+    ctx.strokeStyle = "#5eff9f";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    points.forEach((p, i) => {
+      if (i === 0) ctx.moveTo(p.x, p.y);
+      else ctx.lineTo(p.x, p.y);
+    });
+    ctx.stroke();
+
+    // Points
+    points.forEach((p) => {
+      ctx.fillStyle = "#07130f";
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#5eff9f";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    });
+
+    // X-axis labels (dates)
+    ctx.fillStyle = "#a8c9bb";
+    ctx.font = '10px "JetBrains Mono", monospace';
+    ctx.textAlign = "center";
+    const labelStep = Math.max(1, Math.floor(n / 6));
+    points.forEach((p, i) => {
+      if (i % labelStep === 0 || i === n - 1) {
+        const dateStr = (p.item.created_at_display || "").slice(5, 10);
+        ctx.fillText(dateStr, p.x, h - 8);
+      }
+    });
+  }
+
   function init() {
     drawCourt();
     drawRadar(state.radarData);

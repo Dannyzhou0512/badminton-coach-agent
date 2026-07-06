@@ -40,6 +40,10 @@
         <span class="nav-icon">AI</span>
         <span>AI教练</span>
       </a>
+      <a class="nav-item" data-tab="history">
+        <span class="nav-icon">📅</span>
+        <span>训练历史</span>
+      </a>
       <a class="nav-item delivery-hidden" data-tab="settings">
         <span class="nav-icon">⚙️</span>
         <span>系统设置</span>
@@ -80,6 +84,7 @@
         <button class="tab" data-tab="analysis">动作分析</button>
         <button class="tab" data-tab="report">训练报告</button>
         <button class="tab" data-tab="coach">AI教练</button>
+        <button class="tab" data-tab="history">训练历史</button>
         <button class="tab delivery-hidden" data-tab="settings">设置</button>
       </div>
 
@@ -93,7 +98,62 @@
           <h2 class="section-title">实时训练检测</h2>
           <p class="section-desc">上传或录制羽毛球训练视频，AI 将实时检测动作、追踪球轨迹并评估姿势。</p>
           <div class="notice-card">
-            当前页面已接入后端分析流程：上传视频后先抽帧预览，点击“开始检测”会调用 <code>/api/analyze</code> 生成标注视频、动作结果和训练报告。
+            当前页面已接入后端分析流程：上传视频后先进行视频质量预检，再调用 <code>/api/analyze</code> 生成标注视频、动作结果和训练报告。
+          </div>
+
+          <div class="shooting-guide" id="shootingGuide">
+            <div class="guide-header">
+              <span class="guide-icon">📸</span>
+              <h3>拍摄建议</h3>
+              <button class="guide-toggle" id="guideToggle" title="收起/展开">▼</button>
+            </div>
+            <div class="guide-body" id="guideBody">
+              <div class="guide-grid">
+                <div class="guide-item">
+                  <div class="guide-item-icon">🎬</div>
+                  <div class="guide-item-title">横屏拍摄</div>
+                  <div class="guide-item-desc">请使用手机横屏拍摄，画面更稳定，人物更完整</div>
+                </div>
+                <div class="guide-item">
+                  <div class="guide-item-icon">📏</div>
+                  <div class="guide-item-title">拍摄距离</div>
+                  <div class="guide-item-desc">距离场地边线3-5米，确保人物全身在画面中</div>
+                </div>
+                <div class="guide-item">
+                  <div class="guide-item-icon">📐</div>
+                  <div class="guide-item-title">拍摄角度</div>
+                  <div class="guide-item-desc">站在场地侧面拍摄，与球网平行，不要正面或太斜</div>
+                </div>
+                <div class="guide-item">
+                  <div class="guide-item-icon">💡</div>
+                  <div class="guide-item-title">光线充足</div>
+                  <div class="guide-item-desc">确保场地光线明亮，避免逆光拍摄</div>
+                </div>
+                <div class="guide-item">
+                  <div class="guide-item-icon">📹</div>
+                  <div class="guide-item-title">画面稳定</div>
+                  <div class="guide-item-desc">使用支架固定手机，避免手持晃动</div>
+                </div>
+                <div class="guide-item">
+                  <div class="guide-item-icon">⏱️</div>
+                  <div class="guide-item-title">时长建议</div>
+                  <div class="guide-item-desc">建议10秒-3分钟片段，包含完整的击球动作</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="precheck-panel" id="precheckPanel" hidden>
+            <div class="precheck-header">
+              <span class="precheck-icon">🔍</span>
+              <h3>视频质量检测</h3>
+              <span class="precheck-status" id="precheckStatus">检测中...</span>
+            </div>
+            <div class="precheck-items" id="precheckItems"></div>
+            <div class="precheck-actions" id="precheckActions" hidden>
+              <button class="btn btn-primary" id="btnProceedAnalyze">继续分析</button>
+              <button class="btn btn-secondary" id="btnReupload">重新上传</button>
+            </div>
           </div>
 
           <div class="processing-card" id="analysisTimer" hidden>
@@ -454,6 +514,53 @@
 
         </div>
 
+        <!-- ====== Panel: History ====== -->
+        <div class="tab-panel" id="panel-history">
+
+          <p class="section-kicker">Training History</p>
+          <h2 class="section-title">训练历史</h2>
+          <p class="section-desc">查看过往训练记录，追踪动作质量变化趋势，对比进步情况。</p>
+
+          <div class="history-summary" id="historySummary">
+            <div class="history-stat">
+              <div class="history-stat-value" id="historyTotalSessions">0</div>
+              <div class="history-stat-label">训练次数</div>
+            </div>
+            <div class="history-stat">
+              <div class="history-stat-value" id="historyAvgScore">--</div>
+              <div class="history-stat-label">平均评分</div>
+            </div>
+            <div class="history-stat">
+              <div class="history-stat-value" id="historyTotalShots">0</div>
+              <div class="history-stat-label">总击球数</div>
+            </div>
+            <div class="history-stat">
+              <div class="history-stat-value" id="historyLastDate">--</div>
+              <div class="history-stat-label">最近训练</div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="flex justify-between items-center mb-2">
+              <div>
+                <p class="section-kicker">Trend Chart</p>
+                <h3 style="font-size:16px; font-weight:700; color:var(--ink);">评分趋势</h3>
+              </div>
+              <button class="btn btn-ghost btn-sm" id="btnRefreshHistory">刷新</button>
+            </div>
+            <canvas id="trendChart" height="200" style="width:100%; background:var(--panel); border-radius:12px;"></canvas>
+          </div>
+
+          <div class="panel mt-3">
+            <p class="section-kicker">Session List</p>
+            <h3 style="font-size:16px; font-weight:700; color:var(--ink);" class="mb-2">训练记录</h3>
+            <div class="history-list" id="historyList">
+              <div class="history-empty">暂无训练记录，完成一次视频分析后会显示在这里。</div>
+            </div>
+          </div>
+
+        </div>
+
         <!-- ====== Panel: Settings ====== -->
         <div class="tab-panel" id="panel-settings">
 
@@ -567,6 +674,6 @@
 
 </div><!-- /layout -->
 
-<script src="./app.js?v=20260706-browser-video"></script>
+<script src="./app.js?v=20260706-history-precheck"></script>
 </body>
 </html>
