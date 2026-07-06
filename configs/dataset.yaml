@@ -1,0 +1,28 @@
+dataset_root: "G:/VideoBadminton_Dataset/VideoBadminton_Dataset"
+pose_output_dir: "E:/Learning/badminton-agent/data/pose_features"
+vis_output_dir: "E:/Learning/badminton-agent/data/visualizations"
+pose_model: "yolov8s-pose.pt"
+
+categories:
+  0: "Short Serve"
+  1: "Cross Court Flight"
+  2: "Lift"
+  3: "Tap Smash"
+  4: "Block"
+  5: "Drop Shot"
+  6: "Push Shot"
+  7: "Transitional Slice"
+  8: "Cut"
+  9: "Rush Shot"
+  10: "Defensive Clear"
+  11: "Defensive Drive"
+  12: "Clear"
+  13: "Long Serve"
+  14: "Smash"
+  15: "Flat Shot"
+  16: "Rear Court Flat Drive"
+  17: "Short Flat Shot"
+
+batch_size: 16
+conf_threshold: 0.3
+max_frames_per_video: 300

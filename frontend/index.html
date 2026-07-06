@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>羽动智练 — 羽毛球智能训练系统</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ====== Sidebar ====== -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">羽</div>
+      <div class="brand-text">
+        <span class="title">羽动智练</span>
+        <span class="subtitle">Badminton AI Coach</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a class="nav-item active" data-tab="training">
+        <span class="nav-icon">🎬</span>
+        <span>训练检测</span>
+      </a>
+      <a class="nav-item" data-tab="analysis">
+        <span class="nav-icon">📊</span>
+        <span>动作分析</span>
+      </a>
+      <a class="nav-item" data-tab="report">
+        <span class="nav-icon">📋</span>
+        <span>训练报告</span>
+      </a>
+      <a class="nav-item" data-tab="coach">
+        <span class="nav-icon">AI</span>
+        <span>AI教练</span>
+      </a>
+      <a class="nav-item delivery-hidden" data-tab="settings">
+        <span class="nav-icon">⚙️</span>
+        <span>系统设置</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="version">v1.0.0</div>
+      <div class="credit">Powered by 羽动智练</div>
+    </div>
+  </aside>
+
+  <!-- ====== Main ====== -->
+  <div class="main">
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <h1>训练检测</h1>
+      </div>
+      <div class="topbar-right">
+        <div class="status-indicator" id="statusIndicator">
+          <span class="dot"></span>
+          <span class="status-text">未连接</span>
+        </div>
+        <button class="btn btn-ghost btn-sm delivery-hidden" id="btnSettings">
+          <span>⚙️</span> 设置
+        </button>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <div class="content">
+
+      <!-- Tabs -->
+      <div class="tabs" id="mainTabs">
+        <button class="tab active" data-tab="training">实时检测</button>
+        <button class="tab" data-tab="analysis">动作分析</button>
+        <button class="tab" data-tab="report">训练报告</button>
+        <button class="tab" data-tab="coach">AI教练</button>
+        <button class="tab delivery-hidden" data-tab="settings">设置</button>
+      </div>
+
+      <!-- Tab Panels -->
+      <div class="tab-panels">
+
+        <!-- ====== Panel: Training ====== -->
+        <div class="tab-panel active" id="panel-training">
+
+          <p class="section-kicker">Real-time Detection</p>
+          <h2 class="section-title">实时训练检测</h2>
+          <p class="section-desc">上传或录制羽毛球训练视频，AI 将实时检测动作、追踪球轨迹并评估姿势。</p>
+          <div class="notice-card">
+            当前页面已接入后端分析流程：上传视频后先抽帧预览，点击“开始检测”会调用 <code>/api/analyze</code> 生成标注视频、动作结果和训练报告。
+          </div>
+
+          <div class="processing-card" id="analysisTimer" hidden>
+            <div class="processing-rally">
+              <span class="racket-dot"></span>
+              <span class="shuttle-dot">🏸</span>
+              <span class="racket-dot"></span>
+            </div>
+            <div>
+              <div class="processing-title">视频分析处理中</div>
+              <div class="processing-meta">
+                <span id="analysisStage">上传视频并准备姿态分析</span>
+                <strong id="analysisElapsed">0.0 秒</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Controls -->
+          <div class="panel">
+            <div class="flex justify-between items-center gap-2 mb-3">
+              <div>
+                <p class="section-kicker">Controls</p>
+                <h3 style="font-size:16px; font-weight:700; color:var(--ink);">检测控制</h3>
+                <p class="section-desc" style="margin-top:6px;">系统已内置推荐分析配置，会根据客户电脑环境自动使用 GPU 或 CPU。</p>
+              </div>
+              <div class="flex gap-1">
+                <button class="btn btn-primary" id="btnStart">开始检测</button>
+                <button class="btn btn-secondary" id="btnStop">停止</button>
+                <button class="btn btn-ghost" id="btnReset">重置</button>
+              </div>
+            </div>
+
+            <div class="grid-3 mb-3 delivery-hidden" aria-hidden="true">
+              <div class="form-group">
+                <label>检测模型</label>
+                <select id="modelSelect">
+                  <option value="yolov8">YOLOv8-Pose</option>
+                  <option value="mediapipe">MediaPipe</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>置信度阈值</label>
+                <input type="range" id="confThreshold" min="0.1" max="1.0" step="0.05" value="0.5" />
+              </div>
+              <div class="form-group">
+                <label>视频源</label>
+                <select id="videoSource">
+                  <option value="file">文件上传</option>
+                  <option value="camera">摄像头</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Canvas / Media Preview -->
+          <div class="grid-2">
+            <div>
+              <p class="section-kicker mb-1">Annotated Review</p>
+              <div class="canvas-wrap" id="frameCanvasWrap">
+                <canvas id="frameCanvas" width="640" height="480"></canvas>
+                <video id="analysisVideo" class="analysis-video" controls playsinline preload="auto" hidden></video>
+              </div>
+              <div class="video-actions" id="videoActions" hidden>
+                <span id="videoStatusText">标注视频已生成，可在页面中播放。</span>
+                <a id="downloadVideoLink" class="link-button" href="#" download>下载视频</a>
+              </div>
+              <div class="empty-media mt-1" id="emptyMedia">
+                <span>点击上传视频或将视频拖到这里</span>
+              </div>
+              <input id="videoUploadInput" class="hidden-file-input" type="file" accept="video/mp4,video/quicktime,video/x-msvideo,video/x-matroska,video/mpeg" />
+            </div>
+            <div>
+              <p class="section-kicker mb-1">Footwork Map</p>
+              <div class="court-preview">
+                <canvas id="courtCanvas" width="640" height="480"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel shot-timeline-panel">
+            <div class="shot-timeline-head">
+              <div>
+                <p class="section-kicker">Shot Timeline</p>
+                <h3 class="timeline-title">逐拍时间轴</h3>
+              </div>
+              <div class="timeline-summary" id="shotTimelineSummary">等待分析结果</div>
+            </div>
+            <div class="shot-timeline" id="shotTimeline" aria-label="击球事件时间轴">
+              <div class="timeline-track"></div>
+              <div class="timeline-empty" id="shotTimelineEmpty">分析完成后会在这里显示每一次击球，点击可跳转到视频对应片段。</div>
+            </div>
+          </div>
+
+          <!-- Metrics -->
+          <div class="panel mt-3">
+            <p class="section-kicker">Live Metrics</p>
+            <h3 style="font-size:16px; font-weight:700; color:var(--ink);" class="mb-2">实时指标</h3>
+            <div class="metrics">
+              <div class="metric-item">
+                <div class="metric-label">播放进度</div>
+                <div class="metric-value" id="metricFps">0</div>
+                <div class="metric-unit">当前 / 总时长</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-label">已过击球</div>
+                <div class="metric-value" id="metricDetections">0</div>
+                <div class="metric-unit">当前 / 总计</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-label">当前置信</div>
+                <div class="metric-value" id="metricConf">0%</div>
+                <div class="metric-unit">当前片段</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-label">当前动作</div>
+                <div class="metric-value metric-action" id="metricLatency">--</div>
+                <div class="metric-unit">随播放更新</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ====== Panel: Analysis ====== -->
+        <div class="tab-panel" id="panel-analysis">
+
+          <p class="section-kicker">Action Analysis</p>
+          <h2 class="section-title">动作分析</h2>
+          <p class="section-desc">对检测到的羽毛球动作进行分类与质量评估，包括挥拍类型、力量分析和动作评分。</p>
+
+          <!-- Status Cards -->
+          <div class="grid-3 mb-3">
+            <div class="status-card">
+              <div class="label">动作类型</div>
+              <div class="value" id="actionType">--</div>
+            </div>
+            <div class="status-card">
+                <div class="label">动作质量评分</div>
+              <div class="value"><strong id="actionScore">--</strong>/100</div>
+            </div>
+            <div class="status-card">
+              <div class="label">力量等级</div>
+              <div class="value" id="powerLevel">--</div>
+            </div>
+          </div>
+
+          <!-- Quality Breakdown -->
+          <div class="panel">
+            <p class="section-kicker">Quality Breakdown</p>
+            <h3 style="font-size:16px; font-weight:700; color:var(--ink);" class="mb-2">动作质量评分</h3>
+            <div class="quality-items">
+              <div class="quality-item">
+                <div class="quality-label">挥拍流畅度</div>
+                <div class="quality-value" id="qualitySmooth">--</div>
+                <div class="quality-bar"><div class="quality-bar-fill" id="barSmooth" style="width:0%"></div></div>
+              </div>
+              <div class="quality-item">
+                <div class="quality-label">击球点精准度</div>
+                <div class="quality-value" id="qualityAccuracy">--</div>
+                <div class="quality-bar"><div class="quality-bar-fill" id="barAccuracy" style="width:0%"></div></div>
+              </div>
+              <div class="quality-item">
+                <div class="quality-label">身体协调性</div>
+                <div class="quality-value" id="qualityCoord">--</div>
+                <div class="quality-bar"><div class="quality-bar-fill" id="barCoord" style="width:0%"></div></div>
+              </div>
+              <div class="quality-item">
+                <div class="quality-label">步法移动</div>
+                <div class="quality-value" id="qualityFoot">--</div>
+                <div class="quality-bar"><div class="quality-bar-fill" id="barFoot" style="width:0%"></div></div>
+              </div>
+              <div class="quality-item">
+                <div class="quality-label">手腕发力</div>
+                <div class="quality-value" id="qualityWrist">--</div>
+                <div class="quality-bar"><div class="quality-bar-fill" id="barWrist" style="width:0%"></div></div>
+              </div>
+              <div class="quality-item">
+                <div class="quality-label">重心稳定性</div>
+                <div class="quality-value" id="qualityBalance">--</div>
+                <div class="quality-bar"><div class="quality-bar-fill" id="barBalance" style="width:0%"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Detection History Table -->
+          <div class="panel mt-3">
+            <p class="section-kicker">Detection History</p>
+            <h3 style="font-size:16px; font-weight:700; color:var(--ink);" class="mb-2">检测历史记录</h3>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>时间</th>
+                    <th>动作</th>
+                    <th>置信度</th>
+                    <th>评分</th>
+                    <th>力量</th>
+                  </tr>
+                </thead>
+                <tbody id="historyTable">
+                  <tr>
+                    <td colspan="5" style="text-align:center; color:var(--muted); padding:32px;">暂无检测记录</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ====== Panel: Report ====== -->
+        <div class="tab-panel" id="panel-report">
+
+          <p class="section-kicker">Training Report</p>
+          <h2 class="section-title">训练报告</h2>
+          <p class="section-desc">查看整体训练数据统计、雷达图分析及详细报告。支持导出训练报告。</p>
+
+          <!-- Score Summary -->
+          <div class="panel">
+            <div class="flex justify-between items-center mb-2">
+              <div>
+                <p class="section-kicker">Score Summary</p>
+                <h3 style="font-size:16px; font-weight:700; color:var(--ink);">训练评分概览</h3>
+              </div>
+              <button class="btn btn-primary btn-sm" id="btnExport">导出报告</button>
+            </div>
+            <div class="score-items">
+              <div class="score-item">
+                <div class="score-label">总训练次数</div>
+                <div class="score-value" id="totalSessions">0</div>
+              </div>
+              <div class="score-item">
+                <div class="score-label">平均评分</div>
+                <div class="score-value" id="avgScore">--</div>
+              </div>
+              <div class="score-item">
+                <div class="score-label">最佳动作</div>
+                <div class="score-value" id="bestAction">--</div>
+              </div>
+              <div class="score-item">
+                <div class="score-label">总检测帧数</div>
+                <div class="score-value" id="totalFrames">0</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Radar Chart -->
+          <div class="grid-2 mt-3">
+            <div>
+              <p class="section-kicker mb-1">Ability Radar</p>
+              <div class="radar">
+                <canvas id="radarCanvas" width="360" height="360"></canvas>
+              </div>
+            </div>
+
+            <!-- Report Details -->
+            <div>
+              <p class="section-kicker mb-1">Report Details</p>
+              <div class="panel">
+                <div id="reportList">
+                  <div class="report-item">
+                    <div class="report-label">训练日期</div>
+                    <div class="report-desc" id="reportDate">--</div>
+                  </div>
+                  <div class="report-item">
+                    <div class="report-label">训练时长</div>
+                    <div class="report-desc" id="reportDuration">--</div>
+                  </div>
+                  <div class="report-item">
+                    <div class="report-label">总动作数</div>
+                    <div class="report-desc" id="reportActions">--</div>
+                  </div>
+                  <div class="report-item report-accent2">
+                    <div class="report-label">本次亮点</div>
+                    <div class="report-desc" id="reportHighlights">--</div>
+                  </div>
+                  <div class="report-item">
+                    <div class="report-label">重点问题</div>
+                    <div class="report-desc" id="reportIssues">--</div>
+                  </div>
+                  <div class="report-item report-accent2">
+                    <div class="report-label">改进建议</div>
+                    <div class="report-desc" id="reportSuggestions">--</div>
+                  </div>
+                  <div class="report-item">
+                    <div class="report-label">训练计划</div>
+                    <div class="report-desc" id="reportPlan">--</div>
+                  </div>
+                  <div class="report-item">
+                    <div class="report-label">复核建议</div>
+                    <div class="report-desc" id="reportReview">--</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ====== Panel: AI Coach ====== -->
+        <div class="tab-panel" id="panel-coach">
+
+          <p class="section-kicker">AI Coach Agent</p>
+          <h2 class="section-title">AI教练问答</h2>
+          <p class="section-desc">围绕羽毛球技术、步伐、训练计划、比赛复盘和运动安全进行问答。完成一次视频分析后，可以带着本次训练报告继续追问。</p>
+
+          <div class="coach-agent-layout">
+            <div class="panel coach-chat-panel">
+              <div class="coach-chat-header">
+                <div>
+                  <p class="section-kicker">Conversation</p>
+                  <h3>训练教练</h3>
+                </div>
+                <div class="coach-provider">
+                  <label for="coachProvider">模型</label>
+                  <select id="coachProvider">
+                    <option value="qwen">Qwen</option>
+                    <option value="zhipu">智谱AI</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="coach-messages" id="coachMessages">
+                <div class="coach-message assistant">
+                  <div class="coach-avatar">教</div>
+                  <div class="coach-bubble">
+                    你好，我是羽动智练 AI 教练。你可以问我发力、步伐、训练计划、比赛复盘，也可以在完成视频分析后让我结合本次报告给建议。
+                  </div>
+                </div>
+              </div>
+
+              <div class="coach-input-row">
+                <textarea id="coachQuestion" rows="3" placeholder="例如：我后场杀球总是发不上力，应该怎么练？"></textarea>
+                <button class="btn btn-primary" id="btnCoachSend">发送</button>
+              </div>
+            </div>
+
+            <div class="panel coach-side-panel">
+              <p class="section-kicker">Context</p>
+              <h3>教练配置</h3>
+              <label class="coach-toggle">
+                <input type="checkbox" id="coachUseReport" checked />
+                <span>结合本次训练分析</span>
+              </label>
+              <div class="coach-context-card">
+                <span>当前上下文</span>
+                <strong id="coachContextStatus">暂无训练报告</strong>
+                <p>完成一次视频分析后，AI 教练会自动读取动作、击球片段、置信度和步伐评分，用于回答追问。</p>
+              </div>
+              <div class="coach-prompts">
+                <button type="button" class="coach-prompt" data-prompt="帮我根据本次训练报告总结三个最优先改进的问题。">总结本次问题</button>
+                <button type="button" class="coach-prompt" data-prompt="给我安排一套 20 分钟羽毛球步伐训练计划。">20分钟步伐训练</button>
+                <button type="button" class="coach-prompt" data-prompt="我击球后回位慢，应该从哪些动作细节改？">回位慢怎么改</button>
+                <button type="button" class="coach-prompt" data-prompt="羽毛球训练前后应该怎么热身和放松？">热身放松建议</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ====== Panel: Settings ====== -->
+        <div class="tab-panel" id="panel-settings">
+
+          <p class="section-kicker">System Settings</p>
+          <h2 class="section-title">系统设置</h2>
+          <p class="section-desc">配置检测模型参数、视频处理选项和系统偏好。</p>
+
+          <div class="grid-2">
+
+            <!-- Model Settings -->
+            <div class="panel">
+              <p class="section-kicker">Model Config</p>
+              <h3 style="font-size:16px; font-weight:700; color:var(--ink);" class="mb-2">模型配置</h3>
+
+              <div class="form-group">
+                <label>推理后端</label>
+                <select id="inferenceBackend">
+                  <option value="onnx">ONNX Runtime</option>
+                  <option value="tflite">TensorFlow Lite</option>
+                  <option value="pytorch">PyTorch</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>设备</label>
+                <select id="computeDevice">
+                  <option value="cpu">CPU</option>
+                  <option value="cuda">CUDA (GPU)</option>
+                  <option value="mps">MPS (Apple)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>输入分辨率</label>
+                <select id="inputResolution">
+                  <option value="640">640 x 640</option>
+                  <option value="1280">1280 x 1280</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>模型精度</label>
+                <select id="modelPrecision">
+                  <option value="fp32">FP32 (高精度)</option>
+                  <option value="fp16">FP16 (均衡)</option>
+                  <option value="int8">INT8 (快速)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Video Settings -->
+            <div class="panel">
+              <p class="section-kicker">Video Config</p>
+              <h3 style="font-size:16px; font-weight:700; color:var(--ink);" class="mb-2">视频处理</h3>
+
+              <div class="form-group">
+                <label>帧率</label>
+                <select id="frameRate">
+                  <option value="15">15 FPS</option>
+                  <option value="30" selected>30 FPS</option>
+                  <option value="60">60 FPS</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>跳帧间隔</label>
+                <input type="number" id="frameSkip" value="1" min="1" max="10" />
+              </div>
+              <div class="form-group">
+                <label>ROI 区域</label>
+                <div class="flex gap-1">
+                  <input type="number" id="roiX1" placeholder="x1" value="0" min="0" />
+                  <input type="number" id="roiY1" placeholder="y1" value="0" min="0" />
+                  <input type="number" id="roiX2" placeholder="x2" value="640" max="1920" />
+                  <input type="number" id="roiY2" placeholder="y2" value="480" max="1080" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label>保存检测结果</label>
+                <select id="saveDetection">
+                  <option value="false">不保存</option>
+                  <option value="true">保存为 JSON</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="panel mt-3">
+            <div class="flex justify-between items-center">
+              <div>
+                <p class="section-kicker">Actions</p>
+                <h3 style="font-size:16px; font-weight:700; color:var(--ink);">操作</h3>
+              </div>
+              <div class="flex gap-1">
+                <button class="btn btn-primary" id="btnSaveSettings">保存设置</button>
+                <button class="btn btn-ghost" id="btnResetSettings">恢复默认</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Field Output -->
+          <div class="mt-3">
+            <p class="section-kicker mb-1">Current Config (JSON)</p>
+            <div class="field-output" id="configOutput">{ }</div>
+          </div>
+
+        </div>
+
+      </div><!-- /tab-panels -->
+
+    </div><!-- /content -->
+
+  </div><!-- /main -->
+
+</div><!-- /layout -->
+
+<script src="./app.js?v=20260706-browser-video"></script>
+</body>
+</html>
