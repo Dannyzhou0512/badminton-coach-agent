@@ -1,0 +1,104 @@
+<view class="container">
+  <view class="header">
+    <view class="greeting">
+      <view class="kicker">WELCOME BACK</view>
+      <view class="title">{{greetingText}}</view>
+      <view class="subtitle">上传羽毛球视频，AI智能分析动作</view>
+    </view>
+  </view>
+
+  <view class="card upload-card">
+    <view class="section-title">📹 视频分析</view>
+    <view class="upload-area" bindtap="chooseVideo">
+      <view wx:if="{{!selectedVideo}}" class="upload-placeholder">
+        <view class="upload-icon">🎥</view>
+        <view class="upload-text">点击选择训练视频</view>
+        <view class="upload-hint">支持录制或从相册选择</view>
+      </view>
+      <view wx:else class="video-preview">
+        <video 
+          src="{{selectedVideo}}" 
+          class="preview-video" 
+          show-center-play-btn="{{true}}"
+          controls="{{true}}"
+          object-fit="contain"
+        ></video>
+        <view class="video-info">
+          <text class="video-name">{{videoName}}</text>
+          <text class="video-size">{{videoSize}}</text>
+        </view>
+        <view class="reselect-btn" catchtap="chooseVideo">重新选择</view>
+      </view>
+    </view>
+
+    <view class="config-section" wx:if="{{selectedVideo}}">
+      <view class="config-item">
+        <text class="config-label">分析预设</text>
+        <picker range="{{presetNames}}" value="{{presetIndex}}" bindchange="onPresetChange">
+          <view class="picker-value">{{presetNames[presetIndex]}} ▼</view>
+        </picker>
+      </view>
+      <view class="config-item">
+        <text class="config-label">目标球员</text>
+        <picker range="{{playerNames}}" value="{{playerIndex}}" bindchange="onPlayerChange">
+          <view class="picker-value">{{playerNames[playerIndex]}} ▼</view>
+        </picker>
+      </view>
+    </view>
+
+    <button 
+      class="btn-primary w-full mt-24" 
+      bindtap="startAnalysis" 
+      disabled="{{!selectedVideo || analyzing}}"
+      loading="{{analyzing}}"
+    >
+      <text wx:if="{{!analyzing}}">开始智能分析</text>
+      <text wx:else>{{analyzingStage}}</text>
+    </button>
+  </view>
+
+  <view class="tips-card card">
+    <view class="section-title">💡 拍摄建议</view>
+    <view class="tip-list">
+      <view class="tip-item">
+        <text class="tip-icon">✓</text>
+        <text class="tip-text">侧方拍摄，完整覆盖球场半场</text>
+      </view>
+      <view class="tip-item">
+        <text class="tip-icon">✓</text>
+        <text class="tip-text">保持画面稳定，避免剧烈晃动</text>
+      </view>
+      <view class="tip-item">
+        <text class="tip-icon">✓</text>
+        <text class="tip-text">光线充足，球员着装与背景区分明显</text>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{recentHistory.length > 0}}" class="card">
+    <view class="flex-between mb-24">
+      <view class="section-title">📊 最近记录</view>
+      <text class="text-accent" bindtap="goToHistory">查看全部 →</text>
+    </view>
+    <view class="history-list">
+      <view wx:for="{{recentHistory}}" wx:key="id" class="history-item" bindtap="goToResult" data-id="{{item.id}}">
+        <view class="history-info">
+          <text class="history-date">{{item.date}}</text>
+          <text class="history-summary">{{item.summary}}</text>
+        </view>
+        <text class="history-arrow">›</text>
+      </view>
+    </view>
+  </view>
+</view>
+
+<view wx:if="{{analyzing}}" class="loading-overlay">
+  <view class="loading-spinner"></view>
+  <view class="loading-text">{{analyzingStage}}</view>
+  <view class="progress-bar-container">
+    <view class="progress-bar">
+      <view class="progress-fill" style="width: {{progress}}%"></view>
+    </view>
+    <view class="progress-text">{{progress}}%</view>
+  </view>
+</view>

@@ -3,22 +3,34 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>羽动智练 — 羽毛球智能训练系统</title>
-  <link rel="stylesheet" href="./styles.css" />
+  <title data-i18n="pageTitle">羽动智练 — 羽毛球智能训练系统</title>
+  <link rel="stylesheet" href="./styles.css?v=20260707-auth-fix1" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
+<!-- Animated Background Layer -->
+<div class="bg-animation" id="bgAnimation"></div>
+<div class="bg-orb bg-orb-1"></div>
+<div class="bg-orb bg-orb-2"></div>
+<div class="bg-orb bg-orb-3"></div>
+
+<!-- GitHub Link -->
+<a href="https://github.com/Dannyzhou0512/badminton-coach-agent" target="_blank" rel="noopener" class="github-link" id="githubLink">
+  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.87-1.54-3.87-1.54-.52-1.33-1.28-1.68-1.28-1.68-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.71 1.26 3.37.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.03 11.03 0 015.79 0c2.21-1.49 3.18-1.18 3.18-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.41-2.69 5.38-5.25 5.67.41.35.78 1.05.78 2.12 0 1.53-.01 2.76-.01 3.14 0 .31.21.68.8.56A11.51 11.51 0 0023.5 12C23.5 5.73 18.27.5 12 .5z"/></svg>
+  <span>GitHub</span>
+</a>
+
 <div class="layout">
 
   <!-- ====== Sidebar ====== -->
   <aside class="sidebar">
     <div class="brand">
-      <div class="brand-mark">羽</div>
+      <img src="assets/logo.png" alt="Logo" class="brand-logo">
       <div class="brand-text">
-        <span class="title">羽动智练</span>
+        <span class="title" data-i18n="brandName">羽动智练</span>
         <span class="subtitle">Badminton AI Coach</span>
       </div>
     </div>
@@ -26,33 +38,33 @@
     <nav class="sidebar-nav">
       <a class="nav-item active" data-tab="training">
         <span class="nav-icon">🎬</span>
-        <span>训练检测</span>
+        <span data-i18n="navTraining">训练检测</span>
       </a>
       <a class="nav-item" data-tab="analysis">
         <span class="nav-icon">📊</span>
-        <span>动作分析</span>
+        <span data-i18n="navAnalysis">动作分析</span>
       </a>
       <a class="nav-item" data-tab="report">
         <span class="nav-icon">📋</span>
-        <span>训练报告</span>
+        <span data-i18n="navReport">训练报告</span>
       </a>
       <a class="nav-item" data-tab="coach">
         <span class="nav-icon">AI</span>
-        <span>AI教练</span>
+        <span data-i18n="navCoach">AI教练</span>
       </a>
       <a class="nav-item" data-tab="history">
         <span class="nav-icon">📅</span>
-        <span>训练历史</span>
+        <span data-i18n="navHistory">训练历史</span>
       </a>
-      <a class="nav-item delivery-hidden" data-tab="settings">
+      <a class="nav-item" data-tab="settings">
         <span class="nav-icon">⚙️</span>
-        <span>系统设置</span>
+        <span data-i18n="navSettings">系统设置</span>
       </a>
     </nav>
 
     <div class="sidebar-footer">
       <div class="version">v1.0.0</div>
-      <div class="credit">Powered by 羽动智练</div>
+      <div class="credit" data-i18n="creditText">Powered by 羽动智练</div>
     </div>
   </aside>
 
@@ -62,16 +74,36 @@
     <!-- Topbar -->
     <header class="topbar">
       <div class="topbar-left">
-        <h1>训练检测</h1>
+        <h1 id="topbarTitle" data-i18n="navTraining">训练检测</h1>
       </div>
       <div class="topbar-right">
+        <button class="btn-login" id="btnLogin" data-i18n="btnLogin">登录 / 注册</button>
+        <div class="user-menu" id="userMenu" hidden>
+          <button class="user-avatar-btn" id="btnUserAvatar">
+            <div class="avatar-circle" id="userAvatarCircle">用</div>
+          </button>
+          <div class="user-dropdown" id="userDropdown" hidden>
+            <div class="user-info-card">
+              <div class="user-info-nickname" id="userNickname">--</div>
+              <div class="user-info-username" id="userUsername">--</div>
+              <div class="wechat-badge" id="wechatBadge" hidden>
+                <span class="wechat-icon">💬</span>
+                <span data-i18n="wechatBound">已绑定微信</span>
+              </div>
+            </div>
+            <div class="user-menu-divider"></div>
+            <button class="user-menu-item" id="btnSwitchAccount" data-i18n="switchAccount">
+              <span>🔄</span><span>切换账号</span>
+            </button>
+            <button class="user-menu-item danger" id="btnLogout" data-i18n="logout">
+              <span>🚪</span><span>退出登录</span>
+            </button>
+          </div>
+        </div>
         <div class="status-indicator" id="statusIndicator">
           <span class="dot"></span>
-          <span class="status-text">未连接</span>
+          <span class="status-text" data-i18n="statusDisconnected">未连接</span>
         </div>
-        <button class="btn btn-ghost btn-sm delivery-hidden" id="btnSettings">
-          <span>⚙️</span> 设置
-        </button>
       </div>
     </header>
 
@@ -80,12 +112,12 @@
 
       <!-- Tabs -->
       <div class="tabs" id="mainTabs">
-        <button class="tab active" data-tab="training">实时检测</button>
-        <button class="tab" data-tab="analysis">动作分析</button>
-        <button class="tab" data-tab="report">训练报告</button>
-        <button class="tab" data-tab="coach">AI教练</button>
-        <button class="tab" data-tab="history">训练历史</button>
-        <button class="tab delivery-hidden" data-tab="settings">设置</button>
+        <button class="tab active" data-tab="training" data-i18n="tabRealtime">实时检测</button>
+        <button class="tab" data-tab="analysis" data-i18n="navAnalysis">动作分析</button>
+        <button class="tab" data-tab="report" data-i18n="navReport">训练报告</button>
+        <button class="tab" data-tab="coach" data-i18n="navCoach">AI教练</button>
+        <button class="tab" data-tab="history" data-i18n="navHistory">训练历史</button>
+        <button class="tab" data-tab="settings" data-i18n="navSettings">设置</button>
       </div>
 
       <!-- Tab Panels -->
@@ -95,49 +127,49 @@
         <div class="tab-panel active" id="panel-training">
 
           <p class="section-kicker">Real-time Detection</p>
-          <h2 class="section-title">实时训练检测</h2>
-          <p class="section-desc">上传或录制羽毛球训练视频，AI 将实时检测动作、追踪球轨迹并评估姿势。</p>
-          <div class="notice-card">
-            当前页面已接入后端分析流程：上传视频后先进行视频质量预检，再调用 <code>/api/analyze</code> 生成标注视频、动作结果和训练报告。
+          <h2 class="section-title" data-i18n="trainingTitle">实时训练检测</h2>
+          <p class="section-desc" data-i18n="trainingDesc">上传或录制羽毛球训练视频，AI 将实时检测动作、追踪球轨迹并评估姿势。</p>
+          <div class="notice-card" data-i18n="trainingNotice">
+            当前页面已接入后端分析流程：上传视频后先进行视频质量预检，再调用 /api/analyze 生成标注视频、动作结果和训练报告。
           </div>
 
           <div class="shooting-guide" id="shootingGuide">
             <div class="guide-header">
               <span class="guide-icon">📸</span>
-              <h3>拍摄建议</h3>
+              <h3 data-i18n="shootingGuideTitle">拍摄建议</h3>
               <button class="guide-toggle" id="guideToggle" title="收起/展开">▼</button>
             </div>
             <div class="guide-body" id="guideBody">
               <div class="guide-grid">
                 <div class="guide-item">
                   <div class="guide-item-icon">🎬</div>
-                  <div class="guide-item-title">横屏拍摄</div>
-                  <div class="guide-item-desc">请使用手机横屏拍摄，画面更稳定，人物更完整</div>
+                  <div class="guide-item-title" data-i18n="guideLandscapeTitle">横屏拍摄</div>
+                  <div class="guide-item-desc" data-i18n="guideLandscapeDesc">请使用手机横屏拍摄，画面更稳定，人物更完整</div>
                 </div>
                 <div class="guide-item">
                   <div class="guide-item-icon">📏</div>
-                  <div class="guide-item-title">拍摄距离</div>
-                  <div class="guide-item-desc">距离场地边线3-5米，确保人物全身在画面中</div>
+                  <div class="guide-item-title" data-i18n="guideDistanceTitle">拍摄距离</div>
+                  <div class="guide-item-desc" data-i18n="guideDistanceDesc">距离场地边线3-5米，确保人物全身在画面中</div>
                 </div>
                 <div class="guide-item">
                   <div class="guide-item-icon">📐</div>
-                  <div class="guide-item-title">拍摄角度</div>
-                  <div class="guide-item-desc">站在场地侧面拍摄，与球网平行，不要正面或太斜</div>
+                  <div class="guide-item-title" data-i18n="guideAngleTitle">拍摄角度</div>
+                  <div class="guide-item-desc" data-i18n="guideAngleDesc">站在场地侧面拍摄，与球网平行，不要正面或太斜</div>
                 </div>
                 <div class="guide-item">
                   <div class="guide-item-icon">💡</div>
-                  <div class="guide-item-title">光线充足</div>
-                  <div class="guide-item-desc">确保场地光线明亮，避免逆光拍摄</div>
+                  <div class="guide-item-title" data-i18n="guideLightTitle">光线充足</div>
+                  <div class="guide-item-desc" data-i18n="guideLightDesc">确保场地光线明亮，避免逆光拍摄</div>
                 </div>
                 <div class="guide-item">
                   <div class="guide-item-icon">📹</div>
-                  <div class="guide-item-title">画面稳定</div>
-                  <div class="guide-item-desc">使用支架固定手机，避免手持晃动</div>
+                  <div class="guide-item-title" data-i18n="guideStableTitle">画面稳定</div>
+                  <div class="guide-item-desc" data-i18n="guideStableDesc">使用支架固定手机，避免手持晃动</div>
                 </div>
                 <div class="guide-item">
                   <div class="guide-item-icon">⏱️</div>
-                  <div class="guide-item-title">时长建议</div>
-                  <div class="guide-item-desc">建议10秒-3分钟片段，包含完整的击球动作</div>
+                  <div class="guide-item-title" data-i18n="guideDurationTitle">时长建议</div>
+                  <div class="guide-item-desc" data-i18n="guideDurationDesc">建议10秒-3分钟片段，包含完整的击球动作</div>
                 </div>
               </div>
             </div>
@@ -146,13 +178,13 @@
           <div class="precheck-panel" id="precheckPanel" hidden>
             <div class="precheck-header">
               <span class="precheck-icon">🔍</span>
-              <h3>视频质量检测</h3>
-              <span class="precheck-status" id="precheckStatus">检测中...</span>
+              <h3 data-i18n="precheckTitle">视频质量检测</h3>
+              <span class="precheck-status" id="precheckStatus" data-i18n="precheckChecking">检测中...</span>
             </div>
             <div class="precheck-items" id="precheckItems"></div>
             <div class="precheck-actions" id="precheckActions" hidden>
-              <button class="btn btn-primary" id="btnProceedAnalyze">继续分析</button>
-              <button class="btn btn-secondary" id="btnReupload">重新上传</button>
+              <button class="btn btn-primary" id="btnProceedAnalyze" data-i18n="btnProceed">继续分析</button>
+              <button class="btn btn-secondary" id="btnReupload" data-i18n="btnReupload">重新上传</button>
             </div>
           </div>
 
@@ -162,11 +194,14 @@
               <span class="shuttle-dot">🏸</span>
               <span class="racket-dot"></span>
             </div>
-            <div>
-              <div class="processing-title">视频分析处理中</div>
+            <div style="flex:1;">
+              <div class="processing-title" data-i18n="processingTitle">视频分析处理中</div>
               <div class="processing-meta">
-                <span id="analysisStage">上传视频并准备姿态分析</span>
+                <span id="analysisStage" data-i18n="processingStage1">上传视频并准备姿态分析</span>
                 <strong id="analysisElapsed">0.0 秒</strong>
+              </div>
+              <div style="margin-top:8px; height:6px; background:rgba(94,255,159,0.12); border-radius:3px; overflow:hidden;">
+                <div id="analysisProgressBar" style="height:100%; width:0%; background:linear-gradient(90deg,#5eff9f,#9effc8); border-radius:3px; transition:width 0.3s ease;"></div>
               </div>
             </div>
           </div>
@@ -176,34 +211,13 @@
             <div class="flex justify-between items-center gap-2 mb-3">
               <div>
                 <p class="section-kicker">Controls</p>
-                <h3 style="font-size:16px; font-weight:700; color:var(--ink);">检测控制</h3>
-                <p class="section-desc" style="margin-top:6px;">系统已内置推荐分析配置，会根据客户电脑环境自动使用 GPU 或 CPU。</p>
+                <h3 style="font-size:16px; font-weight:700; color:var(--ink);" data-i18n="detectControls">检测控制</h3>
+                <p class="section-desc" style="margin-top:6px;" data-i18n="detectControlsDesc">系统已内置推荐分析配置，会根据客户电脑环境自动使用 GPU 或 CPU。</p>
               </div>
               <div class="flex gap-1">
-                <button class="btn btn-primary" id="btnStart">开始检测</button>
-                <button class="btn btn-secondary" id="btnStop">停止</button>
-                <button class="btn btn-ghost" id="btnReset">重置</button>
-              </div>
-            </div>
-
-            <div class="grid-3 mb-3 delivery-hidden" aria-hidden="true">
-              <div class="form-group">
-                <label>检测模型</label>
-                <select id="modelSelect">
-                  <option value="yolov8">YOLOv8-Pose</option>
-                  <option value="mediapipe">MediaPipe</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label>置信度阈值</label>
-                <input type="range" id="confThreshold" min="0.1" max="1.0" step="0.05" value="0.5" />
-              </div>
-              <div class="form-group">
-                <label>视频源</label>
-                <select id="videoSource">
-                  <option value="file">文件上传</option>
-                  <option value="camera">摄像头</option>
-                </select>
+                <button class="btn btn-primary" id="btnStart" data-i18n="btnStart">开始检测</button>
+                <button class="btn btn-secondary" id="btnStop" data-i18n="btnStop">停止</button>
+                <button class="btn btn-ghost" id="btnReset" data-i18n="btnReset">重置</button>
               </div>
             </div>
           </div>
@@ -217,18 +231,18 @@
                 <video id="analysisVideo" class="analysis-video" controls playsinline preload="auto" hidden></video>
               </div>
               <div class="video-actions" id="videoActions" hidden>
-                <span id="videoStatusText">标注视频已生成，可在页面中播放。</span>
-                <a id="downloadVideoLink" class="link-button" href="#" download>下载视频</a>
+                <span id="videoStatusText" data-i18n="videoReady">标注视频已生成，可在页面中播放。</span>
+                <a id="downloadVideoLink" class="link-button" href="#" download data-i18n="downloadVideo">下载视频</a>
               </div>
               <div class="empty-media mt-1" id="emptyMedia">
-                <span>点击上传视频或将视频拖到这里</span>
+                <span data-i18n="dropUpload">点击上传视频或将视频拖到这里</span>
               </div>
               <input id="videoUploadInput" class="hidden-file-input" type="file" accept="video/mp4,video/quicktime,video/x-msvideo,video/x-matroska,video/mpeg" />
             </div>
             <div>
               <p class="section-kicker mb-1">Footwork Map</p>
               <div class="court-preview">
-                <canvas id="courtCanvas" width="640" height="480"></canvas>
+                <canvas id="courtCanvas" width="480" height="528"></canvas>
               </div>
             </div>
           </div>
@@ -237,40 +251,40 @@
             <div class="shot-timeline-head">
               <div>
                 <p class="section-kicker">Shot Timeline</p>
-                <h3 class="timeline-title">逐拍时间轴</h3>
+                <h3 class="timeline-title" data-i18n="shotTimelineTitle">逐拍时间轴</h3>
               </div>
-              <div class="timeline-summary" id="shotTimelineSummary">等待分析结果</div>
+              <div class="timeline-summary" id="shotTimelineSummary" data-i18n="waitingAnalysis">等待分析结果</div>
             </div>
             <div class="shot-timeline" id="shotTimeline" aria-label="击球事件时间轴">
               <div class="timeline-track"></div>
-              <div class="timeline-empty" id="shotTimelineEmpty">分析完成后会在这里显示每一次击球，点击可跳转到视频对应片段。</div>
+              <div class="timeline-empty" id="shotTimelineEmpty" data-i18n="timelineEmpty">分析完成后会在这里显示每一次击球，点击可跳转到视频对应片段。</div>
             </div>
           </div>
 
           <!-- Metrics -->
           <div class="panel mt-3">
             <p class="section-kicker">Live Metrics</p>
-            <h3 style="font-size:16px; font-weight:700; color:var(--ink);" class="mb-2">实时指标</h3>
+            <h3 style="font-size:16px; font-weight:700; color:var(--ink);" class="mb-2" data-i18n="liveMetrics">实时指标</h3>
             <div class="metrics">
               <div class="metric-item">
-                <div class="metric-label">播放进度</div>
+                <div class="metric-label" data-i18n="metricProgress">播放进度</div>
                 <div class="metric-value" id="metricFps">0</div>
-                <div class="metric-unit">当前 / 总时长</div>
+                <div class="metric-unit" data-i18n="metricProgressUnit">当前 / 总时长</div>
               </div>
               <div class="metric-item">
-                <div class="metric-label">已过击球</div>
+                <div class="metric-label" data-i18n="metricShots">已过击球</div>
                 <div class="metric-value" id="metricDetections">0</div>
-                <div class="metric-unit">当前 / 总计</div>
+                <div class="metric-unit" data-i18n="metricShotsUnit">当前 / 总计</div>
               </div>
               <div class="metric-item">
-                <div class="metric-label">当前置信</div>
+                <div class="metric-label" data-i18n="metricConf">当前置信</div>
                 <div class="metric-value" id="metricConf">0%</div>
-                <div class="metric-unit">当前片段</div>
+                <div class="metric-unit" data-i18n="metricConfUnit">当前片段</div>
               </div>
               <div class="metric-item">
-                <div class="metric-label">当前动作</div>
+                <div class="metric-label" data-i18n="metricAction">当前动作</div>
                 <div class="metric-value metric-action" id="metricLatency">--</div>
-                <div class="metric-unit">随播放更新</div>
+                <div class="metric-unit" data-i18n="metricActionUnit">随播放更新</div>
               </div>
             </div>
           </div>
@@ -281,81 +295,78 @@
         <div class="tab-panel" id="panel-analysis">
 
           <p class="section-kicker">Action Analysis</p>
-          <h2 class="section-title">动作分析</h2>
-          <p class="section-desc">对检测到的羽毛球动作进行分类与质量评估，包括挥拍类型、力量分析和动作评分。</p>
+          <h2 class="section-title" data-i18n="analysisTitle">动作分析</h2>
+          <p class="section-desc" data-i18n="analysisDesc">对检测到的羽毛球动作进行分类与质量评估，包括挥拍类型、力量分析和动作评分。</p>
 
-          <!-- Status Cards -->
           <div class="grid-3 mb-3">
             <div class="status-card">
-              <div class="label">动作类型</div>
+              <div class="label" data-i18n="actionTypeLabel">动作类型</div>
               <div class="value" id="actionType">--</div>
             </div>
             <div class="status-card">
-                <div class="label">动作质量评分</div>
+                <div class="label" data-i18n="actionScoreLabel">动作质量评分</div>
               <div class="value"><strong id="actionScore">--</strong>/100</div>
             </div>
             <div class="status-card">
-              <div class="label">力量等级</div>
+              <div class="label" data-i18n="powerLevelLabel">力量等级</div>
               <div class="value" id="powerLevel">--</div>
             </div>
           </div>
 
-          <!-- Quality Breakdown -->
           <div class="panel">
             <p class="section-kicker">Quality Breakdown</p>
-            <h3 style="font-size:16px; font-weight:700; color:var(--ink);" class="mb-2">动作质量评分</h3>
+            <h3 style="font-size:16px; font-weight:700; color:var(--ink);" class="mb-2" data-i18n="qualityBreakdown">动作质量评分</h3>
             <div class="quality-items">
               <div class="quality-item">
-                <div class="quality-label">挥拍流畅度</div>
+                <div class="quality-label" data-i18n="qSmooth">挥拍流畅度</div>
                 <div class="quality-value" id="qualitySmooth">--</div>
                 <div class="quality-bar"><div class="quality-bar-fill" id="barSmooth" style="width:0%"></div></div>
               </div>
               <div class="quality-item">
-                <div class="quality-label">击球点精准度</div>
+                <div class="quality-label" data-i18n="qAccuracy">击球点精准度</div>
                 <div class="quality-value" id="qualityAccuracy">--</div>
                 <div class="quality-bar"><div class="quality-bar-fill" id="barAccuracy" style="width:0%"></div></div>
               </div>
               <div class="quality-item">
-                <div class="quality-label">身体协调性</div>
+                <div class="quality-label" data-i18n="qCoord">身体协调性</div>
                 <div class="quality-value" id="qualityCoord">--</div>
                 <div class="quality-bar"><div class="quality-bar-fill" id="barCoord" style="width:0%"></div></div>
               </div>
               <div class="quality-item">
-                <div class="quality-label">步法移动</div>
+                <div class="quality-label" data-i18n="qFoot">步法移动</div>
                 <div class="quality-value" id="qualityFoot">--</div>
                 <div class="quality-bar"><div class="quality-bar-fill" id="barFoot" style="width:0%"></div></div>
               </div>
               <div class="quality-item">
-                <div class="quality-label">手腕发力</div>
+                <div class="quality-label" data-i18n="qWrist">手腕发力</div>
                 <div class="quality-value" id="qualityWrist">--</div>
                 <div class="quality-bar"><div class="quality-bar-fill" id="barWrist" style="width:0%"></div></div>
               </div>
               <div class="quality-item">
-                <div class="quality-label">重心稳定性</div>
+                <div class="quality-label" data-i18n="qBalance">重心稳定性</div>
                 <div class="quality-value" id="qualityBalance">--</div>
                 <div class="quality-bar"><div class="quality-bar-fill" id="barBalance" style="width:0%"></div></div>
               </div>
             </div>
           </div>
 
-          <!-- Detection History Table -->
           <div class="panel mt-3">
             <p class="section-kicker">Detection History</p>
-            <h3 style="font-size:16px; font-weight:700; color:var(--ink);" class="mb-2">检测历史记录</h3>
+            <h3 style="font-size:16px; font-weight:700; color:var(--ink);" class="mb-2" data-i18n="detectionHistory">检测历史记录</h3>
             <div class="table-wrap">
               <table>
                 <thead>
                   <tr>
-                    <th>时间</th>
-                    <th>动作</th>
-                    <th>置信度</th>
-                    <th>评分</th>
-                    <th>力量</th>
+                    <th data-i18n="thTime">时间</th>
+                    <th data-i18n="thAction">动作</th>
+                    <th data-i18n="thConf">置信度</th>
+                    <th data-i18n="thScore">评分</th>
+                    <th data-i18n="thPower">力量</th>
                   </tr>
                 </thead>
                 <tbody id="historyTable">
                   <tr>
-                    <td colspan="5" style="text-align:center; color:var(--muted); padding:32px;">暂无检测记录</td>
+                    <td colspan="5" style="text-align:center; color:var(--muted); padding:32px;" data-i18n="noDetectionRecords">暂无检测记录</td>
                   </tr>
                 </tbody>
               </table>
@@ -368,39 +379,37 @@
         <div class="tab-panel" id="panel-report">
 
           <p class="section-kicker">Training Report</p>
-          <h2 class="section-title">训练报告</h2>
-          <p class="section-desc">查看整体训练数据统计、雷达图分析及详细报告。支持导出训练报告。</p>
+          <h2 class="section-title" data-i18n="reportTitle">训练报告</h2>
+          <p class="section-desc" data-i18n="reportDesc">查看整体训练数据统计、雷达图分析及详细报告。支持导出训练报告。</p>
 
-          <!-- Score Summary -->
           <div class="panel">
             <div class="flex justify-between items-center mb-2">
               <div>
                 <p class="section-kicker">Score Summary</p>
-                <h3 style="font-size:16px; font-weight:700; color:var(--ink);">训练评分概览</h3>
+                <h3 style="font-size:16px; font-weight:700; color:var(--ink);" data-i18n="scoreSummary">训练评分概览</h3>
               </div>
-              <button class="btn btn-primary btn-sm" id="btnExport">导出报告</button>
+              <button class="btn btn-primary btn-sm" id="btnExport" data-i18n="btnExport">导出报告</button>
             </div>
             <div class="score-items">
               <div class="score-item">
-                <div class="score-label">总训练次数</div>
+                <div class="score-label" data-i18n="totalSessions">总训练次数</div>
                 <div class="score-value" id="totalSessions">0</div>
               </div>
               <div class="score-item">
-                <div class="score-label">平均评分</div>
+                <div class="score-label" data-i18n="avgScore">平均评分</div>
                 <div class="score-value" id="avgScore">--</div>
               </div>
               <div class="score-item">
-                <div class="score-label">最佳动作</div>
+                <div class="score-label" data-i18n="bestAction">最佳动作</div>
                 <div class="score-value" id="bestAction">--</div>
               </div>
               <div class="score-item">
-                <div class="score-label">总检测帧数</div>
+                <div class="score-label" data-i18n="totalFrames">总检测帧数</div>
                 <div class="score-value" id="totalFrames">0</div>
               </div>
             </div>
           </div>
 
-          <!-- Radar Chart -->
           <div class="grid-2 mt-3">
             <div>
               <p class="section-kicker mb-1">Ability Radar</p>
@@ -409,41 +418,40 @@
               </div>
             </div>
 
-            <!-- Report Details -->
             <div>
               <p class="section-kicker mb-1">Report Details</p>
               <div class="panel">
                 <div id="reportList">
                   <div class="report-item">
-                    <div class="report-label">训练日期</div>
+                    <div class="report-label" data-i18n="reportDate">训练日期</div>
                     <div class="report-desc" id="reportDate">--</div>
                   </div>
                   <div class="report-item">
-                    <div class="report-label">训练时长</div>
+                    <div class="report-label" data-i18n="reportDuration">训练时长</div>
                     <div class="report-desc" id="reportDuration">--</div>
                   </div>
                   <div class="report-item">
-                    <div class="report-label">总动作数</div>
+                    <div class="report-label" data-i18n="reportActions">总动作数</div>
                     <div class="report-desc" id="reportActions">--</div>
                   </div>
                   <div class="report-item report-accent2">
-                    <div class="report-label">本次亮点</div>
+                    <div class="report-label" data-i18n="reportHighlights">本次亮点</div>
                     <div class="report-desc" id="reportHighlights">--</div>
                   </div>
                   <div class="report-item">
-                    <div class="report-label">重点问题</div>
+                    <div class="report-label" data-i18n="reportIssues">重点问题</div>
                     <div class="report-desc" id="reportIssues">--</div>
                   </div>
                   <div class="report-item report-accent2">
-                    <div class="report-label">改进建议</div>
+                    <div class="report-label" data-i18n="reportSuggestions">改进建议</div>
                     <div class="report-desc" id="reportSuggestions">--</div>
                   </div>
                   <div class="report-item">
-                    <div class="report-label">训练计划</div>
+                    <div class="report-label" data-i18n="reportPlan">训练计划</div>
                     <div class="report-desc" id="reportPlan">--</div>
                   </div>
                   <div class="report-item">
-                    <div class="report-label">复核建议</div>
+                    <div class="report-label" data-i18n="reportReview">复核建议</div>
                     <div class="report-desc" id="reportReview">--</div>
                   </div>
                 </div>
@@ -457,57 +465,56 @@
         <div class="tab-panel" id="panel-coach">
 
           <p class="section-kicker">AI Coach Agent</p>
-          <h2 class="section-title">AI教练问答</h2>
-          <p class="section-desc">围绕羽毛球技术、步伐、训练计划、比赛复盘和运动安全进行问答。完成一次视频分析后，可以带着本次训练报告继续追问。</p>
+          <h2 class="section-title" data-i18n="coachTitle">AI教练问答</h2>
+          <p class="section-desc" data-i18n="coachDesc">围绕羽毛球技术、步伐、训练计划、比赛复盘和运动安全进行问答。完成一次视频分析后，可以带着本次训练报告继续追问。</p>
 
           <div class="coach-agent-layout">
             <div class="panel coach-chat-panel">
               <div class="coach-chat-header">
                 <div>
                   <p class="section-kicker">Conversation</p>
-                  <h3>训练教练</h3>
+                  <h3 id="coachChatTitle" data-i18n="coachChatTitle">训练教练</h3>
                 </div>
-                <div class="coach-provider">
-                  <label for="coachProvider">模型</label>
-                  <select id="coachProvider">
-                    <option value="qwen">Qwen</option>
-                    <option value="zhipu">智谱AI</option>
-                  </select>
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <div class="coach-provider">
+                    <label for="coachProvider" data-i18n="coachModelLabel">模型</label>
+                    <select id="coachProvider">
+                      <option value="qwen">Qwen</option>
+                      <option value="zhipu" data-i18n="coachZhipu">智谱AI</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
               <div class="coach-messages" id="coachMessages">
                 <div class="coach-message assistant">
-                  <div class="coach-avatar">教</div>
-                  <div class="coach-bubble">
+                  <div class="coach-avatar" id="coachInitAvatar">教</div>
+                  <div class="coach-bubble" id="coachWelcome">
                     你好，我是羽动智练 AI 教练。你可以问我发力、步伐、训练计划、比赛复盘，也可以在完成视频分析后让我结合本次报告给建议。
                   </div>
                 </div>
               </div>
 
               <div class="coach-input-row">
-                <textarea id="coachQuestion" rows="3" placeholder="例如：我后场杀球总是发不上力，应该怎么练？"></textarea>
-                <button class="btn btn-primary" id="btnCoachSend">发送</button>
+                <textarea id="coachQuestion" rows="3" data-i18n-placeholder="coachPlaceholder" placeholder="例如：我后场杀球总是发不上力，应该怎么练？"></textarea>
+                <button class="btn btn-primary" id="btnCoachSend" data-i18n="btnSend">发送</button>
               </div>
             </div>
 
             <div class="panel coach-side-panel">
               <p class="section-kicker">Context</p>
-              <h3>教练配置</h3>
+              <h3 id="coachSideTitle" data-i18n="coachConfigTitle">教练配置</h3>
               <label class="coach-toggle">
                 <input type="checkbox" id="coachUseReport" checked />
-                <span>结合本次训练分析</span>
+                <span id="coachUseReportLabel" data-i18n="coachUseReport">结合本次训练分析</span>
               </label>
               <div class="coach-context-card">
-                <span>当前上下文</span>
-                <strong id="coachContextStatus">暂无训练报告</strong>
-                <p>完成一次视频分析后，AI 教练会自动读取动作、击球片段、置信度和步伐评分，用于回答追问。</p>
+                <span id="coachContextLabel" data-i18n="coachContextLabel">当前上下文</span>
+                <strong id="coachContextStatus" data-i18n="coachNoReport">暂无训练报告</strong>
+                <p id="coachContextDesc" data-i18n="coachContextDesc">完成一次视频分析后，AI 教练会自动读取动作、击球片段、置信度和步伐评分，用于回答追问。</p>
               </div>
-              <div class="coach-prompts">
-                <button type="button" class="coach-prompt" data-prompt="帮我根据本次训练报告总结三个最优先改进的问题。">总结本次问题</button>
-                <button type="button" class="coach-prompt" data-prompt="给我安排一套 20 分钟羽毛球步伐训练计划。">20分钟步伐训练</button>
-                <button type="button" class="coach-prompt" data-prompt="我击球后回位慢，应该从哪些动作细节改？">回位慢怎么改</button>
-                <button type="button" class="coach-prompt" data-prompt="羽毛球训练前后应该怎么热身和放松？">热身放松建议</button>
+              <div class="coach-prompts" id="coachPrompts">
+                <!-- Buttons generated by JS -->
               </div>
             </div>
           </div>
@@ -518,25 +525,25 @@
         <div class="tab-panel" id="panel-history">
 
           <p class="section-kicker">Training History</p>
-          <h2 class="section-title">训练历史</h2>
-          <p class="section-desc">查看过往训练记录，追踪动作质量变化趋势，对比进步情况。</p>
+          <h2 class="section-title" data-i18n="historyTitle">训练历史</h2>
+          <p class="section-desc" data-i18n="historyDesc">查看过往训练记录，追踪动作质量变化趋势，对比进步情况。</p>
 
           <div class="history-summary" id="historySummary">
             <div class="history-stat">
               <div class="history-stat-value" id="historyTotalSessions">0</div>
-              <div class="history-stat-label">训练次数</div>
+              <div class="history-stat-label" data-i18n="histSessions">训练次数</div>
             </div>
             <div class="history-stat">
               <div class="history-stat-value" id="historyAvgScore">--</div>
-              <div class="history-stat-label">平均评分</div>
+              <div class="history-stat-label" data-i18n="histAvgScore">平均评分</div>
             </div>
             <div class="history-stat">
               <div class="history-stat-value" id="historyTotalShots">0</div>
-              <div class="history-stat-label">总击球数</div>
+              <div class="history-stat-label" data-i18n="histTotalShots">总击球数</div>
             </div>
             <div class="history-stat">
               <div class="history-stat-value" id="historyLastDate">--</div>
-              <div class="history-stat-label">最近训练</div>
+              <div class="history-stat-label" data-i18n="histLastDate">最近训练</div>
             </div>
           </div>
 
@@ -544,18 +551,18 @@
             <div class="flex justify-between items-center mb-2">
               <div>
                 <p class="section-kicker">Trend Chart</p>
-                <h3 style="font-size:16px; font-weight:700; color:var(--ink);">评分趋势</h3>
+                <h3 style="font-size:16px; font-weight:700; color:var(--ink);" data-i18n="trendChart">评分趋势</h3>
               </div>
-              <button class="btn btn-ghost btn-sm" id="btnRefreshHistory">刷新</button>
+              <button class="btn btn-ghost btn-sm" id="btnRefreshHistory" data-i18n="btnRefresh">刷新</button>
             </div>
             <canvas id="trendChart" height="200" style="width:100%; background:var(--panel); border-radius:12px;"></canvas>
           </div>
 
           <div class="panel mt-3">
             <p class="section-kicker">Session List</p>
-            <h3 style="font-size:16px; font-weight:700; color:var(--ink);" class="mb-2">训练记录</h3>
+            <h3 style="font-size:16px; font-weight:700; color:var(--ink);" class="mb-2" data-i18n="sessionList">训练记录</h3>
             <div class="history-list" id="historyList">
-              <div class="history-empty">暂无训练记录，完成一次视频分析后会显示在这里。</div>
+              <div class="history-empty" data-i18n="noHistory">暂无训练记录，完成一次视频分析后会显示在这里。</div>
             </div>
           </div>
 
@@ -565,103 +572,79 @@
         <div class="tab-panel" id="panel-settings">
 
           <p class="section-kicker">System Settings</p>
-          <h2 class="section-title">系统设置</h2>
-          <p class="section-desc">配置检测模型参数、视频处理选项和系统偏好。</p>
+          <h2 class="section-title" data-i18n="navSettings">系统设置</h2>
+          <p class="section-desc" data-i18n="settingsDesc">管理账号信息、设置界面语言偏好。</p>
 
-          <div class="grid-2">
+          <!-- Account Section -->
+          <div class="panel" id="accountPanel">
+            <p class="section-kicker">Account</p>
+            <h3 style="font-size:16px; font-weight:700; color:var(--ink); margin-bottom:16px;" data-i18n="accountSettings">账号设置</h3>
 
-            <!-- Model Settings -->
-            <div class="panel">
-              <p class="section-kicker">Model Config</p>
-              <h3 style="font-size:16px; font-weight:700; color:var(--ink);" class="mb-2">模型配置</h3>
-
-              <div class="form-group">
-                <label>推理后端</label>
-                <select id="inferenceBackend">
-                  <option value="onnx">ONNX Runtime</option>
-                  <option value="tflite">TensorFlow Lite</option>
-                  <option value="pytorch">PyTorch</option>
-                </select>
+            <!-- Not logged in state -->
+            <div class="account-guest" id="accountGuest">
+              <div class="account-guest-icon">👤</div>
+              <div class="account-guest-text">
+                <div data-i18n="notLoggedIn">您还未登录</div>
+                <div class="account-guest-hint" data-i18n="loginHint">登录后可同步训练记录，微信小程序互联</div>
               </div>
-              <div class="form-group">
-                <label>设备</label>
-                <select id="computeDevice">
-                  <option value="cpu">CPU</option>
-                  <option value="cuda">CUDA (GPU)</option>
-                  <option value="mps">MPS (Apple)</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label>输入分辨率</label>
-                <select id="inputResolution">
-                  <option value="640">640 x 640</option>
-                  <option value="1280">1280 x 1280</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label>模型精度</label>
-                <select id="modelPrecision">
-                  <option value="fp32">FP32 (高精度)</option>
-                  <option value="fp16">FP16 (均衡)</option>
-                  <option value="int8">INT8 (快速)</option>
-                </select>
-              </div>
+              <button class="btn btn-primary" id="btnSettingsLogin" data-i18n="btnLogin">登录 / 注册</button>
             </div>
 
-            <!-- Video Settings -->
-            <div class="panel">
-              <p class="section-kicker">Video Config</p>
-              <h3 style="font-size:16px; font-weight:700; color:var(--ink);" class="mb-2">视频处理</h3>
-
-              <div class="form-group">
-                <label>帧率</label>
-                <select id="frameRate">
-                  <option value="15">15 FPS</option>
-                  <option value="30" selected>30 FPS</option>
-                  <option value="60">60 FPS</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label>跳帧间隔</label>
-                <input type="number" id="frameSkip" value="1" min="1" max="10" />
-              </div>
-              <div class="form-group">
-                <label>ROI 区域</label>
-                <div class="flex gap-1">
-                  <input type="number" id="roiX1" placeholder="x1" value="0" min="0" />
-                  <input type="number" id="roiY1" placeholder="y1" value="0" min="0" />
-                  <input type="number" id="roiX2" placeholder="x2" value="640" max="1920" />
-                  <input type="number" id="roiY2" placeholder="y2" value="480" max="1080" />
+            <!-- Logged in state -->
+            <div class="account-logged" id="accountLogged" hidden>
+              <div class="account-profile">
+                <div class="account-avatar" id="settingsAvatar">用</div>
+                <div class="account-info">
+                  <div class="account-nickname" id="settingsNickname">--</div>
+                  <div class="account-username" id="settingsUsername">--</div>
+                  <div class="account-meta">
+                    <span class="wechat-status" id="settingsWechatStatus">
+                      <span class="wechat-icon">💬</span>
+                      <span data-i18n="wechatNotBound">未绑定微信</span>
+                    </span>
+                  </div>
                 </div>
               </div>
-              <div class="form-group">
-                <label>保存检测结果</label>
-                <select id="saveDetection">
-                  <option value="false">不保存</option>
-                  <option value="true">保存为 JSON</option>
-                </select>
+              <div class="account-actions">
+                <button class="btn btn-secondary" id="btnEditProfile" data-i18n="editProfile">编辑资料</button>
+                <button class="btn btn-ghost" id="btnBindWechat" data-i18n="bindWechat">绑定微信</button>
+                <button class="btn btn-danger-outline" id="btnSettingsLogout" data-i18n="logout">退出登录</button>
               </div>
             </div>
           </div>
 
-          <!-- Actions -->
-          <div class="panel mt-3">
-            <div class="flex justify-between items-center">
-              <div>
-                <p class="section-kicker">Actions</p>
-                <h3 style="font-size:16px; font-weight:700; color:var(--ink);">操作</h3>
-              </div>
-              <div class="flex gap-1">
-                <button class="btn btn-primary" id="btnSaveSettings">保存设置</button>
-                <button class="btn btn-ghost" id="btnResetSettings">恢复默认</button>
-              </div>
+          <!-- Language Section -->
+          <div class="panel" style="margin-top:16px;">
+            <p class="section-kicker">Language</p>
+            <h3 style="font-size:16px; font-weight:700; color:var(--ink); margin-bottom:16px;" data-i18n="langSettings">语言设定</h3>
+            <p class="section-desc" style="margin-bottom:12px;" data-i18n="langSettingsDesc">选择界面显示语言，设置将自动保存并应用到全站。</p>
+            <div class="language-selector">
+              <button type="button" class="lang-option active" data-lang="zh">
+                <span class="lang-flag">🇨🇳</span>
+                <span class="lang-name">中文</span>
+                <span class="lang-check">✓</span>
+              </button>
+              <button type="button" class="lang-option" data-lang="en">
+                <span class="lang-flag">🇬🇧</span>
+                <span class="lang-name">English</span>
+                <span class="lang-check">✓</span>
+              </button>
+              <button type="button" class="lang-option" data-lang="ja">
+                <span class="lang-flag">🇯🇵</span>
+                <span class="lang-name">日本語</span>
+                <span class="lang-check">✓</span>
+              </button>
+              <button type="button" class="lang-option" data-lang="ko">
+                <span class="lang-flag">🇰🇷</span>
+                <span class="lang-name">한국어</span>
+                <span class="lang-check">✓</span>
+              </button>
+              <button type="button" class="lang-option" data-lang="id">
+                <span class="lang-flag">🇮🇩</span>
+                <span class="lang-name">Bahasa</span>
+                <span class="lang-check">✓</span>
+              </button>
             </div>
-          </div>
-
-          <!-- Field Output -->
-          <div class="mt-3">
-            <p class="section-kicker mb-1">Current Config (JSON)</p>
-            <div class="field-output" id="configOutput">{ }</div>
           </div>
 
         </div>
@@ -674,6 +657,105 @@
 
 </div><!-- /layout -->
 
-<script src="./app.js?v=20260706-history-precheck"></script>
+<!-- Login/Register Modal -->
+<div class="modal-overlay" id="authModal" hidden>
+  <div class="modal-content auth-modal">
+    <button class="modal-close" id="btnCloseAuthModal">×</button>
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-auth-tab="login" data-i18n="login">登录</button>
+      <button class="auth-tab" data-auth-tab="register" data-i18n="register">注册</button>
+    </div>
+
+    <!-- Login Form -->
+    <form class="auth-form active" id="loginForm">
+      <div class="form-group">
+        <label data-i18n="usernameOrEmail">用户名/邮箱</label>
+        <input type="text" id="loginUsername" placeholder="请输入用户名或邮箱" autocomplete="username" required />
+      </div>
+      <div class="form-group">
+        <label data-i18n="password">密码</label>
+        <input type="password" id="loginPassword" placeholder="请输入密码" autocomplete="current-password" required />
+      </div>
+      <div class="auth-error" id="loginError" hidden></div>
+      <button type="submit" class="btn btn-primary btn-full" id="btnLoginSubmit" data-i18n="login">登录</button>
+      <div class="auth-divider">
+        <span data-i18n="orLoginWith">或使用以下方式登录</span>
+      </div>
+      <button type="button" class="btn btn-wechat btn-full" id="btnWechatLogin">
+        <span class="wechat-icon">💬</span>
+        <span data-i18n="wechatLogin">微信登录</span>
+      </button>
+      <div class="auth-hint" id="wechatHint" hidden data-i18n="wechatHint">微信登录功能需要在小程序内使用</div>
+    </form>
+
+    <!-- Register Form -->
+    <form class="auth-form" id="registerForm">
+      <div class="form-group">
+        <label data-i18n="username">用户名</label>
+        <input type="text" id="regUsername" placeholder="请输入用户名（至少2个字符）" autocomplete="username" required minlength="2" />
+      </div>
+      <div class="form-group">
+        <label data-i18n="nickname">昵称</label>
+        <input type="text" id="regNickname" placeholder="请输入昵称（选填）" />
+      </div>
+      <div class="form-group">
+        <label data-i18n="email">邮箱</label>
+        <input type="email" id="regEmail" placeholder="请输入邮箱（选填）" autocomplete="email" />
+      </div>
+      <div class="form-group">
+        <label data-i18n="password">密码</label>
+        <input type="password" id="regPassword" placeholder="请输入密码（至少6位）" autocomplete="new-password" required minlength="6" />
+      </div>
+      <div class="auth-error" id="registerError" hidden></div>
+      <button type="submit" class="btn btn-primary btn-full" id="btnRegisterSubmit" data-i18n="register">注册</button>
+      <div class="auth-divider">
+        <span data-i18n="orRegisterWith">或使用以下方式注册</span>
+      </div>
+      <button type="button" class="btn btn-wechat btn-full" id="btnWechatRegister">
+        <span class="wechat-icon">💬</span>
+        <span data-i18n="wechatRegister">微信注册</span>
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div class="modal-overlay" id="profileModal" hidden>
+  <div class="modal-content profile-modal">
+    <button class="modal-close" id="btnCloseProfileModal">×</button>
+    <h2 class="modal-title" data-i18n="editProfile">编辑资料</h2>
+    <form id="profileForm">
+      <div class="form-group">
+        <label data-i18n="nickname">昵称</label>
+        <input type="text" id="editNickname" placeholder="请输入昵称" required />
+      </div>
+      <div class="form-group">
+        <label data-i18n="avatarUrl">头像URL</label>
+        <input type="url" id="editAvatar" placeholder="头像图片链接（选填）" />
+      </div>
+      <div class="auth-error" id="profileError" hidden></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" id="btnCancelProfile" data-i18n="cancel">取消</button>
+        <button type="submit" class="btn btn-primary" id="btnSaveProfile" data-i18n="save">保存</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Onboarding Tour -->
+<div class="tour-overlay" id="tourOverlay" hidden>
+  <div class="tour-highlight" id="tourHighlight"></div>
+  <div class="tour-card" id="tourCard">
+    <h3 class="tour-title" id="tourTitle"></h3>
+    <p class="tour-desc" id="tourDesc"></p>
+    <div class="tour-dots" id="tourDots"></div>
+    <div class="tour-actions">
+      <button type="button" class="btn btn-secondary" id="btnSkipTour" data-i18n="tourSkip">跳过</button>
+      <button type="button" class="btn btn-primary" id="btnNextTour" data-i18n="tourNext">下一步</button>
+    </div>
+  </div>
+</div>
+
+<script src="./app.js?v=20260707-tour"></script>
 </body>
 </html>

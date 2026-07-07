@@ -73,8 +73,138 @@ body {
   overflow-x: hidden;
 }
 
-/* ---------- Layout Shell ---------- */
+/* ---------- Animated Background Layer ---------- */
+.bg-animation {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.shuttlecock {
+  position: absolute;
+  opacity: 0;
+  will-change: transform, opacity;
+  animation-name: shuttleFloat;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  filter: drop-shadow(0 0 6px rgba(94, 255, 159, 0.15));
+}
+
+.shuttlecock svg {
+  display: block;
+}
+
+@keyframes shuttleFloat {
+  0% {
+    transform: translate(0, 0) rotate(0deg) scale(0.7);
+    opacity: 0;
+  }
+  8% {
+    opacity: 0.35;
+  }
+  25% {
+    transform: translate(calc(var(--drift-x, 30px) * 0.25), -120px) rotate(12deg) scale(0.9);
+    opacity: 0.4;
+  }
+  50% {
+    transform: translate(calc(var(--drift-x, -20px) * 0.5), -280px) rotate(-8deg) scale(0.85);
+    opacity: 0.3;
+  }
+  75% {
+    transform: translate(calc(var(--drift-x, 40px) * 0.75), -450px) rotate(15deg) scale(0.8);
+    opacity: 0.2;
+  }
+  100% {
+    transform: translate(var(--drift-x, 10px), -620px) rotate(-5deg) scale(0.6);
+    opacity: 0;
+  }
+}
+
+/* Green glow orbs in background */
+.bg-orb {
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(80px);
+  opacity: 0.4;
+  animation: orbPulse 8s ease-in-out infinite alternate;
+}
+
+.bg-orb-1 {
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(94, 255, 159, 0.15), transparent 70%);
+  top: -100px;
+  left: -100px;
+  animation-delay: 0s;
+}
+
+.bg-orb-2 {
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(78, 240, 212, 0.10), transparent 70%);
+  top: 40%;
+  right: -80px;
+  animation-delay: -3s;
+}
+
+.bg-orb-3 {
+  width: 350px;
+  height: 350px;
+  background: radial-gradient(circle, rgba(94, 255, 159, 0.08), transparent 70%);
+  bottom: -80px;
+  left: 30%;
+  animation-delay: -5s;
+}
+
+@keyframes orbPulse {
+  0% { transform: scale(1); opacity: 0.3; }
+  100% { transform: scale(1.2); opacity: 0.5; }
+}
+
+/* GitHub link - bottom left */
+.github-link {
+  position: fixed;
+  bottom: 20px;
+  left: 280px;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(19, 46, 37, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 12px;
+  font-family: "JetBrains Mono", monospace;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(3, 8, 6, 0.4);
+}
+
+.github-link:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 20px rgba(94, 255, 159, 0.15), 0 4px 20px rgba(3, 8, 6, 0.4);
+  transform: translateY(-1px);
+}
+
+.github-link svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+/* Layout should sit above background */
 .layout {
+  position: relative;
+  z-index: 1;
   display: flex;
   min-height: 100vh;
 }
@@ -106,17 +236,11 @@ body {
   margin-bottom: 24px;
 }
 
-.brand-mark {
+.brand-logo {
   width: 40px;
   height: 40px;
   border-radius: 12px;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 18px;
-  color: var(--bg);
+  object-fit: cover;
   box-shadow: 0 0 20px rgba(94, 255, 159, 0.3);
 }
 
@@ -166,11 +290,12 @@ body {
 }
 
 .nav-item.active {
-  background: var(--panel-glow);
+  background: rgba(94, 255, 159, 0.1);
   color: var(--accent);
   border-color: var(--accent);
   font-weight: 600;
-  box-shadow: 0 0 16px rgba(94, 255, 159, 0.1);
+  border-left: 3px solid var(--accent);
+  box-shadow: 0 0 20px rgba(94, 255, 159, 0.12), inset 0 0 20px rgba(94, 255, 159, 0.05);
 }
 
 .nav-item .nav-icon {
@@ -326,6 +451,7 @@ body {
   color: var(--accent);
   border-bottom-color: var(--accent);
   font-weight: 600;
+  text-shadow: 0 0 12px rgba(94, 255, 159, 0.3);
 }
 
 /* ---------- Tab Panels ---------- */
@@ -369,6 +495,21 @@ body {
   font-weight: 700;
   color: var(--ink);
   margin-bottom: 6px;
+  position: relative;
+  padding-left: 16px;
+}
+
+.section-title::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 24px;
+  background: linear-gradient(180deg, var(--accent), var(--teal));
+  border-radius: 2px;
+  box-shadow: 0 0 8px rgba(94, 255, 159, 0.4);
 }
 
 .section-desc {
@@ -486,17 +627,21 @@ body {
 
 /* ---------- Panels / Cards ---------- */
 .panel {
-  background: color-mix(in srgb, var(--bg2) 72%, transparent);
+  background: linear-gradient(145deg, color-mix(in srgb, var(--bg2) 72%, transparent), rgba(19, 46, 37, 0.6));
   border: 1px solid var(--rule);
   border-radius: var(--radius);
   padding: 24px;
   margin-bottom: 20px;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 4px 24px rgba(3, 8, 6, 0.25), inset 0 1px 0 rgba(94, 255, 159, 0.05);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.25s ease;
 }
 
 .panel:hover {
-  border-color: rgba(94, 255, 159, 0.25);
-  box-shadow: 0 0 24px var(--panel-glow);
+  border-color: rgba(94, 255, 159, 0.18);
+  box-shadow:
+    0 8px 32px rgba(3, 8, 6, 0.35),
+    0 0 40px rgba(94, 255, 159, 0.05),
+    inset 0 1px 0 rgba(94, 255, 159, 0.08);
 }
 
 .card {
@@ -1171,7 +1316,80 @@ tbody tr:last-child td {
   overflow: hidden;
   background: var(--surface);
   min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
 }
+
+.court-preview canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+}
+
+/* ---------- Language Selector ---------- */
+.language-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.lang-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  background: var(--surface);
+  border: 1.5px solid var(--rule);
+  border-radius: 12px;
+  color: var(--muted);
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  position: relative;
+  min-width: 140px;
+}
+
+.lang-option:hover {
+  border-color: rgba(94, 255, 159, 0.4);
+  background: rgba(94, 255, 159, 0.05);
+  color: var(--ink);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(3, 8, 6, 0.3);
+}
+
+.lang-option.active {
+  border-color: var(--accent);
+  background: rgba(94, 255, 159, 0.1);
+  color: var(--accent);
+  box-shadow: 0 0 20px rgba(94, 255, 159, 0.12), inset 0 0 20px rgba(94, 255, 159, 0.05);
+}
+
+.lang-flag {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.lang-name {
+  font-weight: 600;
+  flex: 1;
+}
+
+.lang-check {
+  opacity: 0;
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 14px;
+  transition: opacity 0.2s ease;
+}
+
+.lang-option.active .lang-check {
+  opacity: 1;
+}
+
+/* ---------- Enhanced Panel Glow ---------- */
 
 /* ---------- Radar Chart ---------- */
 .radar {
@@ -1454,6 +1672,10 @@ input[type="range"]::-moz-range-thumb {
   justify-content: center;
   z-index: 1000;
   animation: fadeIn 0.2s ease;
+}
+
+.modal-overlay[hidden] {
+  display: none !important;
 }
 
 .modal {
@@ -2218,3 +2440,580 @@ input[type="range"]::-moz-range-thumb {
   to { opacity: 1; transform: translateY(0); }
 }
 .font-mono { font-family: "JetBrains Mono", monospace; }
+
+/* ---------- Topbar Login Button & User Menu ---------- */
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.btn-login {
+  padding: 8px 18px;
+  background: linear-gradient(135deg, var(--accent), #3dd17e);
+  color: var(--bg);
+  border: none;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 16px rgba(94, 255, 159, 0.25);
+}
+
+.btn-login:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(94, 255, 159, 0.35);
+}
+
+.user-menu {
+  position: relative;
+}
+
+.user-avatar-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+.avatar-circle {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--teal));
+  color: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  border: 2px solid var(--rule);
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.avatar-circle img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.user-avatar-btn:hover .avatar-circle {
+  border-color: var(--accent);
+  box-shadow: 0 0 16px rgba(94, 255, 159, 0.2);
+}
+
+.user-dropdown {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  min-width: 240px;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 16px;
+  box-shadow: var(--shadow-strong);
+  z-index: 500;
+  animation: fadeIn 0.2s ease;
+  overflow: hidden;
+}
+
+.user-info-card {
+  padding: 20px;
+  background: linear-gradient(135deg, rgba(94, 255, 159, 0.08), rgba(78, 240, 212, 0.05));
+}
+
+.user-info-nickname {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+
+.user-info-username {
+  font-size: 12px;
+  color: var(--muted);
+  font-family: "JetBrains Mono", monospace;
+}
+
+.wechat-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+  padding: 3px 10px;
+  background: rgba(7, 193, 96, 0.15);
+  color: #07c160;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.user-menu-divider {
+  height: 1px;
+  background: var(--rule);
+}
+
+.user-menu-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background: none;
+  border: none;
+  color: var(--ink);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.user-menu-item:hover {
+  background: var(--bg2);
+}
+
+.user-menu-item.danger {
+  color: var(--danger);
+}
+
+.user-menu-item.danger:hover {
+  background: rgba(255, 75, 75, 0.08);
+}
+
+/* ---------- Auth Modal ---------- */
+.modal-content {
+  background: var(--bg2);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  padding: 0;
+  width: 90%;
+  max-width: 420px;
+  box-shadow: var(--shadow-strong);
+  animation: fadeIn 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-modal {
+  max-width: 420px;
+}
+
+.profile-modal {
+  max-width: 400px;
+  padding: 32px;
+}
+
+.modal-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 20px;
+}
+
+.modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 10;
+}
+
+.auth-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--rule);
+}
+
+.auth-tab {
+  flex: 1;
+  padding: 16px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.auth-tab:hover {
+  color: var(--ink);
+}
+
+.auth-tab.active {
+  color: var(--accent);
+}
+
+.auth-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 20%;
+  right: 20%;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 1px;
+}
+
+.auth-form {
+  padding: 28px;
+  display: none;
+}
+
+.auth-form.active {
+  display: block;
+}
+
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--bg);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  color: var(--ink);
+  font-size: 14px;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.form-group input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(94, 255, 159, 0.12);
+}
+
+.form-group input::placeholder {
+  color: var(--rule);
+}
+
+.btn-full {
+  width: 100%;
+  padding: 13px;
+  font-size: 15px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.btn-wechat {
+  width: 100%;
+  padding: 12px;
+  background: rgba(7, 193, 96, 0.12);
+  border: 1px solid rgba(7, 193, 96, 0.3);
+  color: #07c160;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.btn-wechat:hover {
+  background: rgba(7, 193, 96, 0.2);
+  border-color: #07c160;
+}
+
+.auth-error {
+  padding: 10px 14px;
+  background: rgba(255, 75, 75, 0.1);
+  border: 1px solid rgba(255, 75, 75, 0.2);
+  border-radius: 10px;
+  color: var(--danger);
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+
+.auth-hint {
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 10px;
+  padding: 8px;
+  background: var(--bg);
+  border-radius: 8px;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  margin: 20px 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--rule);
+}
+
+.auth-divider span {
+  padding: 0 12px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.modal-actions .btn {
+  flex: 1;
+}
+
+.btn-danger-outline {
+  padding: 10px 18px;
+  background: transparent;
+  border: 1px solid rgba(255, 75, 75, 0.3);
+  color: var(--danger);
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-danger-outline:hover {
+  background: rgba(255, 75, 75, 0.1);
+  border-color: var(--danger);
+}
+
+/* ---------- Settings Account Section ---------- */
+.account-guest {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: var(--bg);
+  border-radius: 14px;
+  border: 1px dashed var(--rule);
+}
+
+.account-guest-icon {
+  font-size: 36px;
+  opacity: 0.6;
+}
+
+.account-guest-text {
+  flex: 1;
+}
+
+.account-guest-text > div:first-child {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+
+.account-guest-hint {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.account-logged {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.account-guest[hidden],
+.account-logged[hidden] {
+  display: none !important;
+}
+
+.account-profile {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: linear-gradient(135deg, rgba(94, 255, 159, 0.06), rgba(78, 240, 212, 0.03));
+  border-radius: 14px;
+  border: 1px solid var(--rule);
+}
+
+.account-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--teal));
+  color: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 700;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.account-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.account-info {
+  flex: 1;
+}
+
+.account-nickname {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+
+.account-username {
+  font-size: 12px;
+  color: var(--muted);
+  font-family: "JetBrains Mono", monospace;
+  margin-bottom: 6px;
+}
+
+.wechat-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.wechat-status.bound {
+  color: #07c160;
+}
+
+.account-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 768px) {
+  .btn-login {
+    padding: 6px 14px;
+    font-size: 12px;
+  }
+  .avatar-circle {
+    width: 34px;
+    height: 34px;
+    font-size: 14px;
+  }
+  .account-guest {
+    flex-direction: column;
+    text-align: center;
+  }
+  .account-profile {
+    flex-direction: column;
+    text-align: center;
+  }
+  .account-actions {
+  justify-content: center;
+  }
+}
+
+/* ---------- Onboarding Tour ---------- */
+.tour-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 8, 6, 0.75);
+  z-index: 2000;
+  animation: fadeIn 0.25s ease;
+}
+
+.tour-overlay[hidden] {
+  display: none !important;
+}
+
+.tour-highlight {
+  position: absolute;
+  border-radius: 12px;
+  box-shadow: 0 0 0 4px rgba(94, 255, 159, 0.6), 0 0 32px rgba(94, 255, 159, 0.25);
+  pointer-events: none;
+  z-index: 2001;
+  transition: all 0.3s ease;
+}
+
+.tour-card {
+  position: absolute;
+  width: 320px;
+  max-width: calc(100vw - 32px);
+  background: var(--bg2);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow-strong);
+  z-index: 2002;
+  animation: fadeInUp 0.25s ease;
+}
+
+.tour-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 10px;
+}
+
+.tour-desc {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.tour-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.tour-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--rule);
+  transition: all 0.2s ease;
+}
+
+.tour-dot.active {
+  background: var(--accent);
+  width: 20px;
+  border-radius: 4px;
+}
+
+.tour-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

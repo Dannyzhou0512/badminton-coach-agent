@@ -1,0 +1,264 @@
+<view class="container">
+  <view class="header">
+    <view class="kicker">ANALYSIS</view>
+    <view class="title">动作分析</view>
+    <view class="subtitle">查看你的训练分析报告和步伐轨迹</view>
+  </view>
+
+  <view wx:if="{{!hasData && !loading}}" class="empty-state card">
+    <view class="empty-icon">📊</view>
+    <view class="empty-title">暂无分析数据</view>
+    <view class="empty-desc">先去训练页面上传视频开始分析吧</view>
+    <button class="btn-primary mt-24" bindtap="goToTraining">去上传视频</button>
+  </view>
+
+  <view wx:if="{{loading}}" class="loading-section">
+    <view class="loading-spinner"></view>
+    <view class="loading-text">正在加载分析结果...</view>
+  </view>
+
+  <view wx:if="{{hasData && currentResult}}">
+    <!-- Tab Navigation -->
+    <view class="tab-bar card">
+      <view wx:for="{{tabs}}" wx:key="key" 
+            class="tab {{activeTab === item.key ? 'active' : ''}}" 
+            data-key="{{item.key}}" 
+            bindtap="switchTab">
+        {{item.name}}
+      </view>
+    </view>
+
+    <!-- Overview Tab -->
+    <view wx:if="{{activeTab === 'overview'}}" class="tab-content">
+      <view class="card result-card">
+        <view class="section-title">🎬 标注视频</view>
+        <view wx:if="{{currentResult.annotatedVideoUrl}}" class="video-wrapper">
+          <video src="{{currentResult.annotatedVideoUrl}}" class="annotated-video" controls show-center-play-btn poster="{{currentResult.annotatedPreviewUrl}}" binderror="onVideoError"></video>
+        </view>
+        <view wx:else class="no-video-placeholder">
+          <text>标注视频生成中或暂不可用</text>
+        </view>
+
+        <view class="video-meta">
+          <view class="meta-item">
+            <text class="meta-label">原始视频</text>
+            <text class="meta-value">{{currentResult.videoName}}</text>
+          </view>
+          <view class="meta-item">
+            <text class="meta-label">视频时长</text>
+            <text class="meta-value">{{currentResult.duration}}</text>
+          </view>
+          <view class="meta-item">
+            <text class="meta-label">分析时间</text>
+            <text class="meta-value">{{currentResult.createdAt}}</text>
+          </view>
+          <view wx:if="{{currentResult.dominantAction && currentResult.dominantAction !== '未知'}}" class="meta-item">
+            <text class="meta-label">主要动作</text>
+            <text class="meta-value">{{currentResult.dominantAction}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="card stats-card">
+        <view class="section-title">📈 关键数据</view>
+        <view class="stats-grid">
+          <view class="stat-item">
+            <text class="stat-value">{{currentResult.totalShots}}</text>
+            <text class="stat-label">击球次数</text>
+          </view>
+          <view class="stat-item">
+            <text class="stat-value">{{currentResult.overallScore}}</text>
+            <text class="stat-label">综合评分</text>
+          </view>
+          <view class="stat-item">
+            <text class="stat-value">{{currentResult.avgScore}}</text>
+            <text class="stat-label">平均质量</text>
+          </view>
+        </view>
+      </view>
+
+      <view wx:if="{{qualitySummary}}" class="card">
+        <view class="section-title">🏆 质量摘要</view>
+        <view class="quality-list">
+          <view class="quality-item">
+            <text class="quality-label">综合评分</text>
+            <text class="quality-value">{{qualitySummary.overall_score || '--'}}</text>
+          </view>
+          <view class="quality-item">
+            <text class="quality-label">平均质量</text>
+            <text class="quality-value">{{qualitySummary.avg_quality_score || '--'}}</text>
+          </view>
+          <view class="quality-item">
+            <text class="quality-label">最高质量</text>
+            <text class="quality-value">{{qualitySummary.max_quality_score || '--'}}</text>
+          </view>
+          <view class="quality-item">
+            <text class="quality-label">最低质量</text>
+            <text class="quality-value">{{qualitySummary.min_quality_score || '--'}}</text>
+          </view>
+          <view class="quality-item">
+            <text class="quality-label">平均步伐</text>
+            <text class="quality-value">{{qualitySummary.avg_footwork_score || '--'}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view wx:if="{{videoMetadata && videoMetadata.resolution}}" class="card">
+        <view class="section-title">🎥 视频预处理信息</view>
+        <view class="meta-grid">
+          <view class="meta-box">
+            <text class="meta-box-label">分辨率</text>
+            <text class="meta-box-value">{{videoMetadata.resolution}}</text>
+          </view>
+          <view class="meta-box">
+            <text class="meta-box-label">帧率</text>
+            <text class="meta-box-value">{{videoMetadata.fps}} fps</text>
+          </view>
+          <view class="meta-box">
+            <text class="meta-box-label">总帧数</text>
+            <text class="meta-box-value">{{videoMetadata.total_frames}}</text>
+          </view>
+          <view wx:if="{{videoMetadata.width}}" class="meta-box">
+            <text class="meta-box-label">画面宽度</text>
+            <text class="meta-box-value">{{videoMetadata.width}}px</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- Shots Tab -->
+    <view wx:if="{{activeTab === 'shots'}}" class="tab-content">
+      <view wx:if="{{actionStats.length > 0}}" class="card">
+        <view class="section-title">🏸 动作统计</view>
+        <view class="action-list">
+          <view wx:for="{{actionStats}}" wx:key="name" class="action-item">
+            <view class="action-info">
+              <text class="action-name">{{item.name}}</text>
+              <text class="action-count">{{item.count}}次</text>
+            </view>
+            <view class="action-bar">
+              <view class="action-bar-fill" style="width: {{item.percent}}%"></view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view wx:if="{{shotEvents.length > 0}}" class="card">
+        <view class="section-title">🎯 击球事件</view>
+        <view class="shot-list">
+          <view wx:for="{{shotEvents}}" wx:key="id" class="shot-item">
+            <view class="shot-time">{{item.time}}</view>
+            <view class="shot-detail">
+              <text class="shot-action">{{item.action}}</text>
+              <view class="shot-tags">
+                <text class="shot-tag quality-tag">质量 {{item.quality}}</text>
+                <text class="shot-tag conf-tag">置信 {{item.confidence}}%</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view wx:if="{{actionStats.length === 0 && shotEvents.length === 0}}" class="empty-state card">
+        <view class="empty-icon">🏸</view>
+        <view class="empty-title">暂无击球数据</view>
+        <view class="empty-desc">请重新上传更清晰的视频</view>
+      </view>
+    </view>
+
+    <!-- Footwork Tab -->
+    <view wx:if="{{activeTab === 'footwork'}}" class="tab-content">
+      <view class="card">
+        <view class="section-title">👣 步伐热力图</view>
+        <view class="court-container">
+          <canvas wx:if="{{hasFootwork}}" type="2d" id="footworkCanvas" class="footwork-canvas"></canvas>
+          <view wx:if="{{!hasFootwork}}" class="heatmap-empty">
+            <text>暂无步伐数据</text>
+          </view>
+        </view>
+        <view wx:if="{{hasFootwork}}" class="heatmap-legend">
+          <view class="legend-item">
+            <view class="legend-dot hot"></view>
+            <text>高频停留区</text>
+          </view>
+          <view class="legend-item">
+            <view class="legend-dot cold"></view>
+            <text>低频移动区</text>
+          </view>
+        </view>
+      </view>
+
+      <view wx:if="{{footworkScores}}" class="card">
+        <view class="section-title">📊 步伐评分</view>
+        <view class="score-list">
+          <view class="score-item">
+            <text class="score-label">移动量</text>
+            <text class="score-value">{{footworkScores.movement || 0}}</text>
+          </view>
+          <view class="score-item">
+            <text class="score-label">启动爆发</text>
+            <text class="score-value">{{footworkScores.explosiveness || 0}}</text>
+          </view>
+          <view class="score-item">
+            <text class="score-label">身体协调</text>
+            <text class="score-value">{{footworkScores.coordination || 0}}</text>
+          </view>
+          <view class="score-item">
+            <text class="score-label">重心稳定</text>
+            <text class="score-value">{{footworkScores.stability || 0}}</text>
+          </view>
+          <view class="score-item">
+            <text class="score-label">回位能力</text>
+            <text class="score-value">{{footworkScores.recovery || 0}}</text>
+          </view>
+          <view class="score-item">
+            <text class="score-label">覆盖范围</text>
+            <text class="score-value">{{footworkScores.coverage || 0}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- Coach Tab -->
+    <view wx:if="{{activeTab === 'coach'}}" class="tab-content">
+      <view wx:if="{{coachReport}}" class="card coach-card">
+        <view class="section-title">✨ 亮点</view>
+        <view wx:if="{{coachReport.highlights && coachReport.highlights.length > 0}}" class="coach-list">
+          <view wx:for="{{coachReport.highlights}}" wx:key="index" class="coach-item highlight">
+            <text class="coach-bullet">★</text>
+            <text class="coach-text">{{item}}</text>
+          </view>
+        </view>
+        <view wx:else class="empty-desc">暂无亮点数据</view>
+      </view>
+
+      <view wx:if="{{coachReport}}" class="card coach-card">
+        <view class="section-title">🎯 改进重点</view>
+        <view wx:if="{{coachReport.focus && coachReport.focus.length > 0}}" class="coach-list">
+          <view wx:for="{{coachReport.focus}}" wx:key="index" class="coach-item focus">
+            <text class="coach-bullet">!</text>
+            <text class="coach-text">{{item}}</text>
+          </view>
+        </view>
+        <view wx:else class="empty-desc">暂无重点数据</view>
+      </view>
+
+      <view wx:if="{{coachReport}}" class="card coach-card">
+        <view class="section-title">📋 训练计划</view>
+        <view wx:if="{{coachReport.training_plan && coachReport.training_plan.length > 0}}" class="coach-list">
+          <view wx:for="{{coachReport.training_plan}}" wx:key="index" class="coach-item plan">
+            <text class="coach-bullet">{{index + 1}}</text>
+            <text class="coach-text">{{item}}</text>
+          </view>
+        </view>
+        <view wx:else class="empty-desc">暂无训练计划</view>
+      </view>
+
+      <view wx:if="{{!coachReport}}" class="empty-state card">
+        <view class="empty-icon">📝</view>
+        <view class="empty-title">暂无教练报告</view>
+        <view class="empty-desc">请稍后重试或联系管理员</view>
+      </view>
+    </view>
+  </view>
+</view>

@@ -6,6 +6,1138 @@
 (function () {
   "use strict";
 
+  // ---- Global i18n Dictionary ----
+  const GLOBAL_I18N = {
+    zh: {
+      pageTitle: "羽动智练 — 羽毛球智能训练系统",
+      brandName: "羽动智练",
+      creditText: "Powered by 羽动智练",
+      navTraining: "训练检测",
+      navAnalysis: "动作分析",
+      navReport: "训练报告",
+      navCoach: "AI教练",
+      navHistory: "训练历史",
+      navSettings: "系统设置",
+      tabRealtime: "实时检测",
+      statusDisconnected: "未连接",
+      statusConnected: "已连接",
+      statusConnecting: "连接中...",
+      trainingTitle: "实时训练检测",
+      trainingDesc: "上传或录制羽毛球训练视频，AI 将实时检测动作、追踪球轨迹并评估姿势。",
+      trainingNotice: "当前页面已接入后端分析流程：上传视频后先进行视频质量预检，再调用 /api/analyze 生成标注视频、动作结果和训练报告。",
+      shootingGuideTitle: "拍摄建议",
+      guideLandscapeTitle: "横屏拍摄",
+      guideLandscapeDesc: "请使用手机横屏拍摄，画面更稳定，人物更完整",
+      guideDistanceTitle: "拍摄距离",
+      guideDistanceDesc: "距离场地边线3-5米，确保人物全身在画面中",
+      guideAngleTitle: "拍摄角度",
+      guideAngleDesc: "站在场地侧面拍摄，与球网平行，不要正面或太斜",
+      guideLightTitle: "光线充足",
+      guideLightDesc: "确保场地光线明亮，避免逆光拍摄",
+      guideStableTitle: "画面稳定",
+      guideStableDesc: "使用支架固定手机，避免手持晃动",
+      guideDurationTitle: "时长建议",
+      guideDurationDesc: "建议10秒-3分钟片段，包含完整的击球动作",
+      precheckTitle: "视频质量检测",
+      precheckChecking: "检测中...",
+      precheckPassed: "检测通过",
+      precheckWarning: "存在警告",
+      precheckFailed: "检测未通过",
+      btnProceed: "继续分析",
+      btnReupload: "重新上传",
+      processingTitle: "视频分析处理中",
+      processingStage1: "上传视频并准备姿态分析",
+      detectControls: "检测控制",
+      detectControlsDesc: "系统已内置推荐分析配置，会根据客户电脑环境自动使用 GPU 或 CPU。",
+      btnStart: "开始检测",
+      btnStop: "停止",
+      btnReset: "重置",
+      btnSend: "发送",
+      btnRefresh: "刷新",
+      btnExport: "导出报告",
+      btnSaveSettings: "保存设置",
+      btnResetSettings: "恢复默认",
+      videoReady: "标注视频已生成，可在页面中播放。",
+      downloadVideo: "下载视频",
+      dropUpload: "点击上传视频或将视频拖到这里",
+      shotTimelineTitle: "逐拍时间轴",
+      waitingAnalysis: "等待分析结果",
+      timelineEmpty: "分析完成后会在这里显示每一次击球，点击可跳转到视频对应片段。",
+      liveMetrics: "实时指标",
+      metricProgress: "播放进度",
+      metricProgressUnit: "当前 / 总时长",
+      metricShots: "已过击球",
+      metricShotsUnit: "当前 / 总计",
+      metricConf: "当前置信",
+      metricConfUnit: "当前片段",
+      metricAction: "当前动作",
+      metricActionUnit: "随播放更新",
+      analysisTitle: "动作分析",
+      analysisDesc: "对检测到的羽毛球动作进行分类与质量评估，包括挥拍类型、力量分析和动作评分。",
+      actionTypeLabel: "动作类型",
+      actionScoreLabel: "动作质量评分",
+      powerLevelLabel: "力量等级",
+      qualityBreakdown: "动作质量评分",
+      qSmooth: "挥拍流畅度",
+      qAccuracy: "击球点精准度",
+      qCoord: "身体协调性",
+      qFoot: "步法移动",
+      qWrist: "手腕发力",
+      qBalance: "重心稳定性",
+      detectionHistory: "检测历史记录",
+      thTime: "时间",
+      thAction: "动作",
+      thConf: "置信度",
+      thScore: "评分",
+      thPower: "力量",
+      noDetectionRecords: "暂无检测记录",
+      reportTitle: "训练报告",
+      reportDesc: "查看整体训练数据统计、雷达图分析及详细报告。支持导出训练报告。",
+      scoreSummary: "训练评分概览",
+      totalSessions: "总训练次数",
+      avgScore: "平均评分",
+      bestAction: "最佳动作",
+      totalFrames: "总检测帧数",
+      reportDate: "训练日期",
+      reportDuration: "训练时长",
+      reportActions: "总动作数",
+      reportHighlights: "本次亮点",
+      reportIssues: "重点问题",
+      reportSuggestions: "改进建议",
+      reportPlan: "训练计划",
+      reportReview: "复核建议",
+      coachTitle: "AI教练问答",
+      coachDesc: "围绕羽毛球技术、步伐、训练计划、比赛复盘和运动安全进行问答。完成一次视频分析后，可以带着本次训练报告继续追问。",
+      coachChatTitle: "训练教练",
+      coachModelLabel: "模型",
+      coachZhipu: "智谱AI",
+      coachPlaceholder: "例如：我后场杀球总是发不上力，应该怎么练？",
+      coachConfigTitle: "教练配置",
+      coachUseReport: "结合本次训练分析",
+      coachContextLabel: "当前上下文",
+      coachNoReport: "暂无训练报告",
+      coachContextDesc: "完成一次视频分析后，AI 教练会自动读取动作、击球片段、置信度和步伐评分，用于回答追问。",
+      historyTitle: "训练历史",
+      historyDesc: "查看过往训练记录，追踪动作质量变化趋势，对比进步情况。",
+      histSessions: "训练次数",
+      histAvgScore: "平均评分",
+      histTotalShots: "总击球数",
+      histLastDate: "最近训练",
+      trendChart: "评分趋势",
+      sessionList: "训练记录",
+      noHistory: "暂无训练记录，完成一次视频分析后会显示在这里。",
+      settingsTitle: "系统设置",
+      settingsDesc: "配置界面语言、检测模型参数、视频处理选项和系统偏好。",
+      langSettings: "语言设定",
+      langSettingsDesc: "选择界面显示语言，设置将自动保存并应用到全站。",
+      modelConfig: "模型配置",
+      inferenceBackend: "推理后端",
+      computeDevice: "设备",
+      inputResolution: "输入分辨率",
+      modelPrecision: "模型精度",
+      fp32: "FP32 (高精度)",
+      fp16: "FP16 (均衡)",
+      int8: "INT8 (快速)",
+      videoConfig: "视频处理",
+      frameRate: "帧率",
+      frameSkip: "跳帧间隔",
+      roiArea: "区域",
+      saveDetection: "保存检测结果",
+      dontSave: "不保存",
+      saveJson: "保存为 JSON",
+      actions: "操作",
+      precheckPassMsg: "视频质量良好，可以分析",
+      precheckPassMatchMsg: "检测到比赛远景视频，可以分析",
+      precheckWarnMsg: "视频存在小问题，仍可分析，部分精度可能受影响",
+      precheckWarnMatchMsg: "比赛远景视频，将自动适配参数进行分析",
+      precheckFailMsg: "视频质量不佳，请检查后重新上传",
+      btnLogin: "登录 / 注册",
+      login: "登录",
+      register: "注册",
+      logout: "退出登录",
+      switchAccount: "切换账号",
+      username: "用户名",
+      usernameOrEmail: "用户名/邮箱",
+      nickname: "昵称",
+      email: "邮箱",
+      password: "密码",
+      avatarUrl: "头像URL",
+      editProfile: "编辑资料",
+      save: "保存",
+      cancel: "取消",
+      accountSettings: "账号设置",
+      notLoggedIn: "您还未登录",
+      loginHint: "登录后可同步训练记录，微信小程序互联",
+      wechatBound: "已绑定微信",
+      wechatNotBound: "未绑定微信",
+      bindWechat: "绑定微信",
+      wechatLogin: "微信登录",
+      wechatRegister: "微信注册",
+      orLoginWith: "或使用以下方式登录",
+      orRegisterWith: "或使用以下方式注册",
+      wechatHint: "微信登录功能需要在小程序内使用",
+      loginSuccess: "登录成功",
+      registerSuccess: "注册成功",
+      logoutSuccess: "已退出登录",
+      profileUpdateSuccess: "资料更新成功",
+      loginFailed: "登录失败",
+      registerFailed: "注册失败",
+      videoSizeExceeded: "视频大小超过 500MB 限制，请压缩或剪辑后重新上传",
+      tourWelcomeTitle: "欢迎使用羽动智练",
+      tourWelcomeDesc: "跟着引导快速了解如何使用系统。",
+      tourStep1Title: "第一步：上传视频",
+      tourStep1Desc: "点击这里上传羽毛球训练或比赛视频，支持拖拽上传。",
+      tourStep2Title: "第二步：开始检测",
+      tourStep2Desc: "上传完成后，点击开始检测，AI 将分析动作和步伐。",
+      tourStep3Title: "第三步：查看击球时间轴",
+      tourStep3Desc: "分析完成后，这里会显示每一次击球的详细信息。",
+      tourStep4Title: "第四步：查看训练报告",
+      tourStep4Desc: "切换到训练报告页，查看整体数据、雷达图和 AI 教练建议。",
+      tourStep5Title: "第五步：查看历史记录",
+      tourStep5Desc: "所有分析记录都会保存在训练历史中，方便随时回看。",
+      tourNext: "下一步",
+      tourSkip: "跳过",
+      tourFinish: "完成",
+    },
+    en: {
+      pageTitle: "BadmintonAI — Smart Training System",
+      brandName: "BadmintonAI",
+      creditText: "Powered by BadmintonAI",
+      navTraining: "Detection",
+      navAnalysis: "Analysis",
+      navReport: "Report",
+      navCoach: "AI Coach",
+      navHistory: "History",
+      navSettings: "Settings",
+      tabRealtime: "Real-time",
+      statusDisconnected: "Disconnected",
+      statusConnected: "Connected",
+      statusConnecting: "Connecting...",
+      trainingTitle: "Real-time Training Detection",
+      trainingDesc: "Upload or record badminton training videos. AI detects actions, tracks shuttle trajectory and evaluates posture in real-time.",
+      trainingNotice: "The page connects to the backend analysis pipeline: upload triggers video quality pre-check, then /api/analyze generates annotated video, action results and training report.",
+      shootingGuideTitle: "Filming Guide",
+      guideLandscapeTitle: "Landscape Mode",
+      guideLandscapeDesc: "Use landscape orientation for more stable footage and full player visibility",
+      guideDistanceTitle: "Distance",
+      guideDistanceDesc: "Stand 3-5m from the court sideline to ensure the full body is in frame",
+      guideAngleTitle: "Angle",
+      guideAngleDesc: "Film from the side, parallel to the net. Avoid frontal or steep angles",
+      guideLightTitle: "Lighting",
+      guideLightDesc: "Ensure bright court lighting, avoid backlit filming",
+      guideStableTitle: "Stable Footage",
+      guideStableDesc: "Use a tripod or phone stand to avoid handshake blur",
+      guideDurationTitle: "Duration",
+      guideDurationDesc: "10 seconds to 3 minutes clips with complete stroke actions recommended",
+      precheckTitle: "Video Quality Check",
+      precheckChecking: "Checking...",
+      precheckPassed: "Passed",
+      precheckWarning: "Warnings found",
+      precheckFailed: "Check failed",
+      btnProceed: "Continue Analysis",
+      btnReupload: "Re-upload",
+      processingTitle: "Processing Video",
+      processingStage1: "Preparing pose analysis...",
+      detectControls: "Detection Controls",
+      detectControlsDesc: "Recommended configs are pre-loaded. GPU/CPU is auto-selected based on your hardware.",
+      btnStart: "Start",
+      btnStop: "Stop",
+      btnReset: "Reset",
+      btnSend: "Send",
+      btnRefresh: "Refresh",
+      btnExport: "Export Report",
+      btnSaveSettings: "Save Settings",
+      btnResetSettings: "Reset to Defaults",
+      videoReady: "Annotated video is ready for playback.",
+      downloadVideo: "Download Video",
+      dropUpload: "Click or drag a video here to upload",
+      shotTimelineTitle: "Shot Timeline",
+      waitingAnalysis: "Waiting for analysis results",
+      timelineEmpty: "Each shot will appear here after analysis. Click to jump to the video segment.",
+      liveMetrics: "Live Metrics",
+      metricProgress: "Progress",
+      metricProgressUnit: "Current / Total",
+      metricShots: "Shots Played",
+      metricShotsUnit: "Current / Total",
+      metricConf: "Confidence",
+      metricConfUnit: "Current segment",
+      metricAction: "Current Action",
+      metricActionUnit: "Updates with playback",
+      analysisTitle: "Action Analysis",
+      analysisDesc: "Classify and evaluate detected badminton actions including stroke type, power analysis and quality scores.",
+      actionTypeLabel: "Action Type",
+      actionScoreLabel: "Quality Score",
+      powerLevelLabel: "Power Level",
+      qualityBreakdown: "Action Quality Breakdown",
+      qSmooth: "Swing Smoothness",
+      qAccuracy: "Contact Point Accuracy",
+      qCoord: "Body Coordination",
+      qFoot: "Footwork",
+      qWrist: "Wrist Power",
+      qBalance: "Balance & Stability",
+      detectionHistory: "Detection History",
+      thTime: "Time",
+      thAction: "Action",
+      thConf: "Confidence",
+      thScore: "Score",
+      thPower: "Power",
+      noDetectionRecords: "No detection records yet",
+      reportTitle: "Training Report",
+      reportDesc: "View overall training statistics, radar chart analysis and detailed report. Export supported.",
+      scoreSummary: "Score Overview",
+      totalSessions: "Total Sessions",
+      avgScore: "Avg Score",
+      bestAction: "Best Action",
+      totalFrames: "Frames Analyzed",
+      reportDate: "Date",
+      reportDuration: "Duration",
+      reportActions: "Total Actions",
+      reportHighlights: "Highlights",
+      reportIssues: "Key Issues",
+      reportSuggestions: "Suggestions",
+      reportPlan: "Training Plan",
+      reportReview: "Review Notes",
+      coachTitle: "AI Coach",
+      coachDesc: "Ask about technique, footwork, training plans, match review and injury prevention. After video analysis, the coach uses your report for context.",
+      coachChatTitle: "Training Coach",
+      coachModelLabel: "Model",
+      coachZhipu: "Zhipu AI",
+      coachPlaceholder: "e.g., How can I improve my backcourt smash power?",
+      coachConfigTitle: "Coach Settings",
+      coachUseReport: "Use training report context",
+      coachContextLabel: "Current Context",
+      coachNoReport: "No report loaded",
+      coachContextDesc: "After video analysis, the AI coach reads actions, shots, confidence and footwork scores to answer questions.",
+      historyTitle: "Training History",
+      historyDesc: "View past training records, track quality trends and compare progress.",
+      histSessions: "Sessions",
+      histAvgScore: "Avg Score",
+      histTotalShots: "Total Shots",
+      histLastDate: "Last Session",
+      trendChart: "Score Trend",
+      sessionList: "Session Records",
+      noHistory: "No training records yet. Complete a video analysis to see history here.",
+      settingsTitle: "System Settings",
+      settingsDesc: "Configure interface language, model parameters, video processing and preferences.",
+      langSettings: "Language",
+      langSettingsDesc: "Choose display language. Settings are saved automatically and applied site-wide.",
+      modelConfig: "Model Config",
+      inferenceBackend: "Inference Backend",
+      computeDevice: "Device",
+      inputResolution: "Input Resolution",
+      modelPrecision: "Precision",
+      fp32: "FP32 (High Precision)",
+      fp16: "FP16 (Balanced)",
+      int8: "INT8 (Fast)",
+      videoConfig: "Video Processing",
+      frameRate: "Frame Rate",
+      frameSkip: "Frame Skip",
+      roiArea: "ROI",
+      saveDetection: "Save Results",
+      dontSave: "Don't Save",
+      saveJson: "Save as JSON",
+      actions: "Actions",
+      precheckPassMsg: "Video quality looks good, ready for analysis",
+      precheckPassMatchMsg: "Wide-angle match video detected, ready for analysis",
+      precheckWarnMsg: "Minor issues detected, analysis may proceed with reduced accuracy",
+      precheckWarnMatchMsg: "Wide-angle match video, will auto-adapt parameters",
+      precheckFailMsg: "Video quality is poor, please check and re-upload",
+      btnLogin: "Login / Register",
+      login: "Login",
+      register: "Register",
+      logout: "Logout",
+      switchAccount: "Switch Account",
+      username: "Username",
+      usernameOrEmail: "Username or Email",
+      nickname: "Nickname",
+      email: "Email",
+      password: "Password",
+      avatarUrl: "Avatar URL",
+      editProfile: "Edit Profile",
+      save: "Save",
+      cancel: "Cancel",
+      accountSettings: "Account Settings",
+      notLoggedIn: "You are not logged in",
+      loginHint: "Login to sync training records and connect with WeChat Mini Program",
+      wechatBound: "WeChat bound",
+      wechatNotBound: "WeChat not bound",
+      bindWechat: "Bind WeChat",
+      wechatLogin: "WeChat Login",
+      wechatRegister: "Register with WeChat",
+      orLoginWith: "Or login with",
+      orRegisterWith: "Or register with",
+      wechatHint: "WeChat login is only available within the Mini Program",
+      loginSuccess: "Login successful",
+      registerSuccess: "Registration successful",
+      logoutSuccess: "Logged out",
+      profileUpdateSuccess: "Profile updated",
+      loginFailed: "Login failed",
+      registerFailed: "Registration failed",
+      videoSizeExceeded: "Video exceeds 500MB limit. Please compress or trim before uploading.",
+      tourWelcomeTitle: "Welcome to Badminton Smart Coach",
+      tourWelcomeDesc: "Follow this quick guide to get started.",
+      tourStep1Title: "Step 1: Upload Video",
+      tourStep1Desc: "Click here to upload your badminton training or match video. Drag and drop is also supported.",
+      tourStep2Title: "Step 2: Start Analysis",
+      tourStep2Desc: "After uploading, click Start Analysis and the AI will evaluate your strokes and footwork.",
+      tourStep3Title: "Step 3: Shot Timeline",
+      tourStep3Desc: "Once analysis is complete, every shot will be shown here with details.",
+      tourStep4Title: "Step 4: Training Report",
+      tourStep4Desc: "Switch to the Training Report tab to see overall stats, radar chart and AI coach advice.",
+      tourStep5Title: "Step 5: History",
+      tourStep5Desc: "All analyses are saved in Training History for future review.",
+      tourNext: "Next",
+      tourSkip: "Skip",
+      tourFinish: "Finish",
+    },
+    ja: {
+      pageTitle: "BadmintonAI — バドミントン智能トレーニング",
+      brandName: "BadmintonAI",
+      creditText: "Powered by BadmintonAI",
+      navTraining: "検出",
+      navAnalysis: "分析",
+      navReport: "レポート",
+      navCoach: "AIコーチ",
+      navHistory: "履歴",
+      navSettings: "設定",
+      tabRealtime: "リアルタイム",
+      statusDisconnected: "未接続",
+      statusConnected: "接続済み",
+      statusConnecting: "接続中...",
+      trainingTitle: "リアルタイムトレーニング検出",
+      trainingDesc: "バドミントン練習動画をアップロードまたは録画。AIが動作を検出し、シャトル軌道を追跡し、姿勢を評価します。",
+      trainingNotice: "バックエンド分析パイプラインに接続：アップロード後に動画画質チェックを行い、/api/analyze で注釈付き動画・結果・レポートを生成します。",
+      shootingGuideTitle: "撮影ガイド",
+      guideLandscapeTitle: "横画面撮影",
+      guideLandscapeDesc: "横画面で撮影すると、映像が安定し全身が映ります",
+      guideDistanceTitle: "撮影距離",
+      guideDistanceDesc: "コートのサイドラインから3-5m離れて、全身がフレームに入るように",
+      guideAngleTitle: "撮影角度",
+      guideAngleDesc: "ネットと平行に横から撮影。正面や斜めすぎる角度は避けて",
+      guideLightTitle: "照明",
+      guideLightDesc: "コートを明るく保ち、逆光での撮影を避けて",
+      guideStableTitle: "安定撮影",
+      guideStableDesc: "三脚やスタンドを使って手ブレを防止",
+      guideDurationTitle: "動画の長さ",
+      guideDurationDesc: "ストロークが含まれる10秒〜3分程度のクリップ推奨",
+      precheckTitle: "動画画質チェック",
+      precheckChecking: "チェック中...",
+      precheckPassed: "合格",
+      precheckWarning: "警告あり",
+      precheckFailed: "チェック不合格",
+      btnProceed: "分析を続ける",
+      btnReupload: "再アップロード",
+      processingTitle: "動画を処理中",
+      processingStage1: "姿勢分析を準備中...",
+      detectControls: "検出設定",
+      detectControlsDesc: "推奨設定をプリセット済み。ハードウェアに応じてGPU/CPUを自動選択します。",
+      btnStart: "開始",
+      btnStop: "停止",
+      btnReset: "リセット",
+      btnSend: "送信",
+      btnRefresh: "更新",
+      btnExport: "レポート出力",
+      btnSaveSettings: "設定を保存",
+      btnResetSettings: "初期設定に戻す",
+      videoReady: "注釈付き動画の再生準備ができました。",
+      downloadVideo: "動画をダウンロード",
+      dropUpload: "クリックまたはドラッグで動画をアップロード",
+      shotTimelineTitle: "ショットタイムライン",
+      waitingAnalysis: "分析結果を待っています",
+      timelineEmpty: "分析後、各ショットがここに表示されます。クリックで該当動画にジャンプ。",
+      liveMetrics: "ライブ指標",
+      metricProgress: "再生位置",
+      metricProgressUnit: "現在 / 合計",
+      metricShots: "ショット数",
+      metricShotsUnit: "現在 / 合計",
+      metricConf: "信頼度",
+      metricConfUnit: "現在のセグメント",
+      metricAction: "現在の動作",
+      metricActionUnit: "再生に合わせて更新",
+      analysisTitle: "動作分析",
+      analysisDesc: "検出されたバドミントン動作を分類・評価。ストローク種別、パワー分析、品質スコアを含みます。",
+      actionTypeLabel: "動作タイプ",
+      actionScoreLabel: "品質スコア",
+      powerLevelLabel: "パワーレベル",
+      qualityBreakdown: "動作品質の内訳",
+      qSmooth: "スイングの滑らかさ",
+      qAccuracy: "打点の精度",
+      qCoord: "身体の協調性",
+      qFoot: "フットワーク",
+      qWrist: "手首のパワー",
+      qBalance: "重心安定性",
+      detectionHistory: "検出履歴",
+      thTime: "時間",
+      thAction: "動作",
+      thConf: "信頼度",
+      thScore: "スコア",
+      thPower: "パワー",
+      noDetectionRecords: "検出記録がありません",
+      reportTitle: "トレーニングレポート",
+      reportDesc: "トレーニング統計、レーダーチャート分析、詳細レポートを表示。エクスポート対応。",
+      scoreSummary: "スコア概要",
+      totalSessions: "総セッション数",
+      avgScore: "平均スコア",
+      bestAction: "ベスト動作",
+      totalFrames: "解析フレーム数",
+      reportDate: "日付",
+      reportDuration: "時間",
+      reportActions: "総動作数",
+      reportHighlights: "ハイライト",
+      reportIssues: "主な課題",
+      reportSuggestions: "改善提案",
+      reportPlan: "トレーニング計画",
+      reportReview: "レビュー所見",
+      coachTitle: "AIコーチ",
+      coachDesc: "技術、フットワーク、練習計画、試合の复盘、怪我予防について質問できます。動画分析後はレポートを文脈として使用します。",
+      coachChatTitle: "トレーニングコーチ",
+      coachModelLabel: "モデル",
+      coachZhipu: "智譜AI",
+      coachPlaceholder: "例：バックコートのスマッシュ力を上げるには？",
+      coachConfigTitle: "コーチ設定",
+      coachUseReport: "トレーニングレポートを使用",
+      coachContextLabel: "現在のコンテキスト",
+      coachNoReport: "レポート未読み込み",
+      coachContextDesc: "動画分析後、AIコーチは動作・ショット・信頼度・フットワークスコアを読み取って回答します。",
+      historyTitle: "トレーニング履歴",
+      historyDesc: "過去のトレーニング記録を表示し、品質の変化トレンドを追跡します。",
+      histSessions: "セッション数",
+      histAvgScore: "平均スコア",
+      histTotalShots: "総ショット数",
+      histLastDate: "最終セッション",
+      trendChart: "スコア推移",
+      sessionList: "セッション記録",
+      noHistory: "トレーニング記録がありません。動画分析を完了すると表示されます。",
+      settingsTitle: "システム設定",
+      settingsDesc: "表示言語、モデルパラメータ、動画処理、環境設定を構成します。",
+      langSettings: "言語設定",
+      langSettingsDesc: "表示言語を選択。設定は自動保存され、全体に適用されます。",
+      modelConfig: "モデル設定",
+      inferenceBackend: "推論バックエンド",
+      computeDevice: "デバイス",
+      inputResolution: "入力解像度",
+      modelPrecision: "精度",
+      fp32: "FP32（高精度）",
+      fp16: "FP16（バランス）",
+      int8: "INT8（高速）",
+      videoConfig: "動画処理",
+      frameRate: "フレームレート",
+      frameSkip: "フレームスキップ",
+      roiArea: "ROI領域",
+      saveDetection: "結果を保存",
+      dontSave: "保存しない",
+      saveJson: "JSONで保存",
+      actions: "操作",
+      precheckPassMsg: "動画画質良好、分析可能です",
+      precheckPassMatchMsg: "試合の広角動画を検出、分析可能です",
+      precheckWarnMsg: "小さな問題がありますが、分析は可能です（精度に影響する可能性あり）",
+      precheckWarnMatchMsg: "広角試合動画、パラメータを自動調整します",
+      precheckFailMsg: "動画画質が良くありません。確認して再アップロードしてください",
+      btnLogin: "ログイン / 新規登録",
+      login: "ログイン",
+      register: "新規登録",
+      logout: "ログアウト",
+      switchAccount: "アカウント切替",
+      username: "ユーザー名",
+      usernameOrEmail: "ユーザー名/メール",
+      nickname: "ニックネーム",
+      email: "メールアドレス",
+      password: "パスワード",
+      avatarUrl: "アバターURL",
+      editProfile: "プロフィール編集",
+      save: "保存",
+      cancel: "キャンセル",
+      accountSettings: "アカウント設定",
+      notLoggedIn: "ログインしていません",
+      loginHint: "ログインするとトレーニング記録を同期し、WeChatミニプログラムと連携できます",
+      wechatBound: "WeChat連携済み",
+      wechatNotBound: "WeChat未連携",
+      bindWechat: "WeChatを連携",
+      wechatLogin: "WeChatログイン",
+      wechatRegister: "WeChatで新規登録",
+      orLoginWith: "または次の方法でログイン",
+      orRegisterWith: "または次の方法で登録",
+      wechatHint: "WeChatログインはミニプログラム内でのみ利用可能です",
+      loginSuccess: "ログインしました",
+      registerSuccess: "登録が完了しました",
+      logoutSuccess: "ログアウトしました",
+      profileUpdateSuccess: "プロフィールを更新しました",
+      loginFailed: "ログインに失敗しました",
+      registerFailed: "登録に失敗しました",
+      videoSizeExceeded: "動画が500MBを超えています。圧縮またはトリミングしてからアップロードしてください。",
+      tourWelcomeTitle: "羽動智練へようこそ",
+      tourWelcomeDesc: "このガイドに従って、基本的な使い方を確認しましょう。",
+      tourStep1Title: "ステップ1：動画をアップロード",
+      tourStep1Desc: "ここをタップして練習や試合の動画をアップロードします。ドラッグ＆ドロップも可能です。",
+      tourStep2Title: "ステップ2：分析を開始",
+      tourStep2Desc: "アップロード後、「分析開始」を押すと、AIが動作とフットワークを分析します。",
+      tourStep3Title: "ステップ3：ショットタイムライン",
+      tourStep3Desc: "分析完了後、各ショットの詳細がここに表示されます。",
+      tourStep4Title: "ステップ4：トレーニングレポート",
+      tourStep4Desc: "「トレーニングレポート」タブで総合データ、レーダーチャート、AIコーチのアドバイスを確認します。",
+      tourStep5Title: "ステップ5：履歴",
+      tourStep5Desc: "すべての分析結果は「トレーニング履歴」に保存され、後から確認できます。",
+      tourNext: "次へ",
+      tourSkip: "スキップ",
+      tourFinish: "完了",
+    },
+    ko: {
+      pageTitle: "BadmintonAI — 배드민턴 스마트 트레이닝",
+      brandName: "BadmintonAI",
+      creditText: "Powered by BadmintonAI",
+      navTraining: "검출",
+      navAnalysis: "분석",
+      navReport: "리포트",
+      navCoach: "AI 코치",
+      navHistory: "기록",
+      navSettings: "설정",
+      tabRealtime: "실시간",
+      statusDisconnected: "연결 안됨",
+      statusConnected: "연결됨",
+      statusConnecting: "연결 중...",
+      trainingTitle: "실시간 훈련 감지",
+      trainingDesc: "배드민턴 훈련 영상을 업로드하거나 녹화하세요. AI가 동작을 감지하고 셔틀 궤적을 추적하며 자세를 평가합니다.",
+      trainingNotice: "백엔드 분석 파이프라인에 연결됨: 업로드 시 화질 검사 후 /api/analyze에서 주석 영상, 결과, 리포트를 생성합니다.",
+      shootingGuideTitle: "촬영 가이드",
+      guideLandscapeTitle: "가로 촬영",
+      guideLandscapeDesc: "가로 모드로 촬영하면 안정적인 화면과 전신이 담깁니다",
+      guideDistanceTitle: "촬영 거리",
+      guideDistanceDesc: "코트 사이드라인에서 3-5m 떨어져 전신이 프레임에 들어오게 하세요",
+      guideAngleTitle: "촬영 각도",
+      guideAngleDesc: "네트와 평행하게 측면에서 촬영. 정면이나 너무 기울인 각도 피하기",
+      guideLightTitle: "조명",
+      guideLightDesc: "코트 조명을 밝게 하고 역광 촬영 피하기",
+      guideStableTitle: "안정적인 촬영",
+      guideStableDesc: "삼각대나 거치대를 사용해 흔들림 방지",
+      guideDurationTitle: "영상 길이",
+      guideDurationDesc: "완전한 타격 동작이 포함된 10초~3분 클립 권장",
+      precheckTitle: "영상 화질 검사",
+      precheckChecking: "검사 중...",
+      precheckPassed: "통과",
+      precheckWarning: "경고 있음",
+      precheckFailed: "검사 실패",
+      btnProceed: "분석 계속",
+      btnReupload: "재업로드",
+      processingTitle: "영상 처리 중",
+      processingStage1: "자세 분석 준비 중...",
+      detectControls: "감지 컨트롤",
+      detectControlsDesc: "추천 설정이 미리 로드됨. 하드웨어에 따라 GPU/CPU 자동 선택.",
+      btnStart: "시작",
+      btnStop: "정지",
+      btnReset: "리셋",
+      btnSend: "전송",
+      btnRefresh: "새로고침",
+      btnExport: "리포트 내보내기",
+      btnSaveSettings: "설정 저장",
+      btnResetSettings: "기본값으로 복원",
+      videoReady: "주석 영상이 재생 준비되었습니다.",
+      downloadVideo: "영상 다운로드",
+      dropUpload: "클릭하거나 영상을 여기로 드래그",
+      shotTimelineTitle: "샷 타임라인",
+      waitingAnalysis: "분석 결과 대기 중",
+      timelineEmpty: "분석 후 각 샷이 여기에 표시됩니다. 클릭 시 해당 구간으로 이동.",
+      liveMetrics: "실시간 지표",
+      metricProgress: "재생 진행",
+      metricProgressUnit: "현재 / 전체",
+      metricShots: "샷 수",
+      metricShotsUnit: "현재 / 전체",
+      metricConf: "신뢰도",
+      metricConfUnit: "현재 구간",
+      metricAction: "현재 동작",
+      metricActionUnit: "재생에 따라 갱신",
+      analysisTitle: "동작 분석",
+      analysisDesc: "감지된 배드민턴 동작을 분류하고 평가합니다. 스트로크 유형, 파워 분석, 품질 점수 포함.",
+      actionTypeLabel: "동작 유형",
+      actionScoreLabel: "품질 점수",
+      powerLevelLabel: "파워 레벨",
+      qualityBreakdown: "동작 품질 분석",
+      qSmooth: "스윙 부드러움",
+      qAccuracy: "타점 정확도",
+      qCoord: "신체 협응",
+      qFoot: "풋워크",
+      qWrist: "손목 파워",
+      qBalance: "균형 안정성",
+      detectionHistory: "감지 기록",
+      thTime: "시간",
+      thAction: "동작",
+      thConf: "신뢰도",
+      thScore: "점수",
+      thPower: "파워",
+      noDetectionRecords: "감지 기록 없음",
+      reportTitle: "훈련 리포트",
+      reportDesc: "전체 훈련 통계, 레이더 차트 분석, 상세 리포트를 확인하세요. 내보내기 지원.",
+      scoreSummary: "점수 개요",
+      totalSessions: "총 세션",
+      avgScore: "평균 점수",
+      bestAction: "베스트 동작",
+      totalFrames: "분석 프레임",
+      reportDate: "날짜",
+      reportDuration: "시간",
+      reportActions: "총 동작 수",
+      reportHighlights: "하이라이트",
+      reportIssues: "주요 문제",
+      reportSuggestions: "개선 제안",
+      reportPlan: "훈련 계획",
+      reportReview: "리뷰 노트",
+      coachTitle: "AI 코치",
+      coachDesc: "기술, 풋워크, 훈련 계획, 경기 복기, 부상 예방에 대해 질문하세요. 영상 분석 후 리포트를 맥락으로 사용합니다.",
+      coachChatTitle: "트레이닝 코치",
+      coachModelLabel: "모델",
+      coachZhipu: "즈푸 AI",
+      coachPlaceholder: "예: 백코트 스매시 파워를 높이려면 어떻게 해야 하나요?",
+      coachConfigTitle: "코치 설정",
+      coachUseReport: "훈련 리포트 사용",
+      coachContextLabel: "현재 컨텍스트",
+      coachNoReport: "리포트 없음",
+      coachContextDesc: "영상 분석 후 AI 코치가 동작, 샷, 신뢰도, 풋워크 점수를 읽어 답변합니다.",
+      historyTitle: "훈련 기록",
+      historyDesc: "과거 훈련 기록을 보고 품질 변화 추이를 추적하세요.",
+      histSessions: "세션 수",
+      histAvgScore: "평균 점수",
+      histTotalShots: "총 샷 수",
+      histLastDate: "마지막 세션",
+      trendChart: "점수 추이",
+      sessionList: "세션 기록",
+      noHistory: "훈련 기록 없음. 영상 분석 완료 후 표시됩니다.",
+      settingsTitle: "시스템 설정",
+      settingsDesc: "인터페이스 언어, 모델 파라미터, 영상 처리 및 환경설정을 구성합니다.",
+      langSettings: "언어 설정",
+      langSettingsDesc: "표시 언어를 선택하세요. 설정은 자동 저장되고 전체에 적용됩니다.",
+      modelConfig: "모델 설정",
+      inferenceBackend: "추론 백엔드",
+      computeDevice: "디바이스",
+      inputResolution: "입력 해상도",
+      modelPrecision: "정밀도",
+      fp32: "FP32 (고정밀)",
+      fp16: "FP16 (균형)",
+      int8: "INT8 (고속)",
+      videoConfig: "영상 처리",
+      frameRate: "프레임 레이트",
+      frameSkip: "프레임 스킵",
+      roiArea: "ROI 영역",
+      saveDetection: "결과 저장",
+      dontSave: "저장 안 함",
+      saveJson: "JSON으로 저장",
+      actions: "작업",
+      precheckPassMsg: "영상 화질 양호, 분석 가능합니다",
+      precheckPassMatchMsg: "광각 경기 영상 감지, 분석 가능합니다",
+      precheckWarnMsg: "사소한 문제가 있지만 분석은 가능합니다 (정확도에 영향 있을 수 있음)",
+      precheckWarnMatchMsg: "광각 경기 영상, 파라미터를 자동 조정합니다",
+      precheckFailMsg: "영상 화질이 좋지 않습니다. 확인 후 재업로드해 주세요",
+      btnLogin: "로그인 / 회원가입",
+      login: "로그인",
+      register: "회원가입",
+      logout: "로그아웃",
+      switchAccount: "계정 전환",
+      username: "사용자명",
+      usernameOrEmail: "사용자명/이메일",
+      nickname: "닉네임",
+      email: "이메일",
+      password: "비밀번호",
+      avatarUrl: "아바타 URL",
+      editProfile: "프로필 편집",
+      save: "저장",
+      cancel: "취소",
+      accountSettings: "계정 설정",
+      notLoggedIn: "로그인하지 않았습니다",
+      loginHint: "로그인하면 훈련 기록을 동기화하고 위챗 미니프로그램과 연동할 수 있습니다",
+      wechatBound: "위챗 연동됨",
+      wechatNotBound: "위챗 미연동",
+      bindWechat: "위챗 연동",
+      wechatLogin: "위챗 로그인",
+      wechatRegister: "위챗으로 회원가입",
+      orLoginWith: "또는 다음으로 로그인",
+      orRegisterWith: "또는 다음으로 가입",
+      wechatHint: "위챗 로그인은 미니프로그램 내에서만 사용 가능합니다",
+      loginSuccess: "로그인 성공",
+      registerSuccess: "회원가입 성공",
+      logoutSuccess: "로그아웃되었습니다",
+      profileUpdateSuccess: "프로필이 업데이트되었습니다",
+      loginFailed: "로그인 실패",
+      registerFailed: "회원가입 실패",
+      videoSizeExceeded: "영상 크기가 500MB를 초과합니다. 압축하거나 편집 후 업로드하세요.",
+      tourWelcomeTitle: "羽動智練에 오신 것을 환영합니다",
+      tourWelcomeDesc: "이 가이드를 따라 기본 사용법을 알아보세요.",
+      tourStep1Title: "1단계: 영상 업로드",
+      tourStep1Desc: "여기를 클릭하여 배드민턴 연습 또는 경기 영상을 업로드하세요. 드래그 앤 드롭도 지원됩니다.",
+      tourStep2Title: "2단계: 분석 시작",
+      tourStep2Desc: "업로드 후 분석 시작을 누른 AI가 동작과 풋워크를 분석합니다.",
+      tourStep3Title: "3단계: 샷 타임라인",
+      tourStep3Desc: "분석 완료 후 각 샷의 상세 정보가 여기에 표시됩니다.",
+      tourStep4Title: "4단계: 훈련 리포트",
+      tourStep4Desc: "훈련 리포트 탭에서 종합 데이터, 레이더 차트, AI 코치 조언을 확인하세요.",
+      tourStep5Title: "5단계: 히스토리",
+      tourStep5Desc: "모든 분석 기록은 훈련 히스토리에 저장되어 언제든 다시 볼 수 있습니다.",
+      tourNext: "다음",
+      tourSkip: "건너뛰기",
+      tourFinish: "완료",
+    },
+    id: {
+      pageTitle: "BadmintonAI — Sistem Latihan Cerdas Bulu Tangkis",
+      brandName: "BadmintonAI",
+      creditText: "Powered by BadmintonAI",
+      navTraining: "Deteksi",
+      navAnalysis: "Analisis",
+      navReport: "Laporan",
+      navCoach: "Pelatih AI",
+      navHistory: "Riwayat",
+      navSettings: "Pengaturan",
+      tabRealtime: "Real-time",
+      statusDisconnected: "Terputus",
+      statusConnected: "Terhubung",
+      statusConnecting: "Menghubungkan...",
+      trainingTitle: "Deteksi Latihan Real-time",
+      trainingDesc: "Unggah atau rekam video latihan bulu tangkis. AI mendeteksi gerakan, melacak lintasan kok, dan mengevaluasi postur secara real-time.",
+      trainingNotice: "Terhubung ke pipeline analisis backend: unggah memicu pemeriksaan kualitas video, lalu /api/analyze menghasilkan video beranotasi, hasil, dan laporan.",
+      shootingGuideTitle: "Panduan Pengambilan Video",
+      guideLandscapeTitle: "Mode Lanskap",
+      guideLandscapeDesc: "Gunakan orientasi lanskap untuk footage lebih stabil dan pemain terlihat penuh",
+      guideDistanceTitle: "Jarak",
+      guideDistanceDesc: "Berdiri 3-5m dari garis samping lapangan agar seluruh tubuh terlihat",
+      guideAngleTitle: "Sudut",
+      guideAngleDesc: "Rekam dari samping, sejajar dengan net. Hindari sudut depan atau terlalu miring",
+      guideLightTitle: "Pencahayaan",
+      guideLightDesc: "Pastikan pencahayaan lapangan terang, hindari rekaman backlight",
+      guideStableTitle: "Rekaman Stabil",
+      guideStableDesc: "Gunakan tripod atau penyangga untuk menghindari goyangan",
+      guideDurationTitle: "Durasi",
+      guideDurationDesc: "Klip 10 detik - 3 menit dengan pukulan lengkap direkomendasikan",
+      precheckTitle: "Pemeriksaan Kualitas Video",
+      precheckChecking: "Memeriksa...",
+      precheckPassed: "Lulus",
+      precheckWarning: "Ada peringatan",
+      precheckFailed: "Gagal",
+      btnProceed: "Lanjut Analisis",
+      btnReupload: "Unggah Ulang",
+      processingTitle: "Memproses Video",
+      processingStage1: "Menyiapkan analisis pose...",
+      detectControls: "Kontrol Deteksi",
+      detectControlsDesc: "Konfigurasi rekomendasi sudah dimuat. GPU/CPU dipilih otomatis berdasarkan perangkat keras.",
+      btnStart: "Mulai",
+      btnStop: "Berhenti",
+      btnReset: "Reset",
+      btnSend: "Kirim",
+      btnRefresh: "Refresh",
+      btnExport: "Ekspor Laporan",
+      btnSaveSettings: "Simpan Pengaturan",
+      btnResetSettings: "Reset ke Default",
+      videoReady: "Video beranotasi siap diputar.",
+      downloadVideo: "Unduh Video",
+      dropUpload: "Klik atau seret video ke sini untuk mengunggah",
+      shotTimelineTitle: "Timeline Pukulan",
+      waitingAnalysis: "Menunggu hasil analisis",
+      timelineEmpty: "Setiap pukulan akan muncul di sini setelah analisis. Klik untuk lompat ke segmen video.",
+      liveMetrics: "Metrik Live",
+      metricProgress: "Progress",
+      metricProgressUnit: "Sekarang / Total",
+      metricShots: "Pukulan",
+      metricShotsUnit: "Sekarang / Total",
+      metricConf: "Kepercayaan",
+      metricConfUnit: "Segmen sekarang",
+      metricAction: "Gerakan Sekarang",
+      metricActionUnit: "Update saat putar",
+      analysisTitle: "Analisis Gerakan",
+      analysisDesc: "Mengklasifikasikan dan mengevaluasi gerakan bulu tangkis yang terdeteksi, termasuk jenis pukulan, analisis tenaga, dan skor kualitas.",
+      actionTypeLabel: "Jenis Gerakan",
+      actionScoreLabel: "Skor Kualitas",
+      powerLevelLabel: "Tingkat Tenaga",
+      qualityBreakdown: "Rincian Kualitas Gerakan",
+      qSmooth: "Kelancaran Ayunan",
+      qAccuracy: "Akurasi Titik Pukul",
+      qCoord: "Koordinasi Tubuh",
+      qFoot: "Footwork",
+      qWrist: "Tenaga Pergelangan",
+      qBalance: "Keseimbangan",
+      detectionHistory: "Riwayat Deteksi",
+      thTime: "Waktu",
+      thAction: "Gerakan",
+      thConf: "Kepercayaan",
+      thScore: "Skor",
+      thPower: "Tenaga",
+      noDetectionRecords: "Belum ada riwayat deteksi",
+      reportTitle: "Laporan Latihan",
+      reportDesc: "Lihat statistik latihan keseluruhan, analisis radar chart, dan laporan detail. Ekspor didukung.",
+      scoreSummary: "Ringkasan Skor",
+      totalSessions: "Total Sesi",
+      avgScore: "Skor Rata-rata",
+      bestAction: "Gerakan Terbaik",
+      totalFrames: "Frame Dianalisis",
+      reportDate: "Tanggal",
+      reportDuration: "Durasi",
+      reportActions: "Total Gerakan",
+      reportHighlights: "Highlight",
+      reportIssues: "Masalah Utama",
+      reportSuggestions: "Saran",
+      reportPlan: "Rencana Latihan",
+      reportReview: "Catatan Review",
+      coachTitle: "Pelatih AI",
+      coachDesc: "Tanya tentang teknik, footwork, rencana latihan, review pertandingan, dan pencegahan cedera. Setelah analisis video, pelatih menggunakan laporan Anda sebagai konteks.",
+      coachChatTitle: "Pelatih Latihan",
+      coachModelLabel: "Model",
+      coachZhipu: "Zhipu AI",
+      coachPlaceholder: "cth: Bagaimana cara meningkatkan power smash backcourt saya?",
+      coachConfigTitle: "Pengaturan Pelatih",
+      coachUseReport: "Gunakan konteks laporan latihan",
+      coachContextLabel: "Konteks Saat Ini",
+      coachNoReport: "Belum ada laporan",
+      coachContextDesc: "Setelah analisis video, pelatih AI membaca gerakan, pukulan, kepercayaan, dan skor footwork untuk menjawab pertanyaan.",
+      historyTitle: "Riwayat Latihan",
+      historyDesc: "Lihat catatan latihan sebelumnya, lacak tren kualitas, dan bandingkan kemajuan.",
+      histSessions: "Sesi",
+      histAvgScore: "Skor Rata-rata",
+      histTotalShots: "Total Pukulan",
+      histLastDate: "Sesi Terakhir",
+      trendChart: "Tren Skor",
+      sessionList: "Catatan Sesi",
+      noHistory: "Belum ada catatan latihan. Selesaikan analisis video untuk melihat riwayat.",
+      settingsTitle: "Pengaturan Sistem",
+      settingsDesc: "Konfigurasi bahasa antarmuka, parameter model, pemrosesan video, dan preferensi.",
+      langSettings: "Bahasa",
+      langSettingsDesc: "Pilih bahasa tampilan. Pengaturan disimpan otomatis dan diterapkan ke seluruh situs.",
+      modelConfig: "Konfigurasi Model",
+      inferenceBackend: "Backend Inferensi",
+      computeDevice: "Perangkat",
+      inputResolution: "Resolusi Input",
+      modelPrecision: "Presisi",
+      fp32: "FP32 (Presisi Tinggi)",
+      fp16: "FP16 (Seimbang)",
+      int8: "INT8 (Cepat)",
+      videoConfig: "Pemrosesan Video",
+      frameRate: "Frame Rate",
+      frameSkip: "Lompat Frame",
+      roiArea: "Area ROI",
+      saveDetection: "Simpan Hasil",
+      dontSave: "Jangan Simpan",
+      saveJson: "Simpan sebagai JSON",
+      actions: "Aksi",
+      precheckPassMsg: "Kualitas video baik, siap dianalisis",
+      precheckPassMatchMsg: "Video pertandingan sudut lebar terdeteksi, siap dianalisis",
+      precheckWarnMsg: "Ada masalah kecil, analisis dapat dilanjutkan dengan akurasi terbatas",
+      precheckWarnMatchMsg: "Video sudut lebar, parameter akan disesuaikan otomatis",
+      precheckFailMsg: "Kualitas video buruk, silakan periksa dan unggah ulang",
+      btnLogin: "Masuk / Daftar",
+      login: "Masuk",
+      register: "Daftar",
+      logout: "Keluar",
+      switchAccount: "Ganti Akun",
+      username: "Nama Pengguna",
+      usernameOrEmail: "Nama Pengguna/Email",
+      nickname: "Nama Panggilan",
+      email: "Email",
+      password: "Kata Sandi",
+      avatarUrl: "URL Avatar",
+      editProfile: "Edit Profil",
+      save: "Simpan",
+      cancel: "Batal",
+      accountSettings: "Pengaturan Akun",
+      notLoggedIn: "Anda belum masuk",
+      loginHint: "Masuk untuk menyinkronkan catatan latihan dan terhubung dengan Mini Program WeChat",
+      wechatBound: "WeChat terhubung",
+      wechatNotBound: "WeChat belum terhubung",
+      bindWechat: "Hubungkan WeChat",
+      wechatLogin: "Masuk dengan WeChat",
+      wechatRegister: "Daftar dengan WeChat",
+      orLoginWith: "Atau masuk dengan",
+      orRegisterWith: "Atau daftar dengan",
+      wechatHint: "Login WeChat hanya tersedia di dalam Mini Program",
+      loginSuccess: "Berhasil masuk",
+      registerSuccess: "Pendaftaran berhasil",
+      logoutSuccess: "Berhasil keluar",
+      profileUpdateSuccess: "Profil diperbarui",
+      loginFailed: "Gagal masuk",
+      registerFailed: "Pendaftaran gagal",
+      videoSizeExceeded: "Video melebihi batas 500MB. Silakan kompres atau potong sebelum mengunggah.",
+      tourWelcomeTitle: "Selamat datang di Badminton Smart Coach",
+      tourWelcomeDesc: "Ikuti panduan singkat ini untuk memulai.",
+      tourStep1Title: "Langkah 1: Unggah Video",
+      tourStep1Desc: "Klik di sini untuk mengunggah video latihan atau pertandingan bulu tangkis. Drag and drop juga didukung.",
+      tourStep2Title: "Langkah 2: Mulai Analisis",
+      tourStep2Desc: "Setelah diunggah, klik Mulai Analisis dan AI akan mengevaluasi pukulan dan footwork Anda.",
+      tourStep3Title: "Langkah 3: Timeline Pukulan",
+      tourStep3Desc: "Setelah analisis selesai, setiap pukulan akan ditampilkan di sini dengan detailnya.",
+      tourStep4Title: "Langkah 4: Laporan Latihan",
+      tourStep4Desc: "Beralih ke tab Laporan Latihan untuk melihat statistik, radar chart, dan saran pelatih AI.",
+      tourStep5Title: "Langkah 5: Riwayat",
+      tourStep5Desc: "Semua analisis disimpan dalam Riwayat Latihan untuk ditinjau kapan saja.",
+      tourNext: "Lanjut",
+      tourSkip: "Lewati",
+      tourFinish: "Selesai",
+    },
+  };
+
+  const SUPPORTED_LANGS = ["zh", "en", "ja", "ko", "id"];
+  const LANG_DISPLAY = {
+    zh: { name: "中文", flag: "🇨🇳", avatar: "教", userAvatar: "我" },
+    en: { name: "English", flag: "🇬🇧", avatar: "AI", userAvatar: "Me" },
+    ja: { name: "日本語", flag: "🇯🇵", avatar: "AI", userAvatar: "私" },
+    ko: { name: "한국어", flag: "🇰🇷", avatar: "AI", userAvatar: "나" },
+    id: { name: "Bahasa", flag: "🇮🇩", avatar: "AI", userAvatar: "Me" },
+  };
+
+  function t(key, lang) {
+    const l = lang || state.uiLanguage || "zh";
+    const dict = GLOBAL_I18N[l] || GLOBAL_I18N.zh;
+    return dict[key] !== undefined ? dict[key] : (GLOBAL_I18N.zh[key] || key);
+  }
+
+  function applyGlobalLanguage(lang) {
+    if (!SUPPORTED_LANGS.includes(lang)) lang = "zh";
+    state.uiLanguage = lang;
+    try { localStorage.setItem("badminton_lang", lang); } catch (e) {}
+
+    document.documentElement.lang = lang === "zh" ? "zh-CN" : lang;
+    document.title = t("pageTitle", lang);
+
+    document.querySelectorAll("[data-i18n]").forEach((el) => {
+      const key = el.getAttribute("data-i18n");
+      const text = t(key, lang);
+      if (text) el.textContent = text;
+    });
+    document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
+      const key = el.getAttribute("data-i18n-placeholder");
+      const text = t(key, lang);
+      if (text) el.placeholder = text;
+    });
+    document.querySelectorAll("[data-i18n-title]").forEach((el) => {
+      const key = el.getAttribute("data-i18n-title");
+      const text = t(key, lang);
+      if (text) el.title = text;
+    });
+
+    document.querySelectorAll(".lang-option").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.lang === lang);
+    });
+
+    const ld = LANG_DISPLAY[lang];
+    if (elements.coachWelcome) elements.coachWelcome.textContent = getCoachWelcomeText(lang);
+    if (elements.coachQuestion) elements.coachQuestion.placeholder = t("coachPlaceholder", lang);
+    if (elements.btnCoachSend && !elements.btnCoachSend.disabled) elements.btnCoachSend.textContent = t("btnSend", lang);
+
+    if (elements.coachUseReportLabel) elements.coachUseReportLabel.textContent = t("coachUseReport", lang);
+    if (elements.coachContextLabel) elements.coachContextLabel.textContent = t("coachContextLabel", lang);
+    if (elements.coachContextDesc) elements.coachContextDesc.textContent = t("coachContextDesc", lang);
+    if (elements.coachSideTitle) elements.coachSideTitle.textContent = t("coachConfigTitle", lang);
+    if (elements.coachChatTitle) elements.coachChatTitle.textContent = t("coachChatTitle", lang);
+
+    updateCoachContextStatus();
+    renderCoachPromptButtons(lang);
+    updateCoachAvatars(lang);
+    updateTopbarTitle();
+  }
+
+  function getCoachWelcomeText(lang) {
+    const dict = {
+      zh: "你好，我是羽动智练 AI 教练。你可以问我发力、步伐、训练计划、比赛复盘，也可以在完成视频分析后让我结合本次报告给建议。",
+      en: "Hello! I'm your BadmintonAI Coach. Ask me about technique, footwork, training plans, match review, or share your analysis report for personalized advice.",
+      ja: "こんにちは、BadmintonAIコーチです。技術、フットワーク、練習計画、試合の复盘について質問できます。動画分析後はレポートを基にアドバイスします。",
+      ko: "안녕하세요, BadmintonAI 코치입니다. 기술, 풋워크, 훈련 계획, 경기 복기에 대해 질문하실 수 있습니다. 영상 분석 후 리포트를 바탕으로 조언해 드립니다.",
+      id: "Halo! Saya Pelatih AI BadmintonAI. Tanya saya tentang teknik, footwork, rencana latihan, review tanding, atau bagikan laporan analisis untuk saran personal.",
+    };
+    return dict[lang] || dict.zh;
+  }
+
+  function renderCoachPromptButtons(lang) {
+    if (!elements.coachPrompts) return;
+    const prompts = {
+      zh: [
+        { label: "总结本次问题", prompt: "帮我根据本次训练报告总结三个最优先改进的问题。" },
+        { label: "20分钟步伐训练", prompt: "给我安排一套 20 分钟羽毛球步伐训练计划。" },
+        { label: "回位慢怎么改", prompt: "我击球后回位慢，应该从哪些动作细节改？" },
+        { label: "热身放松建议", prompt: "羽毛球训练前后应该怎么热身和放松？" },
+      ],
+      en: [
+        { label: "Summarize Issues", prompt: "Based on this training report, summarize the top 3 priority issues to improve." },
+        { label: "20min Footwork", prompt: "Create a 20-minute badminton footwork training plan for me." },
+        { label: "Slow Recovery", prompt: "My recovery after hitting is slow - what technical details should I fix?" },
+        { label: "Warm-up/Cool-down", prompt: "How should I warm up before and cool down after badminton training?" },
+      ],
+      ja: [
+        { label: "問題をまとめる", prompt: "今回のトレーニングレポートから、最優先で改善すべき3つの問題をまとめてください。" },
+        { label: "20分フットワーク", prompt: "20分間のバドミントンフットワーク練習メニューを作ってください。" },
+        { label: "戻りが遅い", prompt: "ショット後の戻りが遅いのですが、どの技術的詳細を改善すべきですか？" },
+        { label: "ウォームアップ", prompt: "バドミントンの練習前後のウォームアップとクールダウン方法を教えてください。" },
+      ],
+      ko: [
+        { label: "문제점 요약", prompt: "이번 트레이닝 리포트에서 가장 우선적으로 개선해야 할 3가지 문제를 요약해 주세요." },
+        { label: "20분 풋워크", prompt: "20분 배드민턴 풋워크 훈련 계획을 만들어 주세요." },
+        { label: "복귀 느림", prompt: "샷 후 복귀가 느린데 어떤 기술적 세부사항을 고쳐야 하나요?" },
+        { label: "워밍업", prompt: "배드민턴 훈련 전후 워밍업과 쿨다운 방법을 알려주세요." },
+      ],
+      id: [
+        { label: "Ringkas Masalah", prompt: "Berdasarkan laporan latihan ini, rangkum 3 masalah prioritas utama untuk diperbaiki." },
+        { label: "Footwork 20menit", prompt: "Buatkan rencana latihan footwork bulu tangkis 20 menit untuk saya." },
+        { label: "Recovery Lambat", prompt: "Recovery setelah pukulan saya lambat - detail teknis apa yang harus diperbaiki?" },
+        { label: "Pemanasan", prompt: "Bagaimana cara pemanasan sebelum dan pendinginan setelah latihan bulu tangkis?" },
+      ],
+    };
+    const items = prompts[lang] || prompts.zh;
+    elements.coachPrompts.innerHTML = items.map(item =>
+      `<button type="button" class="coach-prompt" data-prompt="${item.prompt.replace(/"/g, '&quot;')}">${item.label}</button>`
+    ).join("");
+    elements.coachPrompts.querySelectorAll(".coach-prompt").forEach((button) => {
+      button.addEventListener("click", () => {
+        const promptText = button.dataset.prompt || button.textContent || "";
+        if (elements.coachQuestion) {
+          elements.coachQuestion.value = promptText;
+          elements.coachQuestion.focus();
+        }
+      });
+    });
+  }
+
+  function updateCoachAvatars(lang) {
+    const ld = LANG_DISPLAY[lang] || LANG_DISPLAY.zh;
+    document.querySelectorAll(".coach-message").forEach((msg) => {
+      const avatar = msg.querySelector(".coach-avatar");
+      if (!avatar) return;
+      if (msg.classList.contains("user")) {
+        avatar.textContent = ld.userAvatar;
+      } else {
+        avatar.textContent = ld.avatar;
+      }
+    });
+  }
+
+  // ---- Animated Background (floating shuttlecocks) ----
+  function createShuttlecockSVG(size) {
+    const s = size || 24;
+    return `<svg width="${s}" height="${s}" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="16" cy="24" rx="5" ry="3.5" fill="#f0f5f2" stroke="#5eff9f" stroke-width="0.8"/>
+      <ellipse cx="16" cy="24" rx="3.5" ry="2.2" fill="#c8ddd3" opacity="0.6"/>
+      <path d="M11 23 L8 6 M13 23 L11 5 M16 23 L16 4 M19 23 L21 5 M21 23 L24 6" stroke="#e8f5ee" stroke-width="1.2" stroke-linecap="round"/>
+      <path d="M9 8 Q16 3 23 8" stroke="#5eff9f" stroke-width="0.6" fill="none" opacity="0.5"/>
+      <path d="M10 13 Q16 9 22 13" stroke="#5eff9f" stroke-width="0.5" fill="none" opacity="0.4"/>
+      <path d="M11 18 Q16 15 21 18" stroke="#5eff9f" stroke-width="0.5" fill="none" opacity="0.3"/>
+    </svg>`;
+  }
+
+  function spawnShuttlecock() {
+    const container = document.getElementById("bgAnimation");
+    if (!container) return;
+    const el = document.createElement("div");
+    el.className = "shuttlecock";
+    const size = 16 + Math.random() * 20;
+    el.innerHTML = createShuttlecockSVG(size);
+    const startX = Math.random() * 100;
+    const duration = 12 + Math.random() * 18;
+    const delay = Math.random() * 2;
+    el.style.left = startX + "%";
+    el.style.bottom = "-40px";
+    el.style.animationDuration = duration + "s";
+    el.style.animationDelay = delay + "s";
+    const driftX = (Math.random() - 0.5) * 80;
+    el.style.setProperty("--drift-x", driftX + "px");
+    container.appendChild(el);
+    setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, (duration + delay) * 1000 + 500);
+  }
+
+  function initAnimatedBackground() {
+    for (let i = 0; i < 6; i++) {
+      setTimeout(() => spawnShuttlecock(), i * 800);
+    }
+    setInterval(spawnShuttlecock, 2500 + Math.random() * 2000);
+  }
+
   // ---- State ----
   const state = {
     connected: false,
@@ -31,12 +1163,16 @@
     analysisStartedAt: 0,
     courtAnimationFrame: null,
     analysisVideoObjectUrl: null,
+    uiLanguage: "zh",
+    user: null,
+    authToken: null,
   };
 
   // ---- DOM Elements ----
   const elements = {
     statusIndicator: document.getElementById("statusIndicator"),
     statusText: document.querySelector(".status-text"),
+    topbarTitle: document.getElementById("topbarTitle"),
 
     // Tabs
     mainTabs: document.getElementById("mainTabs"),
@@ -61,6 +1197,7 @@
     analysisTimer: document.getElementById("analysisTimer"),
     analysisStage: document.getElementById("analysisStage"),
     analysisElapsed: document.getElementById("analysisElapsed"),
+    analysisProgressBar: document.getElementById("analysisProgressBar"),
     shotTimeline: document.getElementById("shotTimeline"),
     shotTimelineEmpty: document.getElementById("shotTimelineEmpty"),
     shotTimelineSummary: document.getElementById("shotTimelineSummary"),
@@ -152,11 +1289,73 @@
 
     // AI Coach
     coachProvider: document.getElementById("coachProvider"),
+    coachWelcome: document.getElementById("coachWelcome"),
     coachMessages: document.getElementById("coachMessages"),
     coachQuestion: document.getElementById("coachQuestion"),
     btnCoachSend: document.getElementById("btnCoachSend"),
     coachUseReport: document.getElementById("coachUseReport"),
     coachContextStatus: document.getElementById("coachContextStatus"),
+    coachSideTitle: document.getElementById("coachSideTitle"),
+    coachUseReportLabel: document.getElementById("coachUseReportLabel"),
+    coachContextLabel: document.getElementById("coachContextLabel"),
+    coachContextDesc: document.getElementById("coachContextDesc"),
+    coachChatTitle: document.getElementById("coachChatTitle"),
+    coachPrompts: document.getElementById("coachPrompts"),
+
+    // Auth
+    btnLogin: document.getElementById("btnLogin"),
+    userMenu: document.getElementById("userMenu"),
+    btnUserAvatar: document.getElementById("btnUserAvatar"),
+    userAvatarCircle: document.getElementById("userAvatarCircle"),
+    userDropdown: document.getElementById("userDropdown"),
+    userNickname: document.getElementById("userNickname"),
+    userUsername: document.getElementById("userUsername"),
+    wechatBadge: document.getElementById("wechatBadge"),
+    btnSwitchAccount: document.getElementById("btnSwitchAccount"),
+    btnLogout: document.getElementById("btnLogout"),
+    authModal: document.getElementById("authModal"),
+    btnCloseAuthModal: document.getElementById("btnCloseAuthModal"),
+    loginForm: document.getElementById("loginForm"),
+    registerForm: document.getElementById("registerForm"),
+    loginUsername: document.getElementById("loginUsername"),
+    loginPassword: document.getElementById("loginPassword"),
+    loginError: document.getElementById("loginError"),
+    regUsername: document.getElementById("regUsername"),
+    regNickname: document.getElementById("regNickname"),
+    regEmail: document.getElementById("regEmail"),
+    regPassword: document.getElementById("regPassword"),
+    registerError: document.getElementById("registerError"),
+    btnWechatLogin: document.getElementById("btnWechatLogin"),
+    btnWechatRegister: document.getElementById("btnWechatRegister"),
+    wechatHint: document.getElementById("wechatHint"),
+    btnSettingsLogin: document.getElementById("btnSettingsLogin"),
+    accountGuest: document.getElementById("accountGuest"),
+    accountLogged: document.getElementById("accountLogged"),
+    settingsAvatar: document.getElementById("settingsAvatar"),
+    settingsNickname: document.getElementById("settingsNickname"),
+    settingsUsername: document.getElementById("settingsUsername"),
+    settingsWechatStatus: document.getElementById("settingsWechatStatus"),
+    btnEditProfile: document.getElementById("btnEditProfile"),
+    btnBindWechat: document.getElementById("btnBindWechat"),
+    btnSettingsLogout: document.getElementById("btnSettingsLogout"),
+    profileModal: document.getElementById("profileModal"),
+    btnCloseProfileModal: document.getElementById("btnCloseProfileModal"),
+    profileForm: document.getElementById("profileForm"),
+    editNickname: document.getElementById("editNickname"),
+    editAvatar: document.getElementById("editAvatar"),
+    profileError: document.getElementById("profileError"),
+    btnCancelProfile: document.getElementById("btnCancelProfile"),
+    btnSaveProfile: document.getElementById("btnSaveProfile"),
+
+    // Tour
+    tourOverlay: document.getElementById("tourOverlay"),
+    tourHighlight: document.getElementById("tourHighlight"),
+    tourCard: document.getElementById("tourCard"),
+    tourTitle: document.getElementById("tourTitle"),
+    tourDesc: document.getElementById("tourDesc"),
+    tourDots: document.getElementById("tourDots"),
+    btnSkipTour: document.getElementById("btnSkipTour"),
+    btnNextTour: document.getElementById("btnNextTour"),
   };
 
   const ctx = elements.frameCanvas.getContext("2d");
@@ -178,6 +1377,183 @@
     use_cpu: false,
   });
 
+  const COACH_I18N = {
+    zh: {
+      welcome: "你好，我是羽动智练 AI 教练。你可以问我发力、步伐、训练计划、比赛复盘，也可以在完成视频分析后让我结合本次报告给建议。",
+      placeholder: "例如：我后场杀球总是发不上力，应该怎么练？",
+      send: "发送",
+      thinking: "思考中...",
+      noQuestion: "请输入想问 AI 教练的问题",
+      thinkingStatus: "思考进度：",
+      firstStatus: "正在理解你的问题",
+      generating: "正在生成回答...",
+      genFailed: "AI 教练生成失败",
+      noAnswer: "我暂时没有生成有效回答。",
+      unavailable: "AI教练暂时不可用：",
+      providerLabel: "模型",
+      langLabel: "语言",
+      coachTitle: "训练教练",
+      contextTitle: "教练配置",
+      contextLabel: "当前上下文",
+      useReport: "结合本次训练分析",
+      noReport: "暂无训练报告",
+      contextDesc: "完成一次视频分析后，AI 教练会自动读取动作、击球片段、置信度和步伐评分，用于回答追问。",
+      reportLoaded: "已加载训练报告",
+      prompts: [
+        { label: "总结本次问题", prompt: "帮我根据本次训练报告总结三个最优先改进的问题。" },
+        { label: "20分钟步伐训练", prompt: "给我安排一套 20 分钟羽毛球步伐训练计划。" },
+        { label: "回位慢怎么改", prompt: "我击球后回位慢，应该从哪些动作细节改？" },
+        { label: "热身放松建议", prompt: "羽毛球训练前后应该怎么热身和放松？" },
+      ],
+    },
+    en: {
+      welcome: "Hello! I'm your BadmintonAI Coach. Ask me about technique, footwork, training plans, match review, or share your analysis report for personalized advice.",
+      placeholder: "e.g., How can I improve my backcourt smash power?",
+      send: "Send",
+      thinking: "Thinking...",
+      noQuestion: "Please enter a question for the AI coach",
+      thinkingStatus: "Progress:",
+      firstStatus: "Understanding your question",
+      generating: "Generating response...",
+      genFailed: "AI coach generation failed",
+      noAnswer: "I couldn't generate a valid response at this time.",
+      unavailable: "AI coach unavailable: ",
+      providerLabel: "Model",
+      langLabel: "Language",
+      coachTitle: "Training Coach",
+      contextTitle: "Coach Settings",
+      contextLabel: "Current Context",
+      useReport: "Use training analysis context",
+      noReport: "No training report yet",
+      contextDesc: "After completing a video analysis, the AI coach will automatically read actions, shots, confidence, and footwork scores to answer follow-up questions.",
+      reportLoaded: "Report loaded",
+      prompts: [
+        { label: "Summarize Issues", prompt: "Based on this training report, summarize the top 3 priority issues to improve." },
+        { label: "20min Footwork", prompt: "Create a 20-minute badminton footwork training plan for me." },
+        { label: "Slow Recovery", prompt: "My recovery after hitting is slow - what technical details should I fix?" },
+        { label: "Warm-up/Cool-down", prompt: "How should I warm up before and cool down after badminton training?" },
+      ],
+    },
+    ja: {
+      welcome: "こんにちは、BadmintonAIコーチです。技術、フットワーク、練習計画、試合の复盘について質問できます。動画分析後はレポートを基にアドバイスします。",
+      placeholder: "例：後衛のスマッシュ力を上げるにはどうすればいいですか？",
+      send: "送信",
+      thinking: "考え中...",
+      noQuestion: "AIコーチへの質問を入力してください",
+      thinkingStatus: "思考進捗：",
+      firstStatus: "質問を理解しています",
+      generating: "回答を生成中...",
+      genFailed: "AIコーチの生成に失敗しました",
+      noAnswer: "有効な回答を生成できませんでした。",
+      unavailable: "AIコーチは一時的に利用できません：",
+      providerLabel: "モデル",
+      langLabel: "言語",
+      coachTitle: "トレーニングコーチ",
+      contextTitle: "コーチ設定",
+      contextLabel: "現在のコンテキスト",
+      useReport: "トレーニング分析結果を使用",
+      noReport: "トレーニングレポートがありません",
+      contextDesc: "動画分析完了後、AIコーチはアクション、ショット、信頼度、フットワークスコアを自動的に読み取り、質問に回答します。",
+      reportLoaded: "レポート読み込み済み",
+      prompts: [
+        { label: "問題をまとめる", prompt: "今回のトレーニングレポートから、最優先で改善すべき3つの問題をまとめてください。" },
+        { label: "20分フットワーク", prompt: "20分間のバドミントンフットワーク練習メニューを作ってください。" },
+        { label: "戻りが遅い", prompt: "ショット後の戻りが遅いのですが、どの技術的詳細を改善すべきですか？" },
+        { label: "ウォームアップ", prompt: "バドミントンの練習前後のウォームアップとクールダウン方法を教えてください。" },
+      ],
+    },
+    ko: {
+      welcome: "안녕하세요, BadmintonAI 코치입니다. 기술, 풋워크, 훈련 계획, 경기 복기에 대해 질문하실 수 있습니다. 영상 분석 후 리포트를 바탕으로 조언해 드립니다.",
+      placeholder: "예: 백핸드 스매시 파워를 높이려면 어떻게 해야 하나요?",
+      send: "전송",
+      thinking: "생각 중...",
+      noQuestion: "AI 코치에게 질문을 입력해 주세요",
+      thinkingStatus: "진행 상황:",
+      firstStatus: "질문을 이해하는 중",
+      generating: "답변 생성 중...",
+      genFailed: "AI 코치 생성 실패",
+      noAnswer: "유효한 답변을 생성하지 못했습니다.",
+      unavailable: "AI 코치를 일시적으로 사용할 수 없습니다: ",
+      providerLabel: "모델",
+      langLabel: "언어",
+      coachTitle: "트레이닝 코치",
+      contextTitle: "코치 설정",
+      contextLabel: "현재 컨텍스트",
+      useReport: "트레이닝 분석 결과 사용",
+      noReport: "트레이닝 리포트 없음",
+      contextDesc: "영상 분석 완료 후 AI 코치가 액션, 샷, 신뢰도, 풋워크 점수를 자동으로 읽어 후속 질문에 답변합니다.",
+      reportLoaded: "리포트 로드됨",
+      prompts: [
+        { label: "문제점 요약", prompt: "이번 트레이닝 리포트에서 가장 우선적으로 개선해야 할 3가지 문제를 요약해 주세요." },
+        { label: "20분 풋워크", prompt: "20분 배드민턴 풋워크 훈련 계획을 만들어 주세요." },
+        { label: "복귀 느림", prompt: "샷 후 복귀가 느린데 어떤 기술적 세부사항을 고쳐야 하나요?" },
+        { label: "워밍업", prompt: "배드민턴 훈련 전후 워밍업과 쿨다운 방법을 알려주세요." },
+      ],
+    },
+    id: {
+      welcome: "Halo! Saya Pelatih AI BadmintonAI. Tanya saya tentang teknik, footwork, rencana latihan, review tanding, atau bagikan laporan analisis untuk saran personal.",
+      placeholder: "cth: Bagaimana cara meningkatkan power smash backcourt saya?",
+      send: "Kirim",
+      thinking: "Berpikir...",
+      noQuestion: "Silakan masukkan pertanyaan untuk pelatih AI",
+      thinkingStatus: "Proses:",
+      firstStatus: "Memahami pertanyaan Anda",
+      generating: "Menghasilkan jawaban...",
+      genFailed: "Pelatih AI gagal menghasilkan jawaban",
+      noAnswer: "Saya tidak dapat menghasilkan jawaban yang valid saat ini.",
+      unavailable: "Pelatih AI tidak tersedia: ",
+      providerLabel: "Model",
+      langLabel: "Bahasa",
+      coachTitle: "Pelatih Latihan",
+      contextTitle: "Pengaturan Pelatih",
+      contextLabel: "Konteks Saat Ini",
+      useReport: "Gunakan konteks analisis latihan",
+      noReport: "Belum ada laporan latihan",
+      contextDesc: "Setelah analisis video selesai, pelatih AI akan membaca aksi, pukulan, keyakinan, dan skor footwork untuk menjawab pertanyaan lanjutan.",
+      reportLoaded: "Laporan dimuat",
+      prompts: [
+        { label: "Ringkas Masalah", prompt: "Berdasarkan laporan latihan ini, rangkum 3 masalah prioritas utama untuk diperbaiki." },
+        { label: "Footwork 20menit", prompt: "Buatkan rencana latihan footwork bulu tangkis 20 menit untuk saya." },
+        { label: "Recovery Lambat", prompt: "Recovery setelah pukulan saya lambat - detail teknis apa yang harus diperbaiki?" },
+        { label: "Pemanasan", prompt: "Bagaimana cara pemanasan sebelum dan pendinginan setelah latihan bulu tangkis?" },
+      ],
+    },
+  };
+
+  function getCoachLang() {
+    return SUPPORTED_LANGS.includes(state.uiLanguage) ? state.uiLanguage : "zh";
+  }
+
+  function coachT(key) {
+    const dict = COACH_I18N[getCoachLang()] || COACH_I18N.zh;
+    return dict[key] !== undefined ? dict[key] : (COACH_I18N.zh[key] || "");
+  }
+
+  function updateCoachUILanguage() {
+    const lang = getCoachLang();
+    renderCoachPromptButtons(lang);
+    updateCoachContextStatus();
+    if (elements.btnCoachSend && !elements.btnCoachSend.disabled) {
+      elements.btnCoachSend.textContent = t("btnSend", state.uiLanguage);
+    }
+  }
+
+  function updateTopbarTitle() {
+    const active = document.querySelector(".nav-item.active");
+    const tabMap = {
+      "navTraining": { zh: "训练检测", en: "Detection", ja: "検出", ko: "검출", id: "Deteksi" },
+      "navAnalysis": { zh: "动作分析", en: "Analysis", ja: "分析", ko: "분석", id: "Analisis" },
+      "navReport":   { zh: "训练报告", en: "Report", ja: "レポート", ko: "리포트", id: "Laporan" },
+      "navCoach":    { zh: "AI教练问答", en: "AI Coach", ja: "AIコーチ", ko: "AI 코치", id: "Pelatih AI" },
+      "navHistory":  { zh: "训练历史", en: "History", ja: "履歴", ko: "기록", id: "Riwayat" },
+      "navSettings": { zh: "系统设置", en: "Settings", ja: "設定", ko: "설정", id: "Pengaturan" },
+    };
+    const panel = elements?.topbarTitle?.closest(".topbar-panel");
+    if (active && tabMap[active.id] && elements.topbarTitle) {
+      elements.topbarTitle.textContent = tabMap[active.id][state.uiLanguage] || tabMap[active.id].zh;
+    }
+  }
+
   function apiUrl(path) {
     return `${API_BASE}${path}`;
   }
@@ -196,16 +1572,8 @@
     Object.entries(elements.panels).forEach(([key, panel]) => {
       panel.classList.toggle("active", key === tabName);
     });
-    // Update topbar title
-    const titles = {
-      training: "训练检测",
-      analysis: "动作分析",
-      report: "训练报告",
-      coach: "AI教练",
-      history: "训练历史",
-      settings: "系统设置",
-    };
-    document.querySelector(".topbar-left h1").textContent = titles[tabName] || "羽动智练";
+    // Update topbar title (i18n-aware)
+    updateTopbarTitle();
   }
 
   // Tab click handlers
@@ -225,19 +1593,24 @@
     }
   });
 
-  elements.btnSettings.addEventListener("click", () => switchTab("settings"));
+  if (elements.btnSettings) {
+    elements.btnSettings.addEventListener("click", () => switchTab("settings"));
+  }
 
   // ---- Connection Status ----
   function setConnected(connected) {
     state.connected = connected;
     const indicator = elements.statusIndicator;
+    if (!indicator) return;
     const statusText = indicator.querySelector(".status-text");
     indicator.classList.remove("connected", "error");
+    const connLabels = { zh: { on: "已连接", off: "未连接" }, en: { on: "Connected", off: "Disconnected" }, ja: { on: "接続済み", off: "未接続" }, ko: { on: "연결됨", off: "연결 안됨" }, id: { on: "Terhubung", off: "Terputus" } };
+    const lbl = connLabels[state.uiLanguage] || connLabels.zh;
     if (connected) {
       indicator.classList.add("connected");
-      statusText.textContent = "已连接";
+      if (statusText) statusText.textContent = lbl.on;
     } else {
-      statusText.textContent = "未连接";
+      if (statusText) statusText.textContent = lbl.off;
     }
   }
 
@@ -360,6 +1733,16 @@
 
   async function loadUploadedVideo(file) {
     if (!file) return;
+    if (!state.user) {
+      showAuthModal("login");
+      return;
+    }
+    const MAX_VIDEO_SIZE = 500 * 1024 * 1024;
+    if (file.size > MAX_VIDEO_SIZE) {
+      showUploadHint(t("videoSizeExceeded"));
+      if (elements.videoUploadInput) elements.videoUploadInput.value = "";
+      return;
+    }
     stopCourtPlaybackLoop();
     if (state.analysisTimerId) {
       window.clearInterval(state.analysisTimerId);
@@ -430,19 +1813,11 @@
     statusEl.className = "precheck-status " + (result.overall || (result.ok ? "pass" : "fail"));
     const scene = result.scene_type;
     if (result.overall === "pass" || result.ok) {
-      if (scene === "match_wide") {
-        statusEl.textContent = "检测到比赛远景视频，可以分析";
-      } else {
-        statusEl.textContent = "视频质量良好，可以分析";
-      }
+      statusEl.textContent = scene === "match_wide" ? t("precheckPassMatchMsg") : t("precheckPassMsg");
     } else if (result.overall === "warn") {
-      if (scene === "match_wide") {
-        statusEl.textContent = "比赛远景视频，将自动适配参数进行分析";
-      } else {
-        statusEl.textContent = "视频存在小问题，仍可分析，部分精度可能受影响";
-      }
+      statusEl.textContent = scene === "match_wide" ? t("precheckWarnMatchMsg") : t("precheckWarnMsg");
     } else {
-      statusEl.textContent = "视频质量不佳，请检查后重新上传";
+      statusEl.textContent = t("precheckFailMsg");
     }
 
     elements.precheckItems.innerHTML = "";
@@ -462,12 +1837,15 @@
     elements.precheckActions.hidden = false;
     state.precheckPassed = result.ok || result.overall !== "fail";
     if (elements.btnProceedAnalyze) {
+      const startLabels = { zh: "开始分析", en: "Start Analysis", ja: "分析を開始", ko: "분석 시작", id: "Mulai Analisis" };
+      const startWideLabels = { zh: "开始分析（比赛远景模式）", en: "Start Analysis (Wide-angle Mode)", ja: "分析を開始（広角モード）", ko: "분석 시작 (광각 모드)", id: "Mulai Analisis (Mode Sudut Lebar)" };
+      const proceedLabels = { zh: "继续分析", en: "Continue Analysis", ja: "分析を続ける", ko: "분석 계속", id: "Lanjut Analisis" };
       if (result.overall === "pass") {
-        elements.btnProceedAnalyze.textContent = "开始分析";
+        elements.btnProceedAnalyze.textContent = startLabels[state.uiLanguage] || startLabels.zh;
       } else if (result.scene_type === "match_wide") {
-        elements.btnProceedAnalyze.textContent = "开始分析（比赛远景模式）";
+        elements.btnProceedAnalyze.textContent = startWideLabels[state.uiLanguage] || startWideLabels.zh;
       } else {
-        elements.btnProceedAnalyze.textContent = "继续分析";
+        elements.btnProceedAnalyze.textContent = proceedLabels[state.uiLanguage] || proceedLabels.zh;
       }
       elements.btnProceedAnalyze.disabled = !state.precheckPassed;
     }
@@ -476,9 +1854,10 @@
   async function runPrecheck(file) {
     if (!window.location.protocol.startsWith("http")) return;
     showPrecheckPanel();
-    elements.precheckStatus.textContent = "检测中...";
+    elements.precheckStatus.textContent = t("precheckChecking");
     elements.precheckStatus.className = "precheck-status";
-    elements.precheckItems.innerHTML = '<div class="precheck-item"><span class="check-icon">⏳</span><span class="check-label">正在检测视频质量...</span></div>';
+    const checkingLabels = { zh: "正在检测视频质量...", en: "Checking video quality...", ja: "動画画質をチェック中...", ko: "영상 화질 확인 중...", id: "Memeriksa kualitas video..." };
+    elements.precheckItems.innerHTML = `<div class="precheck-item"><span class="check-icon">⏳</span><span class="check-label">${checkingLabels[state.uiLanguage] || checkingLabels.zh}</span></div>`;
     elements.precheckActions.hidden = true;
 
     try {
@@ -492,9 +1871,11 @@
       const result = await resp.json();
       renderPrecheckResult(result);
     } catch (err) {
-      elements.precheckStatus.textContent = "检测失败，可直接尝试分析";
+      const failLabels = { zh: "检测失败，可直接尝试分析", en: "Precheck failed, you may try analysis directly", ja: "チェック失敗、直接分析を試せます", ko: "검사 실패, 직접 분석을 시도할 수 있습니다", id: "Pemeriksaan gagal, Anda bisa mencoba analisis langsung" };
+      elements.precheckStatus.textContent = failLabels[state.uiLanguage] || failLabels.zh;
       elements.precheckStatus.className = "precheck-status warn";
-      elements.precheckItems.innerHTML = `<div class="precheck-item"><span class="check-icon warn">⚠️</span><span class="check-label">预检失败</span><span class="check-value">${err.message}</span></div>`;
+      const precheckFailLabels = { zh: "预检失败", en: "Precheck failed", ja: "プレチェック失敗", ko: "사전 검사 실패", id: "Pemeriksaan awal gagal" };
+      elements.precheckItems.innerHTML = `<div class="precheck-item"><span class="check-icon warn">⚠️</span><span class="check-label">${precheckFailLabels[state.uiLanguage] || precheckFailLabels.zh}</span><span class="check-value">${err.message}</span></div>`;
       elements.precheckActions.hidden = false;
       state.precheckPassed = true;
       if (elements.btnProceedAnalyze) elements.btnProceedAnalyze.disabled = false;
@@ -502,7 +1883,13 @@
   }
 
   function buildAnalyzeConfig() {
-    return { ...DELIVERY_ANALYSIS_CONFIG };
+    const lang = state.uiLanguage || "zh";
+    return {
+      ...DELIVERY_ANALYSIS_CONFIG,
+      generate_llm_report: true,
+      language: SUPPORTED_LANGS.includes(lang) ? lang : "zh",
+      llm_language: SUPPORTED_LANGS.includes(lang) ? lang : "zh",
+    };
   }
 
   function formatElapsed(ms) {
@@ -520,17 +1907,40 @@
       state.analysisTimerId = null;
     }
     if (elements.analysisTimer) elements.analysisTimer.hidden = false;
-    if (elements.analysisStage) elements.analysisStage.textContent = "上传视频并准备姿态分析";
+    if (elements.analysisStage) {
+      elements.analysisStage.textContent = t("processingStage1");
+      delete elements.analysisStage.dataset.sseUpdated;
+    }
     if (elements.analysisElapsed) elements.analysisElapsed.textContent = "0.0 秒";
+    if (elements.analysisProgressBar) elements.analysisProgressBar.style.width = "3%";
     state.analysisTimerId = window.setInterval(() => {
       const elapsed = performance.now() - state.analysisStartedAt;
       if (elements.analysisElapsed) elements.analysisElapsed.textContent = formatElapsed(elapsed);
-      if (elements.analysisStage) {
-        if (elapsed > 45000) elements.analysisStage.textContent = "生成标注视频与训练报告";
-        else if (elapsed > 15000) elements.analysisStage.textContent = "识别人体姿态和步伐轨迹";
-        else if (elapsed > 5000) elements.analysisStage.textContent = "抽帧并加载动作识别模型";
+      if (elements.analysisStage && !elements.analysisStage.dataset.sseUpdated) {
+        const stageLabels = {
+          zh: ["上传视频并准备姿态分析", "抽帧并加载动作识别模型", "识别人体姿态和步伐轨迹", "生成标注视频与训练报告"],
+          en: ["Uploading video and preparing pose analysis", "Extracting frames and loading models", "Detecting poses and footwork traces", "Generating annotated video and report"],
+          ja: ["動画アップロードと姿勢分析準備", "フレーム抽出とモデル読み込み", "姿勢とフットワーク軌跡の検出", "注釈動画とレポートの生成"],
+          ko: ["영상 업로드 및 자세 분석 준비", "프레임 추출 및 모델 로딩", "자세와 풋워크 궤적 감지", "주석 영상과 리포트 생성"],
+          id: ["Mengunggah video dan menyiapkan analisis pose", "Mengekstrak frame dan memuat model", "Mendeteksi pose dan jejak footwork", "Menghasilkan video beranotasi dan laporan"],
+        };
+        const labels = stageLabels[state.uiLanguage] || stageLabels.zh;
+        let idx = 0;
+        if (elapsed > 45000) idx = 3;
+        else if (elapsed > 15000) idx = 2;
+        else if (elapsed > 5000) idx = 1;
+        elements.analysisStage.textContent = labels[idx];
       }
     }, 100);
+  }
+
+  function updateAnalysisProgress(percent, message) {
+    const pct = Math.max(0, Math.min(100, Number(percent) || 0));
+    if (elements.analysisProgressBar) elements.analysisProgressBar.style.width = pct + "%";
+    if (message && elements.analysisStage) {
+      elements.analysisStage.textContent = message;
+      elements.analysisStage.dataset.sseUpdated = "1";
+    }
   }
 
   function stopAnalysisTimer(statusText, elapsedMs = null) {
@@ -542,6 +1952,7 @@
     if (elements.analysisTimer) elements.analysisTimer.hidden = false;
     if (elements.analysisStage) elements.analysisStage.textContent = statusText;
     if (elements.analysisElapsed) elements.analysisElapsed.textContent = formatElapsed(elapsed);
+    if (elements.analysisProgressBar) elements.analysisProgressBar.style.width = "100%";
   }
 
   async function runBackendAnalysis() {
@@ -572,12 +1983,54 @@
       if (!response.ok) {
         throw new Error(await response.text());
       }
-      const report = await response.json();
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let buffer = "";
+      let finalReport = null;
+      let sseError = null;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const events = buffer.split("\n\n");
+        buffer = events.pop();
+        for (const chunk of events) {
+          const lines = chunk.split("\n");
+          let eventName = "message";
+          let dataStr = "";
+          for (const line of lines) {
+            if (line.startsWith("event:")) eventName = line.slice(6).trim();
+            else if (line.startsWith("data:")) dataStr += line.slice(5).trim();
+          }
+          if (!dataStr || dataStr === "[DONE]") continue;
+          try {
+            const data = JSON.parse(dataStr);
+            if (eventName === "progress") {
+              updateAnalysisProgress(data.percent, data.message);
+            } else if (eventName === "result") {
+              finalReport = data;
+            } else if (eventName === "error") {
+              sseError = data.message || "分析失败";
+            } else if (eventName === "start") {
+              updateAnalysisProgress(3, data.message || "开始分析...");
+            }
+          } catch (e) {
+            // ignore parse errors for heartbeat etc.
+          }
+        }
+      }
+
+      if (sseError) throw new Error(sseError);
+      if (!finalReport) throw new Error("未收到分析结果");
+
       const elapsedMs = performance.now() - startedAt;
-      state.analysisReport = report;
+      state.analysisReport = finalReport;
       stopAnalysisTimer("分析完成，已生成训练结果", elapsedMs);
-      renderBackendReport(report, elapsedMs);
+      renderBackendReport(finalReport, elapsedMs);
       loadHistoryList();
+      updateCoachContextStatus();
     } catch (error) {
       setConnected(false);
       stopAnalysisTimer("分析失败，请检查后端服务或视频格式");
@@ -1082,9 +2535,11 @@
     const cleaned = [];
     let previous = null;
     (trace || []).forEach((point) => {
+      const t = point && Number.isFinite(Number(point.time_sec)) ? Number(point.time_sec) : null;
       const current = {
         x: Number.isFinite(Number(point.x)) ? Number(point.x) : 0.5,
         y: Number.isFinite(Number(point.y)) ? Number(point.y) : 0.5,
+        time_sec: t,
       };
       if (previous) {
         const jump = Math.hypot(current.x - previous.x, current.y - previous.y);
@@ -1094,12 +2549,13 @@
       previous = current;
     });
     if (cleaned.length < 5) return cleaned;
-    return cleaned.map((point, index) => {
-      if (index < 2 || index > cleaned.length - 3) return point;
+    return cleaned.map((pt, index) => {
+      if (index < 2 || index > cleaned.length - 3) return pt;
       const window = cleaned.slice(index - 2, index + 3);
       return {
         x: window.reduce((sum, item) => sum + item.x, 0) / window.length,
         y: window.reduce((sum, item) => sum + item.y, 0) / window.length,
+        time_sec: pt.time_sec,
       };
     });
   }
@@ -1186,7 +2642,26 @@
     ctx.restore();
   }
 
-  function drawCourt(values = null, trace = state.footworkTrace, progressRatio = 1) {
+  function findTraceIndexByTime(trace, targetTime) {
+    if (!trace || trace.length === 0) return 0;
+    if (trace.length === 1) return 0;
+    const t0 = trace[0].time_sec;
+    const tN = trace[trace.length - 1].time_sec;
+    const hasTime = t0 != null && Number.isFinite(t0) && tN != null && Number.isFinite(tN) && tN > t0;
+    if (!hasTime) return -1;
+    if (targetTime <= t0) return 0;
+    if (targetTime >= tN) return trace.length - 1;
+    let lo = 0, hi = trace.length - 1;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      const mt = trace[mid].time_sec;
+      if (mt == null || !Number.isFinite(mt) || mt < targetTime) lo = mid + 1;
+      else hi = mid;
+    }
+    return lo;
+  }
+
+  function drawCourt(values = null, trace = state.footworkTrace, progressRatio = 1, currentTime = null) {
     const canvas = elements.courtCanvas;
     const w = canvas.width;
     const h = canvas.height;
@@ -1196,57 +2671,104 @@
     courtCtx.fillStyle = "#0a1f16";
     courtCtx.fillRect(0, 0, w, h);
 
-    // Half-court outline for target-player footwork density.
-    courtCtx.strokeStyle = "#254b3e";
+    // Standard badminton half-court (doubles): 6.10m wide x 6.70m deep (net to baseline)
+    // We draw with equal margins on sides, smaller margin top/bottom for labels
+    const padX = 28;
+    const padTop = 36;
+    const padBottom = 28;
+    const availW = w - padX * 2;
+    const availH = h - padTop - padBottom;
+    const courtAspect = 6.10 / 6.70;
+    let courtW, courtH;
+    if (availW / availH > courtAspect) {
+      courtH = availH;
+      courtW = courtH * courtAspect;
+    } else {
+      courtW = availW;
+      courtH = courtW / courtAspect;
+    }
+    const left = padX + (availW - courtW) / 2;
+    const top = padTop + (availH - courtH) / 2;
+    const right = left + courtW;
+    const bottom = top + courtH;
+
+    // Standard court line ratios (relative to half-court, 0=net, 1=baseline)
+    const R_SHORT_SERVICE = 1.98 / 6.70;
+    const R_SINGLES_SIDE = 0.46 / 6.10;
+    const yShort = top + courtH * R_SHORT_SERVICE;
+    const xSinglesL = left + courtW * R_SINGLES_SIDE;
+    const xSinglesR = right - courtW * R_SINGLES_SIDE;
+    const xCenter = left + courtW * 0.5;
+
+    // Doubles outer boundary
+    courtCtx.strokeStyle = "#2a6e52";
     courtCtx.lineWidth = 2;
-    const marginX = 78;
-    const marginY = 42;
-    const left = marginX;
-    const top = marginY;
-    const right = w - marginX;
-    const bottom = h - marginY;
-    const courtW = right - left;
-    const courtH = bottom - top;
     courtCtx.strokeRect(left, top, courtW, courtH);
 
-    // Net and service lines
+    // Singles sidelines
+    courtCtx.strokeStyle = "#254b3e";
+    courtCtx.lineWidth = 1.2;
+    courtCtx.beginPath();
+    courtCtx.moveTo(xSinglesL, top);
+    courtCtx.lineTo(xSinglesL, bottom);
+    courtCtx.stroke();
+    courtCtx.beginPath();
+    courtCtx.moveTo(xSinglesR, top);
+    courtCtx.lineTo(xSinglesR, bottom);
+    courtCtx.stroke();
+
+    // Short service line
+    courtCtx.beginPath();
+    courtCtx.moveTo(left, yShort);
+    courtCtx.lineTo(right, yShort);
+    courtCtx.stroke();
+
+    // Center line (from short service line to baseline)
+    courtCtx.beginPath();
+    courtCtx.moveTo(xCenter, yShort);
+    courtCtx.lineTo(xCenter, bottom);
+    courtCtx.stroke();
+
+    // Net (top boundary, dashed green)
     courtCtx.strokeStyle = "#5eff9f";
     courtCtx.setLineDash([6, 4]);
-    courtCtx.lineWidth = 1.5;
+    courtCtx.lineWidth = 2;
     courtCtx.beginPath();
     courtCtx.moveTo(left, top);
     courtCtx.lineTo(right, top);
     courtCtx.stroke();
     courtCtx.setLineDash([]);
 
-    courtCtx.strokeStyle = "#254b3e";
+    // Baseline label area
+    courtCtx.strokeStyle = "rgba(94,255,159,0.2)";
     courtCtx.lineWidth = 1;
+    courtCtx.setLineDash([3, 3]);
     courtCtx.beginPath();
-    courtCtx.moveTo(left, top + courtH * 0.34);
-    courtCtx.lineTo(right, top + courtH * 0.34);
+    courtCtx.moveTo(left, bottom);
+    courtCtx.lineTo(right, bottom);
     courtCtx.stroke();
-    courtCtx.beginPath();
-    courtCtx.moveTo(left, top + courtH * 0.62);
-    courtCtx.lineTo(right, top + courtH * 0.62);
-    courtCtx.stroke();
-    courtCtx.beginPath();
-    courtCtx.moveTo(w / 2, top + courtH * 0.34);
-    courtCtx.lineTo(w / 2, bottom);
-    courtCtx.stroke();
-    courtCtx.beginPath();
-    courtCtx.moveTo(left + courtW * 0.12, top);
-    courtCtx.lineTo(left + courtW * 0.12, bottom);
-    courtCtx.stroke();
-    courtCtx.beginPath();
-    courtCtx.moveTo(right - courtW * 0.12, top);
-    courtCtx.lineTo(right - courtW * 0.12, bottom);
-    courtCtx.stroke();
+    courtCtx.setLineDash([]);
 
-    // Labels
+    // Zone labels
+    courtCtx.fillStyle = "rgba(168,201,187,0.45)";
+    courtCtx.font = "10px JetBrains Mono, monospace";
+    courtCtx.textAlign = "center";
+    courtCtx.fillText("NET", xCenter, top - 8);
+    courtCtx.textAlign = "center";
+    courtCtx.fillText("BASELINE", xCenter, bottom + 14);
+    courtCtx.save();
+    courtCtx.fillStyle = "rgba(168,201,187,0.3)";
+    courtCtx.font = "9px JetBrains Mono, monospace";
+    courtCtx.fillText("FRONT", xCenter, top + courtH * 0.15);
+    courtCtx.fillText("MID", xCenter, top + courtH * (R_SHORT_SERVICE + (1 - R_SHORT_SERVICE) * 0.35));
+    courtCtx.fillText("BACK", xCenter, top + courtH * (R_SHORT_SERVICE + (1 - R_SHORT_SERVICE) * 0.8));
+    courtCtx.restore();
+
+    // Title / footer
     courtCtx.fillStyle = "#a8c9bb";
     courtCtx.font = "12px JetBrains Mono, monospace";
     courtCtx.textAlign = "center";
-    courtCtx.fillText("目标球员半场步伐热区", w / 2, h - 16);
+    courtCtx.fillText("目标球员半场步伐热区", w / 2, h - 8);
 
     if (!trace || trace.length < 2) {
       courtCtx.fillStyle = "rgba(168, 201, 187, 0.78)";
@@ -1257,10 +2779,47 @@
 
     const cleanedTrace = cleanTrace(trace);
     if (cleanedTrace.length < 2) return;
-    const safeProgress = Math.max(0.02, Math.min(1, Number(progressRatio || 1)));
-    const exactIndex = Math.max(1, (cleanedTrace.length - 1) * safeProgress);
-    const baseIndex = Math.max(1, Math.min(cleanedTrace.length - 1, Math.floor(exactIndex)));
-    const fraction = Math.max(0, Math.min(1, exactIndex - baseIndex));
+
+    let baseIndex;
+    let fraction = 0;
+    const t = Number.isFinite(Number(currentTime)) ? Number(currentTime) : null;
+    if (t != null) {
+      const idx = findTraceIndexByTime(cleanedTrace, t);
+      if (idx >= 0) {
+        if (idx === 0) {
+          baseIndex = 0;
+          fraction = 0;
+        } else if (idx >= cleanedTrace.length - 1) {
+          baseIndex = cleanedTrace.length - 2;
+          const prev = cleanedTrace[baseIndex];
+          const curr = cleanedTrace[baseIndex + 1];
+          const dt = (curr.time_sec - prev.time_sec) || 1;
+          fraction = Math.max(0, Math.min(1, (t - prev.time_sec) / dt));
+        } else {
+          const prev = cleanedTrace[idx - 1];
+          const curr = cleanedTrace[idx];
+          if (curr.time_sec > t && prev.time_sec <= t) {
+            baseIndex = idx - 1;
+            const dt = (curr.time_sec - prev.time_sec) || 1;
+            fraction = Math.max(0, Math.min(1, (t - prev.time_sec) / dt));
+          } else {
+            baseIndex = idx;
+            fraction = 0;
+          }
+        }
+      } else {
+        const safeProgress = Math.max(0.02, Math.min(1, Number(progressRatio || 1)));
+        const exactIndex = Math.max(1, (cleanedTrace.length - 1) * safeProgress);
+        baseIndex = Math.max(1, Math.min(cleanedTrace.length - 1, Math.floor(exactIndex)));
+        fraction = Math.max(0, Math.min(1, exactIndex - baseIndex));
+      }
+    } else {
+      const safeProgress = Math.max(0.02, Math.min(1, Number(progressRatio || 1)));
+      const exactIndex = Math.max(1, (cleanedTrace.length - 1) * safeProgress);
+      baseIndex = Math.max(1, Math.min(cleanedTrace.length - 1, Math.floor(exactIndex)));
+      fraction = Math.max(0, Math.min(1, exactIndex - baseIndex));
+    }
+
     const visible = cleanedTrace.slice(0, baseIndex + 1);
     if (fraction > 0 && cleanedTrace[baseIndex + 1]) {
       const from = cleanedTrace[baseIndex];
@@ -1271,17 +2830,17 @@
       });
     }
     const points = visible.map((point) => {
-      const x = Number.isFinite(Number(point.x)) ? Number(point.x) : 0.5;
-      const y = Number.isFinite(Number(point.y)) ? Number(point.y) : 0.5;
+      const nx = Number.isFinite(Number(point.x)) ? Number(point.x) : 0.5;
+      const ny = Number.isFinite(Number(point.y)) ? Number(point.y) : 0.5;
       return {
-        x: left + (0.16 + x * 0.68) * courtW,
-        y: top + (0.18 + y * 0.72) * courtH,
+        x: left + (0.08 + nx * 0.84) * courtW,
+        y: top + (0.06 + ny * 0.88) * courtH,
       };
     });
 
     // Heat layer
     const heatCols = 14;
-    const heatRows = 10;
+    const heatRows = 16;
     const heat = new Array(heatCols * heatRows).fill(0);
     points.forEach((point) => {
       const gx = Math.max(0, Math.min(heatCols - 1, Math.round(((point.x - left) / courtW) * (heatCols - 1))));
@@ -1313,7 +2872,7 @@
         const rh = cellH * 1.24;
         courtCtx.beginPath();
         if (typeof courtCtx.roundRect === "function") {
-          courtCtx.roundRect(rx, ry, rw, rh, 12);
+          courtCtx.roundRect(rx, ry, rw, rh, 10);
         } else {
           courtCtx.rect(rx, ry, rw, rh);
         }
@@ -1322,7 +2881,7 @@
     }
 
     // Recent trajectory only, smoothed and interpolated for a stable playback trail.
-    const recent = densifyCourtPoints(smoothCourtPoints(points.slice(-48), 3), 7);
+    const recent = densifyCourtPoints(smoothCourtPoints(points.slice(-90), 3), 7);
     drawFootworkTrail(courtCtx, recent);
 
     const current = recent[recent.length - 1] || points[points.length - 1];
@@ -1344,7 +2903,8 @@
     const summary = `热区 ${points.length} 点 · 覆盖 ${coverage.toFixed(0)} · 移动 ${movement.toFixed(0)} · 回位 ${recovery.toFixed(0)}`;
     courtCtx.fillStyle = "#d9f7e8";
     courtCtx.font = "13px Microsoft YaHei, sans-serif";
-    courtCtx.fillText(summary, w / 2, 24);
+    courtCtx.textAlign = "center";
+    courtCtx.fillText(summary, w / 2, 20);
   }
 
   function drawRadar(data) {
@@ -1576,7 +3136,7 @@
     }
 
     if (animateCourt && state.footworkTrace.length) {
-      drawCourt(state.radarData, state.footworkTrace, progressRatio);
+      drawCourt(state.radarData, state.footworkTrace, progressRatio, currentTime);
     }
   }
 
@@ -1674,25 +3234,28 @@
   }
 
   function updateConfigOutput() {
+    const v = (el, def) => el ? (el.type === "number" ? parseFloat(el.value) : el.value) : def;
     const config = {
-      model: elements.modelSelect.value,
-      confidence: parseFloat(elements.confThreshold.value),
-      videoSource: elements.videoSource.value,
-      inferenceBackend: elements.inferenceBackend.value,
-      computeDevice: elements.computeDevice.value,
-      inputResolution: parseInt(elements.inputResolution.value),
-      modelPrecision: elements.modelPrecision.value,
-      frameRate: parseInt(elements.frameRate.value),
-      frameSkip: parseInt(elements.frameSkip.value),
+      model: v(elements.modelSelect, "yolov8"),
+      confidence: v(elements.confThreshold, 0.5),
+      videoSource: v(elements.videoSource, "file"),
+      inferenceBackend: v(elements.inferenceBackend, "onnx"),
+      computeDevice: v(elements.computeDevice, "cpu"),
+      inputResolution: parseInt(v(elements.inputResolution, "640")),
+      modelPrecision: v(elements.modelPrecision, "fp32"),
+      frameRate: parseInt(v(elements.frameRate, "30")),
+      frameSkip: parseInt(v(elements.frameSkip, "1")),
       roi: {
-        x1: parseInt(elements.roiX1.value),
-        y1: parseInt(elements.roiY1.value),
-        x2: parseInt(elements.roiX2.value),
-        y2: parseInt(elements.roiY2.value),
+        x1: parseInt(v(elements.roiX1, "0")),
+        y1: parseInt(v(elements.roiY1, "0")),
+        x2: parseInt(v(elements.roiX2, "640")),
+        y2: parseInt(v(elements.roiY2, "480")),
       },
-      saveDetection: elements.saveDetection.value === "true",
+      saveDetection: v(elements.saveDetection, "false") === "true",
     };
-    elements.configOutput.textContent = JSON.stringify(config, null, 2);
+    if (elements.configOutput) {
+      elements.configOutput.textContent = JSON.stringify(config, null, 2);
+    }
   }
 
   function showToast(message, type = "info") {
@@ -1812,13 +3375,16 @@ ${footworkText || "暂无步伐评分数据"}
 
   function updateCoachContextStatus() {
     if (!elements.coachContextStatus) return;
+    const lang = getCoachLang();
     if (!state.analysisReport) {
-      elements.coachContextStatus.textContent = "暂无训练报告";
+      elements.coachContextStatus.textContent = t("coachNoReport");
       return;
     }
-    const action = state.analysisReport.predicted_action || "已完成分析";
+    const completeLabels = { zh: "已完成分析", en: "Analysis complete", ja: "分析完了", ko: "분석 완료", id: "Analisis selesai" };
+    const hitsLabels = { zh: "次击球", en: " shots", ja: "回のショット", ko: "회 타격", id: " pukulan" };
+    const action = state.analysisReport.predicted_action || completeLabels[lang] || completeLabels.zh;
     const hits = state.analysisReport.hit_count || state.shotEvents.length || 0;
-    elements.coachContextStatus.textContent = `${action} · ${hits} 次击球`;
+    elements.coachContextStatus.textContent = `${action} · ${hits}${hitsLabels[lang] || hitsLabels.zh}`;
   }
 
   function appendCoachMessage(role, content) {
@@ -1828,7 +3394,12 @@ ${footworkText || "暂无步伐评分数据"}
 
     const avatar = document.createElement("div");
     avatar.className = "coach-avatar";
-    avatar.textContent = role === "user" ? "我" : "教";
+    const lang = getCoachLang();
+    if (role === "user") {
+      avatar.textContent = lang === "zh" ? "我" : (lang === "ja" ? "私" : lang === "ko" ? "나" : "Me");
+    } else {
+      avatar.textContent = lang === "zh" ? "教" : "AI";
+    }
 
     const bubble = document.createElement("div");
     bubble.className = "coach-bubble";
@@ -1844,7 +3415,7 @@ ${footworkText || "暂无步伐评分数据"}
   function setCoachBusy(busy) {
     if (!elements.btnCoachSend) return;
     elements.btnCoachSend.disabled = busy;
-    elements.btnCoachSend.textContent = busy ? "思考中..." : "发送";
+    elements.btnCoachSend.textContent = busy ? coachT("thinking") : coachT("send");
   }
 
   function cleanCoachAnswer(text) {
@@ -1862,10 +3433,10 @@ ${footworkText || "暂无步伐评分数据"}
   function renderCoachStreamingBubble(bubble, steps, answer) {
     if (!bubble) return;
     const stepText = steps.length
-      ? `思考进度：\n${steps.map((item) => `· ${item}`).join("\n")}\n\n`
+      ? `${coachT("thinkingStatus")}\n${steps.map((item) => `· ${item}`).join("\n")}\n\n`
       : "";
     const answerText = cleanCoachAnswer(answer);
-    bubble.textContent = `${stepText}${answerText || "正在生成回答..."}`;
+    bubble.textContent = `${stepText}${answerText || coachT("generating")}`;
     elements.coachMessages.scrollTop = elements.coachMessages.scrollHeight;
   }
 
@@ -1922,7 +3493,7 @@ ${footworkText || "暂无步伐评分数据"}
         queuedAnswer += data.text;
         startTyping();
       } else if (event === "error") {
-        throw new Error(data.message || "AI 教练生成失败");
+        throw new Error(data.message || coachT("genFailed"));
       }
     };
 
@@ -1950,7 +3521,7 @@ ${footworkText || "暂无步伐评分数据"}
   async function sendCoachQuestion(questionText = null) {
     const question = (questionText || elements.coachQuestion?.value || "").trim();
     if (!question) {
-      showToast("请输入想问 AI 教练的问题", "error");
+      showToast(coachT("noQuestion"), "error");
       return;
     }
 
@@ -1958,7 +3529,7 @@ ${footworkText || "暂无步伐评分数据"}
     state.coachHistory.push({ role: "user", content: question });
     if (elements.coachQuestion) elements.coachQuestion.value = "";
 
-    const pending = appendCoachMessage("assistant", "思考进度：\n· 正在理解你的问题");
+    const pending = appendCoachMessage("assistant", `${coachT("thinkingStatus")}\n· ${coachT("firstStatus")}`);
     const pendingBubble = pending?.querySelector(".coach-bubble");
     setCoachBusy(true);
 
@@ -1969,6 +3540,7 @@ ${footworkText || "暂无步伐评分数据"}
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           provider: elements.coachProvider?.value || "qwen",
+          language: getCoachLang(),
           question,
           history: state.coachHistory.slice(-8),
           report: state.analysisReport,
@@ -1980,11 +3552,11 @@ ${footworkText || "暂无步伐评分数据"}
         const data = await response.json().catch(() => ({}));
         throw new Error(data.detail || `HTTP ${response.status}`);
       }
-      const answer = await readCoachStream(response, pendingBubble) || "我暂时没有生成有效回答。";
+      const answer = await readCoachStream(response, pendingBubble) || coachT("noAnswer");
       if (pendingBubble) pendingBubble.textContent = answer;
       state.coachHistory.push({ role: "assistant", content: answer });
     } catch (error) {
-      const message = `AI教练暂时不可用：${formatFetchError(error)}`;
+      const message = `${coachT("unavailable")}${formatFetchError(error)}`;
       if (pendingBubble) pendingBubble.textContent = message;
       state.coachHistory.push({ role: "assistant", content: message });
     } finally {
@@ -1995,24 +3567,38 @@ ${footworkText || "暂无步伐评分数据"}
   // ---- Simulation: Start Detection ----
   let simInterval = null;
 
+  if (elements.btnStart) {
   elements.btnStart.addEventListener("click", async () => {
     if (state.detecting) return;
+    if (!state.user) {
+      showAuthModal("login");
+      return;
+    }
     if (!state.precheckPassed && state.precheckResult && state.precheckResult.overall === "fail") {
       showUploadHint("视频预检未通过，请重新拍摄后上传，或点击\"继续分析\"强制分析");
       return;
     }
     await runBackendAnalysis();
   });
+  }
 
   if (elements.btnProceedAnalyze) {
     elements.btnProceedAnalyze.addEventListener("click", async () => {
       if (state.detecting) return;
+      if (!state.user) {
+        showAuthModal("login");
+        return;
+      }
       await runBackendAnalysis();
     });
   }
 
   if (elements.btnReupload) {
     elements.btnReupload.addEventListener("click", () => {
+      if (!state.user) {
+        showAuthModal("login");
+        return;
+      }
       elements.videoUploadInput.click();
     });
   }
@@ -2027,20 +3613,33 @@ ${footworkText || "暂无步伐评分数据"}
     elements.btnRefreshHistory.addEventListener("click", loadHistoryList);
   }
 
+  if (elements.emptyMedia) {
   elements.emptyMedia.addEventListener("click", () => {
-    if (elements.videoSource.value === "camera") {
+    if (!state.user) {
+      showAuthModal("login");
+      return;
+    }
+    if (elements.videoSource && elements.videoSource.value === "camera") {
       showUploadHint("当前演示版暂未接入摄像头，请先选择文件上传");
       return;
     }
-    elements.videoUploadInput.click();
+    if (elements.videoUploadInput) elements.videoUploadInput.click();
   });
+  }
 
+  if (elements.frameCanvasWrap) {
   elements.frameCanvasWrap.addEventListener("click", () => {
-    if (!state.frameImage && elements.videoSource.value === "file") {
-      elements.videoUploadInput.click();
+    if (!state.user) {
+      showAuthModal("login");
+      return;
+    }
+    if (!state.frameImage && (!elements.videoSource || elements.videoSource.value === "file")) {
+      if (elements.videoUploadInput) elements.videoUploadInput.click();
     }
   });
+  }
 
+  if (elements.emptyMedia) {
   elements.emptyMedia.addEventListener("dragover", (event) => {
     event.preventDefault();
     elements.emptyMedia.classList.add("drag-over");
@@ -2053,26 +3652,38 @@ ${footworkText || "暂无步伐评分数据"}
   elements.emptyMedia.addEventListener("drop", (event) => {
     event.preventDefault();
     elements.emptyMedia.classList.remove("drag-over");
+    if (!state.user) {
+      showAuthModal("login");
+      return;
+    }
     const [file] = event.dataTransfer.files || [];
     loadUploadedVideo(file);
   });
+  }
 
+  if (elements.videoUploadInput) {
   elements.videoUploadInput.addEventListener("change", (event) => {
     const [file] = event.target.files || [];
     loadUploadedVideo(file);
     event.target.value = "";
   });
+  }
 
+  if (elements.btnStop) {
   elements.btnStop.addEventListener("click", () => {
     if (!state.detecting) return;
     state.detecting = false;
     clearInterval(simInterval);
     simInterval = null;
-    elements.btnStart.classList.remove("btn-secondary");
-    elements.btnStart.classList.add("btn-primary");
-    elements.btnStart.textContent = "开始检测";
+    if (elements.btnStart) {
+      elements.btnStart.classList.remove("btn-secondary");
+      elements.btnStart.classList.add("btn-primary");
+      elements.btnStart.textContent = t("btnStart");
+    }
   });
+  }
 
+  if (elements.btnReset) {
   elements.btnReset.addEventListener("click", () => {
     stopCourtPlaybackLoop();
     if (state.analysisTimerId) {
@@ -2104,21 +3715,27 @@ ${footworkText || "暂无步伐评分数据"}
 
     hidePrecheckPanel();
     updateMetrics();
-    elements.historyTable.innerHTML =
-      '<tr><td colspan="5" style="text-align:center; color:var(--muted); padding:32px;">暂无检测记录</td></tr>';
+    const noRecLabels = { zh: "暂无检测记录", en: "No detection records", ja: "検出記録なし", ko: "검출 기록 없음", id: "Tidak ada catatan" };
+    if (elements.historyTable) {
+      elements.historyTable.innerHTML =
+        `<tr><td colspan="5" style="text-align:center; color:var(--muted); padding:32px;">${noRecLabels[state.uiLanguage] || noRecLabels.zh}</td></tr>`;
+    }
 
-    ctx.clearRect(0, 0, elements.frameCanvas.width, elements.frameCanvas.height);
-    elements.emptyMedia.style.display = "flex";
-    elements.frameCanvasWrap.style.display = "none";
+    if (elements.frameCanvas && ctx) ctx.clearRect(0, 0, elements.frameCanvas.width, elements.frameCanvas.height);
+    if (elements.emptyMedia) elements.emptyMedia.style.display = "flex";
+    if (elements.frameCanvasWrap) elements.frameCanvasWrap.style.display = "none";
     drawRadar(state.radarData);
     renderShotTimeline();
 
-    elements.btnStart.classList.remove("btn-secondary");
-    elements.btnStart.classList.add("btn-primary");
-    elements.btnStart.textContent = "开始检测";
+    if (elements.btnStart) {
+      elements.btnStart.classList.remove("btn-secondary");
+      elements.btnStart.classList.add("btn-primary");
+      elements.btnStart.textContent = t("btnStart");
+    }
     setConnected(false);
     updateCoachContextStatus();
   });
+  }
 
   // ---- Config Events ----
   [
@@ -2133,16 +3750,17 @@ ${footworkText || "暂无步伐评分数据"}
     elements.frameSkip,
     elements.roiX1, elements.roiY1, elements.roiX2, elements.roiY2,
     elements.saveDetection,
-  ].forEach((el) => {
+  ].filter(Boolean).forEach((el) => {
     el.addEventListener("change", updateConfigOutput);
   });
 
+  if (elements.btnSaveSettings) {
   elements.btnSaveSettings.addEventListener("click", () => {
     updateConfigOutput();
-    // Simulate save
+    const savedLabels = { zh: "设置已保存", en: "Settings saved", ja: "設定を保存しました", ko: "설정 저장됨", id: "Pengaturan disimpan" };
     const toast = document.createElement("div");
     toast.className = "toast toast-success";
-    toast.textContent = "设置已保存";
+    toast.textContent = savedLabels[state.uiLanguage] || savedLabels.zh;
     let container = document.querySelector(".toast-container");
     if (!container) {
       container = document.createElement("div");
@@ -2152,28 +3770,33 @@ ${footworkText || "暂无步伐评分数据"}
     container.appendChild(toast);
     setTimeout(() => toast.remove(), 3000);
   });
+  }
 
+  if (elements.btnResetSettings) {
   elements.btnResetSettings.addEventListener("click", () => {
-    elements.modelSelect.value = "yolov8";
-    elements.confThreshold.value = 0.5;
-    elements.videoSource.value = "file";
-    elements.inferenceBackend.value = "onnx";
-    elements.computeDevice.value = "cpu";
-    elements.inputResolution.value = "640";
-    elements.modelPrecision.value = "fp32";
-    elements.frameRate.value = "30";
-    elements.frameSkip.value = "1";
-    elements.roiX1.value = "0";
-    elements.roiY1.value = "0";
-    elements.roiX2.value = "640";
-    elements.roiY2.value = "480";
-    elements.saveDetection.value = "false";
+    if (elements.modelSelect) elements.modelSelect.value = "yolov8";
+    if (elements.confThreshold) elements.confThreshold.value = 0.5;
+    if (elements.videoSource) elements.videoSource.value = "file";
+    if (elements.inferenceBackend) elements.inferenceBackend.value = "onnx";
+    if (elements.computeDevice) elements.computeDevice.value = "cpu";
+    if (elements.inputResolution) elements.inputResolution.value = "640";
+    if (elements.modelPrecision) elements.modelPrecision.value = "fp32";
+    if (elements.frameRate) elements.frameRate.value = "30";
+    if (elements.frameSkip) elements.frameSkip.value = "1";
+    if (elements.roiX1) elements.roiX1.value = "0";
+    if (elements.roiY1) elements.roiY1.value = "0";
+    if (elements.roiX2) elements.roiX2.value = "640";
+    if (elements.roiY2) elements.roiY2.value = "480";
+    if (elements.saveDetection) elements.saveDetection.value = "false";
     updateConfigOutput();
   });
+  }
 
+  if (elements.btnExport) {
   elements.btnExport.addEventListener("click", () => {
     exportTrainingReport();
   });
+  }
 
   if (elements.btnCoachSend) {
     elements.btnCoachSend.addEventListener("click", () => {
@@ -2199,6 +3822,576 @@ ${footworkText || "暂无步伐评分数据"}
       }
     });
   });
+
+  // ---- Auth Logic ----
+  function authApi(path, options = {}) {
+    const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
+    if (state.authToken) {
+      headers["Authorization"] = `Bearer ${state.authToken}`;
+    }
+    return fetch(apiUrl(path), { ...options, headers }).then(async (resp) => {
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok) {
+        throw new Error(data.detail || `HTTP ${resp.status}`);
+      }
+      return data;
+    });
+  }
+
+  function saveAuth(token, user) {
+    state.authToken = token;
+    state.user = user;
+    try {
+      localStorage.setItem("badminton_token", token);
+      localStorage.setItem("badminton_user", JSON.stringify(user));
+    } catch (e) {}
+  }
+
+  function clearAuth() {
+    state.authToken = null;
+    state.user = null;
+    try {
+      localStorage.removeItem("badminton_token");
+      localStorage.removeItem("badminton_user");
+    } catch (e) {}
+  }
+
+  function getUserInitial(nickname) {
+    if (!nickname) return "用";
+    return nickname.charAt(0).toUpperCase();
+  }
+
+  function updateAuthUI() {
+    const isLoggedIn = !!state.user;
+    if (elements.btnLogin) elements.btnLogin.hidden = isLoggedIn;
+    if (elements.userMenu) elements.userMenu.hidden = !isLoggedIn;
+
+    if (isLoggedIn && state.user) {
+      const u = state.user;
+      const initial = getUserInitial(u.nickname);
+
+      if (elements.userNickname) elements.userNickname.textContent = u.nickname;
+      if (elements.userUsername) elements.userUsername.textContent = "@" + u.username;
+      if (elements.userAvatarCircle) {
+        if (u.avatar) {
+          elements.userAvatarCircle.innerHTML = `<img src="${u.avatar}" alt="${u.nickname}" />`;
+        } else {
+          elements.userAvatarCircle.textContent = initial;
+        }
+      }
+      if (elements.wechatBadge) elements.wechatBadge.hidden = !u.has_wechat;
+
+      if (elements.settingsNickname) elements.settingsNickname.textContent = u.nickname;
+      if (elements.settingsUsername) elements.settingsUsername.textContent = "@" + u.username;
+      if (elements.settingsAvatar) {
+        if (u.avatar) {
+          elements.settingsAvatar.innerHTML = `<img src="${u.avatar}" alt="${u.nickname}" />`;
+        } else {
+          elements.settingsAvatar.textContent = initial;
+        }
+      }
+      if (elements.settingsWechatStatus) {
+        const statusEl = elements.settingsWechatStatus;
+        const textSpan = statusEl.querySelector("span:last-child");
+        if (u.has_wechat) {
+          statusEl.classList.add("bound");
+          if (textSpan) textSpan.textContent = t("wechatBound");
+        } else {
+          statusEl.classList.remove("bound");
+          if (textSpan) textSpan.textContent = t("wechatNotBound");
+        }
+      }
+    } else {
+      if (elements.settingsNickname) elements.settingsNickname.textContent = "--";
+      if (elements.settingsUsername) elements.settingsUsername.textContent = "--";
+      if (elements.settingsAvatar) elements.settingsAvatar.textContent = "用";
+      if (elements.settingsWechatStatus) {
+        elements.settingsWechatStatus.classList.remove("bound");
+        const textSpan = elements.settingsWechatStatus.querySelector("span:last-child");
+        if (textSpan) textSpan.textContent = t("wechatNotBound");
+      }
+    }
+
+    if (elements.accountGuest) elements.accountGuest.hidden = isLoggedIn;
+    if (elements.accountLogged) elements.accountLogged.hidden = !isLoggedIn;
+  }
+
+  function showAuthModal(tab = "login") {
+    switchAuthTab(tab);
+    if (elements.authModal) elements.authModal.hidden = false;
+    if (elements.loginError) {
+      elements.loginError.hidden = true;
+      elements.loginError.textContent = "";
+    }
+    if (elements.registerError) {
+      elements.registerError.hidden = true;
+      elements.registerError.textContent = "";
+    }
+  }
+
+  function hideAuthModal() {
+    if (elements.authModal) elements.authModal.hidden = true;
+    if (elements.loginError) elements.loginError.hidden = true;
+    if (elements.registerError) elements.registerError.hidden = true;
+  }
+
+  function showProfileModal() {
+    if (!state.user) return;
+    if (elements.editNickname) elements.editNickname.value = state.user.nickname || "";
+    if (elements.editAvatar) elements.editAvatar.value = state.user.avatar || "";
+    if (elements.profileError) {
+      elements.profileError.hidden = true;
+      elements.profileError.textContent = "";
+    }
+    if (elements.profileModal) elements.profileModal.hidden = false;
+  }
+
+  function hideProfileModal() {
+    if (elements.profileModal) elements.profileModal.hidden = true;
+    if (elements.profileError) elements.profileError.hidden = true;
+  }
+
+  // ---- Onboarding Tour ----
+  const TOUR_STEPS = [
+    { target: "emptyMedia", titleKey: "tourStep1Title", descKey: "tourStep1Desc", position: "bottom" },
+    { target: "btnStart", titleKey: "tourStep2Title", descKey: "tourStep2Desc", position: "bottom" },
+    { target: "shotTimeline", titleKey: "tourStep3Title", descKey: "tourStep3Desc", position: "top" },
+    { target: "report", titleKey: "tourStep4Title", descKey: "tourStep4Desc", position: "bottom", navTab: "report" },
+    { target: "history", titleKey: "tourStep5Title", descKey: "tourStep5Desc", position: "bottom", navTab: "history" },
+  ];
+
+  let currentTourStep = 0;
+  let tourResizeHandler = null;
+
+  function startTour(force = false) {
+    if (!elements.tourOverlay) {
+      console.warn("[Tour] overlay element not found");
+      return;
+    }
+    if (!force) {
+      try {
+        const seen = localStorage.getItem("badminton_tour_seen");
+        if (seen) {
+          console.log("[Tour] already seen, skip. Use startTour(true) to force.");
+          return;
+        }
+      } catch (e) {}
+    }
+    currentTourStep = 0;
+    switchTab("training");
+    elements.tourOverlay.hidden = false;
+    document.body.style.overflow = "hidden";
+    renderTourStep();
+    console.log("[Tour] started");
+  }
+
+  function endTour() {
+    if (elements.tourOverlay) elements.tourOverlay.hidden = true;
+    document.body.style.overflow = "";
+    try {
+      localStorage.setItem("badminton_tour_seen", "1");
+    } catch (e) {}
+    if (tourResizeHandler) {
+      window.removeEventListener("resize", tourResizeHandler);
+      tourResizeHandler = null;
+    }
+  }
+
+  function renderTourStep() {
+    const step = TOUR_STEPS[currentTourStep];
+    if (!step) {
+      endTour();
+      return;
+    }
+    if (step.navTab) {
+      switchTab(step.navTab);
+    }
+    const target = elements[step.target] || document.querySelector(`[data-tab="${step.target}"]`);
+    if (!target) {
+      console.warn(`[Tour] target not found: ${step.target}`);
+      currentTourStep++;
+      renderTourStep();
+      return;
+    }
+    const rect = target.getBoundingClientRect();
+    if (!rect.width || !rect.height || !target.offsetParent) {
+      console.warn(`[Tour] target not visible: ${step.target}, skip`);
+      currentTourStep++;
+      renderTourStep();
+      return;
+    }
+    // Scroll target into center of viewport before positioning
+    target.scrollIntoView({ behavior: "smooth", block: "center" });
+    setTimeout(() => {
+      positionTourHighlight(target, step.position);
+    }, 350);
+    if (elements.tourTitle) elements.tourTitle.textContent = t(step.titleKey);
+    if (elements.tourDesc) elements.tourDesc.textContent = t(step.descKey);
+    if (elements.btnNextTour) {
+      const isLast = currentTourStep === TOUR_STEPS.length - 1;
+      elements.btnNextTour.textContent = t(isLast ? "tourFinish" : "tourNext");
+    }
+    renderTourDots();
+    if (tourResizeHandler) window.removeEventListener("resize", tourResizeHandler);
+    tourResizeHandler = () => positionTourHighlight(target, step.position);
+    window.addEventListener("resize", tourResizeHandler);
+  }
+
+  function positionTourHighlight(target, position) {
+    const rect = target.getBoundingClientRect();
+    const padding = 8;
+    // Overlay is fixed, so use viewport coordinates directly
+    if (elements.tourHighlight) {
+      elements.tourHighlight.style.left = (rect.left - padding) + "px";
+      elements.tourHighlight.style.top = (rect.top - padding) + "px";
+      elements.tourHighlight.style.width = (rect.width + padding * 2) + "px";
+      elements.tourHighlight.style.height = (rect.height + padding * 2) + "px";
+    }
+    if (elements.tourCard) {
+      const cardRect = elements.tourCard.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      let top = rect.bottom + 16;
+      if (position === "top") {
+        top = rect.top - cardRect.height - 16;
+      }
+      let left = rect.left + rect.width / 2 - cardRect.width / 2;
+      left = Math.max(16, Math.min(left, viewportWidth - cardRect.width - 16));
+      // Keep card inside viewport vertically
+      if (top + cardRect.height > viewportHeight - 16) {
+        top = rect.top - cardRect.height - 16;
+      }
+      if (top < 16) {
+        top = rect.bottom + 16;
+      }
+      elements.tourCard.style.left = left + "px";
+      elements.tourCard.style.top = top + "px";
+    }
+  }
+
+  function renderTourDots() {
+    if (!elements.tourDots) return;
+    elements.tourDots.innerHTML = "";
+    TOUR_STEPS.forEach((_, idx) => {
+      const dot = document.createElement("span");
+      dot.className = "tour-dot" + (idx === currentTourStep ? " active" : "");
+      elements.tourDots.appendChild(dot);
+    });
+  }
+
+  function nextTourStep() {
+    currentTourStep++;
+    renderTourStep();
+  }
+
+  function switchAuthTab(tab) {
+    document.querySelectorAll(".auth-tab").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.authTab === tab);
+    });
+    document.querySelectorAll(".auth-form").forEach((form) => {
+      form.classList.toggle("active", form.id === (tab === "login" ? "loginForm" : "registerForm"));
+    });
+  }
+
+  async function handleLogin(e) {
+    e.preventDefault();
+    if (elements.loginError) {
+      elements.loginError.hidden = true;
+      elements.loginError.textContent = "";
+    }
+    const username = (elements.loginUsername?.value || "").trim();
+    const password = elements.loginPassword?.value || "";
+    if (!username || !password) {
+      if (elements.loginError) {
+        elements.loginError.textContent = "请输入用户名和密码";
+        elements.loginError.hidden = false;
+      }
+      return;
+    }
+    try {
+      const data = await authApi("/api/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ username, password }),
+      });
+      saveAuth(data.token, data.user);
+      updateAuthUI();
+      hideAuthModal();
+      showToast(t("loginSuccess"), "success");
+      if (elements.loginPassword) elements.loginPassword.value = "";
+    } catch (err) {
+      if (elements.loginError) {
+        elements.loginError.textContent = err.message || t("loginFailed");
+        elements.loginError.hidden = false;
+      }
+    }
+  }
+
+  async function handleRegister(e) {
+    e.preventDefault();
+    if (elements.registerError) {
+      elements.registerError.hidden = true;
+      elements.registerError.textContent = "";
+    }
+    const username = (elements.regUsername?.value || "").trim();
+    const nickname = (elements.regNickname?.value || "").trim();
+    const email = (elements.regEmail?.value || "").trim();
+    const password = elements.regPassword?.value || "";
+    if (!username || !password) {
+      if (elements.registerError) {
+        elements.registerError.textContent = "请填写用户名和密码";
+        elements.registerError.hidden = false;
+      }
+      return;
+    }
+    try {
+      const data = await authApi("/api/auth/register", {
+        method: "POST",
+        body: JSON.stringify({ username, password, nickname, email }),
+      });
+      saveAuth(data.token, data.user);
+      updateAuthUI();
+      hideAuthModal();
+      showToast(t("registerSuccess"), "success");
+      if (elements.regPassword) elements.regPassword.value = "";
+      setTimeout(() => startTour(true), 350);
+    } catch (err) {
+      if (elements.registerError) {
+        elements.registerError.textContent = err.message || t("registerFailed");
+        elements.registerError.hidden = false;
+      }
+    }
+  }
+
+  async function handleLogout() {
+    try {
+      await authApi("/api/auth/logout", { method: "POST" });
+    } catch (e) {}
+    clearAuth();
+    updateAuthUI();
+    if (elements.userDropdown) elements.userDropdown.hidden = true;
+    showToast(t("logoutSuccess"), "info");
+  }
+
+  async function fetchCurrentUser() {
+    try {
+      const user = await authApi("/api/auth/me");
+      state.user = user;
+      updateAuthUI();
+    } catch (e) {
+      clearAuth();
+      updateAuthUI();
+    }
+  }
+
+  async function handleSaveProfile(e) {
+    e.preventDefault();
+    if (elements.profileError) {
+      elements.profileError.hidden = true;
+      elements.profileError.textContent = "";
+    }
+    const nickname = (elements.editNickname?.value || "").trim();
+    const avatar = (elements.editAvatar?.value || "").trim();
+    if (!nickname) {
+      if (elements.profileError) {
+        elements.profileError.textContent = "昵称不能为空";
+        elements.profileError.hidden = false;
+      }
+      return;
+    }
+    try {
+      const updated = await authApi("/api/auth/profile", {
+        method: "PUT",
+        body: JSON.stringify({ nickname, avatar: avatar || null, language: state.uiLanguage }),
+      });
+      state.user = updated;
+      try {
+        localStorage.setItem("badminton_user", JSON.stringify(updated));
+      } catch (e) {}
+      updateAuthUI();
+      hideProfileModal();
+      showToast(t("profileUpdateSuccess"), "success");
+    } catch (err) {
+      if (elements.profileError) {
+        elements.profileError.textContent = err.message || "更新失败";
+        elements.profileError.hidden = false;
+      }
+    }
+  }
+
+  function handleWechatLogin() {
+    if (elements.wechatHint) {
+      elements.wechatHint.hidden = false;
+    }
+    showToast("微信登录需要在微信小程序中使用", "info");
+  }
+
+  // Auth event bindings
+  if (elements.btnLogin) {
+    elements.btnLogin.addEventListener("click", () => showAuthModal("login"));
+  }
+  if (elements.btnSettingsLogin) {
+    elements.btnSettingsLogin.addEventListener("click", () => showAuthModal("login"));
+  }
+  if (elements.btnCloseAuthModal) {
+    elements.btnCloseAuthModal.addEventListener("click", hideAuthModal);
+  }
+  if (elements.authModal) {
+    elements.authModal.addEventListener("click", (e) => {
+      if (e.target === elements.authModal) hideAuthModal();
+    });
+  }
+  document.querySelectorAll(".auth-tab").forEach((tab) => {
+    tab.addEventListener("click", () => switchAuthTab(tab.dataset.authTab));
+  });
+  if (elements.loginForm) {
+    elements.loginForm.addEventListener("submit", handleLogin);
+  }
+  if (elements.registerForm) {
+    elements.registerForm.addEventListener("submit", handleRegister);
+  }
+  if (elements.btnWechatLogin) {
+    elements.btnWechatLogin.addEventListener("click", handleWechatLogin);
+  }
+  if (elements.btnWechatRegister) {
+    elements.btnWechatRegister.addEventListener("click", handleWechatLogin);
+  }
+  if (elements.btnSkipTour) {
+    elements.btnSkipTour.addEventListener("click", endTour);
+  }
+  if (elements.btnNextTour) {
+    elements.btnNextTour.addEventListener("click", nextTourStep);
+  }
+  if (elements.tourOverlay) {
+    elements.tourOverlay.addEventListener("click", (e) => {
+      if (e.target === elements.tourOverlay) endTour();
+    });
+  }
+  if (elements.btnLogout) {
+    elements.btnLogout.addEventListener("click", handleLogout);
+  }
+  if (elements.btnSettingsLogout) {
+    elements.btnSettingsLogout.addEventListener("click", handleLogout);
+  }
+  if (elements.btnSwitchAccount) {
+    elements.btnSwitchAccount.addEventListener("click", () => {
+      if (elements.userDropdown) elements.userDropdown.hidden = true;
+      showAuthModal("login");
+    });
+  }
+  if (elements.btnUserAvatar) {
+    elements.btnUserAvatar.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (elements.userDropdown) {
+        elements.userDropdown.hidden = !elements.userDropdown.hidden;
+      }
+    });
+  }
+  document.addEventListener("click", () => {
+    if (elements.userDropdown && !elements.userDropdown.hidden) {
+      elements.userDropdown.hidden = true;
+    }
+  });
+  if (elements.btnEditProfile) {
+    elements.btnEditProfile.addEventListener("click", showProfileModal);
+  }
+  if (elements.btnCloseProfileModal) {
+    elements.btnCloseProfileModal.addEventListener("click", hideProfileModal);
+  }
+  if (elements.btnCancelProfile) {
+    elements.btnCancelProfile.addEventListener("click", hideProfileModal);
+  }
+  if (elements.profileForm) {
+    elements.profileForm.addEventListener("submit", handleSaveProfile);
+  }
+  if (elements.profileModal) {
+    elements.profileModal.addEventListener("click", (e) => {
+      if (e.target === elements.profileModal) hideProfileModal();
+    });
+  }
+  if (elements.btnBindWechat) {
+    elements.btnBindWechat.addEventListener("click", () => {
+      showToast("微信绑定功能需要在微信小程序中操作", "info");
+    });
+  }
+
+  // Restore auth from localStorage
+  try {
+    const savedToken = localStorage.getItem("badminton_token");
+    const savedUser = localStorage.getItem("badminton_user");
+    if (savedToken && savedUser) {
+      state.authToken = savedToken;
+      try {
+        state.user = JSON.parse(savedUser);
+      } catch (e) {
+        state.user = null;
+        state.authToken = null;
+        localStorage.removeItem("badminton_token");
+        localStorage.removeItem("badminton_user");
+      }
+    }
+  } catch (e) {}
+
+  // Ensure all modals are hidden initially
+  if (elements.authModal) elements.authModal.hidden = true;
+  if (elements.profileModal) elements.profileModal.hidden = true;
+  if (elements.userDropdown) elements.userDropdown.hidden = true;
+
+  updateAuthUI();
+  if (state.authToken) {
+    fetchCurrentUser();
+  }
+
+  // ESC key to close modals
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      if (elements.authModal && !elements.authModal.hidden) {
+        hideAuthModal();
+      }
+      if (elements.profileModal && !elements.profileModal.hidden) {
+        hideProfileModal();
+      }
+      if (elements.userDropdown && !elements.userDropdown.hidden) {
+        elements.userDropdown.hidden = true;
+      }
+    }
+  });
+
+  // Global language selector (settings panel buttons)
+  document.querySelectorAll(".lang-option").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const lang = (btn.dataset.lang || "zh").toLowerCase();
+      if (!SUPPORTED_LANGS.includes(lang)) return;
+      document.querySelectorAll(".lang-option").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      applyGlobalLanguage(lang);
+      state.coachHistory = [];
+      if (elements.coachMessages) {
+        elements.coachMessages.innerHTML = "";
+        const welcomeRow = document.createElement("div");
+        welcomeRow.className = "coach-message assistant";
+        const ld = LANG_DISPLAY[lang];
+        welcomeRow.innerHTML = `<div class="coach-avatar">${ld.avatar}</div><div class="coach-bubble" id="coachWelcome"></div>`;
+        elements.coachMessages.appendChild(welcomeRow);
+        elements.coachWelcome = welcomeRow.querySelector("#coachWelcome");
+        if (elements.coachWelcome) {
+          elements.coachWelcome.textContent = getCoachWelcomeText(lang);
+        }
+      }
+      updateCoachUILanguage();
+    });
+  });
+
+  // Initialize language from localStorage
+  let savedLang = "zh";
+  try { savedLang = localStorage.getItem("badminton_lang") || "zh"; } catch (e) {}
+  if (!SUPPORTED_LANGS.includes(savedLang)) savedLang = "zh";
+  state.uiLanguage = savedLang;
+  applyGlobalLanguage(savedLang);
+
+  updateCoachUILanguage();
+
+  // Init animated background
+  initAnimatedBackground();
 
   // ---- Sample Frame Generator ----
   function generateSampleFrame() {
@@ -2259,7 +4452,7 @@ ${footworkText || "暂无步伐评分数据"}
   async function loadHistoryList() {
     if (!window.location.protocol.startsWith("http")) return;
     try {
-      const resp = await fetch("/api/history?limit=50");
+      const resp = await fetch(`/api/history?limit=50&language=${getCoachLang()}`);
       if (!resp.ok) throw new Error("Failed to load history");
       const data = await resp.json();
       renderHistoryList(data.items || []);

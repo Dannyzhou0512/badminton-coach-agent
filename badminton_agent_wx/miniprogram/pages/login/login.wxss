@@ -1,0 +1,181 @@
+.login-container {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #06100c 0%, #0a1a14 40%, #0f281f 100%);
+  position: relative;
+  overflow: hidden;
+  padding: 0 48rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.bg-decoration {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80rpx);
+  opacity: 0.3;
+  animation: float 8s ease-in-out infinite;
+}
+
+.orb-1 {
+  width: 400rpx;
+  height: 400rpx;
+  background: #5eff9f;
+  top: -100rpx;
+  right: -100rpx;
+}
+
+.orb-2 {
+  width: 300rpx;
+  height: 300rpx;
+  background: #3dd17e;
+  bottom: 200rpx;
+  left: -80rpx;
+  animation-delay: -3s;
+}
+
+.orb-3 {
+  width: 250rpx;
+  height: 250rpx;
+  background: #2a9d60;
+  top: 40%;
+  right: 20%;
+  animation-delay: -5s;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-40rpx) scale(1.05); }
+}
+
+.login-content {
+  position: relative;
+  z-index: 1;
+}
+
+.logo-section {
+  text-align: center;
+  margin-bottom: 80rpx;
+}
+
+.logo-icon {
+  font-size: 120rpx;
+  margin-bottom: 24rpx;
+}
+
+.logo-text {
+  font-size: 56rpx;
+  font-weight: 700;
+  color: #e8fff3;
+  letter-spacing: 4rpx;
+  margin-bottom: 12rpx;
+}
+
+.logo-subtitle {
+  font-size: 28rpx;
+  color: #7a9e8e;
+}
+
+.login-card {
+  background: linear-gradient(145deg, rgba(15, 40, 31, 0.9), rgba(19, 48, 37, 0.9));
+  border: 1px solid rgba(94, 255, 159, 0.15);
+  border-radius: 32rpx;
+  padding: 40rpx;
+  backdrop-filter: blur(20rpx);
+}
+
+.tab-bar {
+  display: flex;
+  gap: 48rpx;
+  margin-bottom: 40rpx;
+  border-bottom: 1px solid rgba(94, 255, 159, 0.1);
+  padding-bottom: 24rpx;
+}
+
+.tab {
+  font-size: 32rpx;
+  color: #6b8a7d;
+  font-weight: 500;
+  padding-bottom: 24rpx;
+  position: relative;
+}
+
+.tab.active {
+  color: #5eff9f;
+  font-weight: 600;
+}
+
+.tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1rpx;
+  left: 0;
+  right: 0;
+  height: 4rpx;
+  background: linear-gradient(90deg, #5eff9f, #3dd17e);
+  border-radius: 2rpx;
+}
+
+.wechat-desc {
+  font-size: 28rpx;
+  color: #7a9e8e;
+  text-align: center;
+  line-height: 1.8;
+  margin-bottom: 40rpx;
+}
+
+.form-item {
+  margin-bottom: 24rpx;
+}
+
+.form-input {
+  width: 100%;
+  height: 96rpx;
+  background: rgba(10, 26, 20, 0.6);
+  border: 1px solid rgba(94, 255, 159, 0.15);
+  border-radius: 16rpx;
+  padding: 0 28rpx;
+  font-size: 30rpx;
+  color: #e8fff3;
+  box-sizing: border-box;
+}
+
+.form-input:focus {
+  border-color: #5eff9f;
+}
+
+.input-placeholder {
+  color: #4a6357;
+}
+
+.error-msg {
+  font-size: 26rpx;
+  color: #ff6b6b;
+  margin-bottom: 24rpx;
+  text-align: center;
+}
+
+.register-link {
+  text-align: center;
+  font-size: 28rpx;
+  color: #5eff9f;
+  margin-top: 32rpx;
+}
+
+.agreement {
+  text-align: center;
+  font-size: 24rpx;
+  color: #5a7066;
+  margin-top: 48rpx;
+}
+
+.agreement .link {
+  color: #5eff9f;
+}

@@ -1,0 +1,44 @@
+{
+  "pages": [
+    "pages/login/login",
+    "pages/training/training",
+    "pages/analysis/analysis",
+    "pages/coach/coach",
+    "pages/history/history",
+    "pages/profile/profile"
+  ],
+  "window": {
+    "backgroundColor": "#0a1a14",
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#0a1a14",
+    "navigationBarTitleText": "羽动智练",
+    "navigationBarTextStyle": "white"
+  },
+  "tabBar": {
+    "color": "#6b8a7d",
+    "selectedColor": "#5eff9f",
+    "backgroundColor": "#0d2219",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/training/training",
+        "text": "训练"
+      },
+      {
+        "pagePath": "pages/analysis/analysis",
+        "text": "分析"
+      },
+      {
+        "pagePath": "pages/coach/coach",
+        "text": "AI教练"
+      },
+      {
+        "pagePath": "pages/profile/profile",
+        "text": "我的"
+      }
+    ]
+  },
+  "sitemapLocation": "sitemap.json",
+  "style": "v2",
+  "lazyCodeLoading": "requiredComponents"
+}

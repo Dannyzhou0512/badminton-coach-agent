@@ -1,0 +1,123 @@
+<view class="container">
+  <view class="profile-header card">
+    <view class="profile-info">
+      <view class="avatar profile-avatar">
+        <block wx:if="{{userInfo && userInfo.avatarUrl}}">
+          <image src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
+        </block>
+        <block wx:elif="{{userInfo && userInfo.nickname}}">
+          <text>{{userInfo.nicknameInitial}}</text>
+        </block>
+        <text wx:else>🏸</text>
+      </view>
+      <view class="user-detail">
+        <view class="user-nickname">{{displayNickname}}</view>
+        <view class="user-username">@{{displayUsername}}</view>
+        <view wx:if="{{userInfo && userInfo.has_wechat}}" class="wechat-badge">
+          ✓ 微信已绑定
+        </view>
+      </view>
+    </view>
+    <view wx:if="{{userInfo}}" class="edit-btn" bindtap="editProfile">
+      编辑资料
+    </view>
+  </view>
+
+  <view wx:if="{{stats}}" class="stats-card card">
+    <view class="stats-header">
+      <view class="section-title">📊 训练数据</view>
+    </view>
+    <view class="stats-grid">
+      <view class="stat-box">
+        <text class="stat-num">{{stats.totalSessions}}</text>
+        <text class="stat-text">训练次数</text>
+      </view>
+      <view class="stat-box">
+        <text class="stat-num">{{stats.totalShots}}</text>
+        <text class="stat-text">总击球数</text>
+      </view>
+      <view class="stat-box">
+        <text class="stat-num">{{stats.avgScore}}</text>
+        <text class="stat-text">平均分</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="menu-card card">
+    <view class="menu-item" bindtap="goToHistory">
+      <view class="menu-icon">📋</view>
+      <text class="menu-text">训练历史</text>
+      <text class="menu-arrow">›</text>
+    </view>
+    <view class="menu-divider"></view>
+    <view class="menu-item" bindtap="showLanguageSelector">
+      <view class="menu-icon">🌐</view>
+      <text class="menu-text">语言设置</text>
+      <text class="menu-value">{{currentLangName}}</text>
+      <text class="menu-arrow">›</text>
+    </view>
+    <view class="menu-divider"></view>
+    <view class="menu-item" bindtap="showAbout">
+      <view class="menu-icon">ℹ️</view>
+      <text class="menu-text">关于羽动智练</text>
+      <text class="menu-arrow">›</text>
+    </view>
+  </view>
+
+  <view class="menu-card card">
+    <block wx:if="{{userInfo && !userInfo.has_wechat}}">
+      <view class="menu-item" bindtap="bindWechat">
+        <view class="menu-icon wechat-icon">💬</view>
+        <text class="menu-text">绑定微信账号</text>
+        <text class="menu-arrow">›</text>
+      </view>
+    </block>
+    <block wx:elif="{{userInfo && userInfo.has_wechat}}">
+      <view class="menu-item" bindtap="unbindWechat">
+        <view class="menu-icon wechat-icon">💬</view>
+        <text class="menu-text">解绑微信</text>
+        <text class="menu-arrow">›</text>
+      </view>
+    </block>
+    <view class="menu-divider"></view>
+    <view class="menu-item" bindtap="switchAccount">
+      <view class="menu-icon">🔄</view>
+      <text class="menu-text">切换账号</text>
+      <text class="menu-arrow">›</text>
+    </view>
+    <view class="menu-divider"></view>
+    <view class="menu-item logout-item" bindtap="logout">
+      <view class="menu-icon">🚪</view>
+      <text class="menu-text logout-text">退出登录</text>
+    </view>
+  </view>
+
+  <view class="version-info">
+    羽动智练 v1.0.0
+  </view>
+</view>
+
+<!-- Edit Profile Modal -->
+<view wx:if="{{editModalVisible}}" class="modal-mask" bindtap="closeEditModal">
+  <view class="modal-content" catchtap="preventClose">
+    <view class="modal-title">编辑资料</view>
+
+    <view class="avatar-edit-row" bindtap="chooseAvatarSource">
+      <view class="avatar-edit-preview">
+        <image wx:if="{{editAvatarUrl}}" src="{{editAvatarUrl}}" mode="aspectFill"></image>
+        <text wx:else>{{editNickname ? editNickname.charAt(0) : '🏸'}}</text>
+      </view>
+      <view class="avatar-edit-hint">点击更换头像</view>
+    </view>
+
+    <view class="form-row">
+      <view class="form-label">昵称</view>
+      <input class="form-input" value="{{editNickname}}" placeholder="请输入昵称" bindinput="onNicknameInput" maxlength="20" />
+    </view>
+
+    <view class="modal-actions">
+      <button class="modal-btn cancel" bindtap="closeEditModal">取消</button>
+      <button class="modal-btn confirm" loading="{{editLoading}}" bindtap="saveProfile">保存</button>
+    </view>
+  </view>
+</view>

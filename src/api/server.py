@@ -1,10 +1,16 @@
 """
 FastAPI backend for the standalone HTML frontend.
 
-Run:
+Run (local debug):
   python -m uvicorn src.api.server:app --host 127.0.0.1 --port 8000
+
+Run (allow mobile preview on LAN):
+  python -m uvicorn src.api.server:app --host 0.0.0.0 --port 8000
 """
 
+
+
+import copy
 import hashlib
 import json
 import sqlite3
@@ -24,8 +30,11 @@ from fastapi.staticfiles import StaticFiles
 
 ROOT = Path(__file__).resolve().parents[2]
 INFERENCE_DIR = ROOT / "src" / "inference"
+API_DIR = ROOT / "src" / "api"
 if str(INFERENCE_DIR) not in sys.path:
     sys.path.insert(0, str(INFERENCE_DIR))
+if str(API_DIR) not in sys.path:
+    sys.path.insert(0, str(API_DIR))
 
 from predict_video import (  # noqa: E402
     build_coach_report,
@@ -51,6 +60,8 @@ from llm_coach import (  # noqa: E402
     provider_defaults,
 )
 
+from auth import router as auth_router  # noqa: E402
+
 
 UPLOAD_DIR = ROOT / "outputs" / "api_uploads"
 ANNOTATED_DIR = ROOT / "outputs" / "api_annotated"
@@ -61,6 +72,115 @@ DEFAULT_CHECKPOINT = ROOT / "models" / "pose_sequence_tcn_gru.pt"
 DEFAULT_POSE_MODEL = ROOT / "yolov8s-pose.pt"
 
 
+# ---------------------------------------------------------------------------
+# Action name i18n (used by both web frontend and WeChat mini-program)
+# ---------------------------------------------------------------------------
+ACTION_NAME_I18N = {
+    "Short Serve": {"zh": "短发球", "en": "Short Serve", "ja": "ショートサーブ", "ko": "숏 서브", "id": "Servis Pendek"},
+    "Cross Court Flight": {"zh": "斜线高远球", "en": "Cross Court Flight", "ja": "クロスクリア", "ko": "크로스 클리어", "id": "Pukulan Melambung Silang"},
+    "Lift": {"zh": "挑球", "en": "Lift", "ja": "リフト", "ko": "리프트", "id": "Lift"},
+    "Tap Smash": {"zh": "点杀", "en": "Tap Smash", "ja": "タップスマッシュ", "ko": "탭 스매시", "id": "Tap Smash"},
+    "Block": {"zh": "挡网", "en": "Block", "ja": "ブロック", "ko": "블록", "id": "Block"},
+    "Drop Shot": {"zh": "吊球", "en": "Drop Shot", "ja": "ドロップショット", "ko": "드롭 샷", "id": "Drop Shot"},
+    "Push Shot": {"zh": "推球", "en": "Push Shot", "ja": "プッシュショット", "ko": "푸시 샷", "id": "Push Shot"},
+    "Transitional Slice": {"zh": "过渡劈吊", "en": "Transitional Slice", "ja": "トランジショナルスライス", "ko": "트랜지션 슬라이스", "id": "Transitional Slice"},
+    "Cut": {"zh": "搓球", "en": "Cut", "ja": "カット", "ko": "컷", "id": "Cut"},
+    "Rush Shot": {"zh": "突击球", "en": "Rush Shot", "ja": "ラッシュショット", "ko": "러시 샷", "id": "Rush Shot"},
+    "Defensive Clear": {"zh": "防守高远球", "en": "Defensive Clear", "ja": "ディフェンシブクリア", "ko": "디펜시브 클리어", "id": "Defensive Clear"},
+    "Defensive Drive": {"zh": "防守抽球", "en": "Defensive Drive", "ja": "ディフェンシブドライブ", "ko": "디펜시브 드라이브", "id": "Defensive Drive"},
+    "Clear": {"zh": "高远球", "en": "Clear", "ja": "クリア", "ko": "클리어", "id": "Clear"},
+    "Long Serve": {"zh": "长发球", "en": "Long Serve", "ja": "ロングサーブ", "ko": "롱 서브", "id": "Servis Panjang"},
+    "Smash": {"zh": "杀球", "en": "Smash", "ja": "スマッシュ", "ko": "스매시", "id": "Smash"},
+    "Flat Shot": {"zh": "平抽球", "en": "Flat Shot", "ja": "フラットショット", "ko": "플랫 샷", "id": "Flat Shot"},
+    "Rear Court Flat Drive": {"zh": "后场平抽", "en": "Rear Court Flat Drive", "ja": "リアコートフラットドライブ", "ko": "리어코트 플랫 드라이브", "id": "Rear Court Flat Drive"},
+    "Short Flat Shot": {"zh": "前场平抽", "en": "Short Flat Shot", "ja": "ショートフラットショット", "ko": "숏 플랫 샷", "id": "Short Flat Shot"},
+}
+
+QUALITY_LEVEL_I18N = {
+    "数据不足": {"zh": "数据不足", "en": "Insufficient Data", "ja": "データ不足", "ko": "데이터 부족", "id": "Data Tidak Cukup"},
+    "优秀": {"zh": "优秀", "en": "Excellent", "ja": "優秀", "ko": "우수", "id": "Sangat Baik"},
+    "良好": {"zh": "良好", "en": "Good", "ja": "良好", "ko": "양호", "id": "Baik"},
+    "一般": {"zh": "一般", "en": "Average", "ja": "普通", "ko": "보통", "id": "Cukup"},
+    "较差": {"zh": "较差", "en": "Below Average", "ja": "やや劣る", "ko": "부족", "id": "Kurang"},
+}
+
+
+def translate_action_name(name, language):
+    lang = language if language in {"zh", "en", "ja", "ko", "id"} else "en"
+    mapping = ACTION_NAME_I18N.get(name) or ACTION_NAME_I18N.get(name.strip())
+    if mapping:
+        return mapping.get(lang, name)
+    return name
+
+
+def translate_quality_level(level, language):
+    lang = language if language in {"zh", "en", "ja", "ko", "id"} else "en"
+    mapping = QUALITY_LEVEL_I18N.get(level)
+    if mapping:
+        return mapping.get(lang, level)
+    return level
+
+
+def translate_text_terms(text, language):
+    lang = language if language in {"zh", "en", "ja", "ko", "id"} else "en"
+    if lang == "en" or not isinstance(text, str):
+        return text
+    # Replace longest names first to avoid partial overlaps
+    for en_name in sorted(ACTION_NAME_I18N.keys(), key=len, reverse=True):
+        translated = ACTION_NAME_I18N[en_name].get(lang)
+        if translated and en_name in text:
+            text = text.replace(en_name, translated)
+    return text
+
+
+def translate_report(report, language):
+    lang = language if language in {"zh", "en", "ja", "ko", "id"} else "en"
+    if lang == "en":
+        return report
+
+    if report.get("predicted_action"):
+        report["predicted_action"] = translate_action_name(report["predicted_action"], lang)
+
+    for item in report.get("top_predictions", []):
+        if isinstance(item, dict) and item.get("class_name"):
+            item["class_name"] = translate_action_name(item["class_name"], lang)
+
+    for event in report.get("hit_events", []):
+        if event.get("predicted_action"):
+            event["predicted_action"] = translate_action_name(event["predicted_action"], lang)
+
+    for event in report.get("shot_events", []):
+        if event.get("predicted_action"):
+            event["predicted_action"] = translate_action_name(event["predicted_action"], lang)
+        if event.get("shot_action"):
+            event["shot_action"] = translate_action_name(event["shot_action"], lang)
+        if event.get("quality_level"):
+            event["quality_level"] = translate_quality_level(event["quality_level"], lang)
+        for pred in event.get("shot_top_predictions", []):
+            if pred.get("action"):
+                pred["action"] = translate_action_name(pred["action"], lang)
+
+    # Translate action terms embedded in coach report free text
+    coach_report = report.get("coach_report")
+    if isinstance(coach_report, dict):
+        for key in ("highlights", "focus", "plan"):
+            if isinstance(coach_report.get(key), list):
+                coach_report[key] = [translate_text_terms(t, lang) for t in coach_report[key]]
+        if isinstance(coach_report.get("summary"), str):
+            coach_report["summary"] = translate_text_terms(coach_report["summary"], lang)
+
+    if isinstance(report.get("llm_coach_report"), str):
+        report["llm_coach_report"] = translate_text_terms(report["llm_coach_report"], lang)
+
+    for segment in report.get("llm_coach_segments", []):
+        if isinstance(segment, dict):
+            for seg_key in ("content", "summary", "advice"):
+                if isinstance(segment.get(seg_key), str):
+                    segment[seg_key] = translate_text_terms(segment[seg_key], lang)
+
+    return report
+
+
 app = FastAPI(title="Badminton Coach Agent API")
 app.add_middleware(
     CORSMiddleware,
@@ -69,6 +189,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(auth_router)
 
 
 def init_db():
@@ -100,7 +222,7 @@ def save_history(video_name, report, annotated_video_url=None, annotated_preview
     avg_score = round(float(np.mean(scores)), 1) if scores else None
     action_counts = {}
     for s in shots:
-        name = s.get("action_name", "unknown")
+        name = s.get("shot_action") or s.get("action_name") or s.get("predicted_action") or "unknown"
         action_counts[name] = action_counts.get(name, 0) + 1
     dominant = max(action_counts, key=action_counts.get) if action_counts else None
     conn.execute(
@@ -111,7 +233,9 @@ def save_history(video_name, report, annotated_video_url=None, annotated_preview
         (
             datetime.now().isoformat(),
             video_name,
-            report.get("duration_seconds"),
+            report.get("video_metadata", {}).get("duration_seconds")
+            or report.get("video_metadata", {}).get("duration_sec")
+            or report.get("duration_seconds"),
             len(shots),
             avg_score,
             dominant,
@@ -562,7 +686,7 @@ def read_video_metadata(video_path):
     }
 
 
-def build_footwork_trace(pose_seq, sampled_indices=None, frame_size=None, conf_threshold=0.3, max_points=180):
+def build_footwork_trace(pose_seq, sampled_indices=None, frame_size=None, conf_threshold=0.3, max_points=360, fps=None):
     centers = filter_footwork_jumps(footwork_centers(pose_seq, conf_threshold=conf_threshold))
     valid = [(idx, center) for idx, center in enumerate(centers) if center is not None]
     if len(valid) < 2:
@@ -599,6 +723,7 @@ def build_footwork_trace(pose_seq, sampled_indices=None, frame_size=None, conf_t
 
     step = max(1, int(np.ceil(len(smoothed) / max_points)))
     sampled_lookup = list(sampled_indices) if sampled_indices is not None else None
+    fps_val = float(fps) if fps is not None else 30.0
 
     trace = []
     for idx, norm in zip(filtered_indices[::step], smoothed[::step]):
@@ -609,6 +734,7 @@ def build_footwork_trace(pose_seq, sampled_indices=None, frame_size=None, conf_t
                 "pose_index": int(idx),
                 "x": round(float(norm[0]), 4),
                 "y": round(float(norm[1]), 4),
+                "time_sec": round(float(frame) / max(fps_val, 1.0), 3),
             }
         )
     return trace
@@ -679,6 +805,7 @@ def format_frontend_report(report):
         "llm_coach_segments": report.get("llm_coach_segments", []),
         "llm_coach_error": report.get("llm_coach_error"),
         "llm_provider": report.get("llm_provider"),
+        "llm_language": report.get("llm_language", "zh"),
         "shot_events": shot_events,
         "footwork_trace": report.get("footwork_trace", []),
         "video_metadata": report.get("video_metadata", {}),
@@ -706,23 +833,72 @@ def compact_chat_report(report):
     }
 
 
-def build_coach_chat_messages(question, history=None, report=None):
-    history = history or []
-    context = compact_chat_report(report)
-    system = (
-        "你是“羽动智练”的羽毛球 AI 教练。回答要专业、具体、可执行，"
+CHAT_SYSTEM_PROMPTS = {
+    "zh": (
+        "你是\"羽动智练\"的羽毛球 AI 教练。回答要专业、具体、可执行，"
         "优先围绕羽毛球技术、步伐、训练计划、比赛复盘、运动恢复和安全建议。"
         "如果用户问到伤病、疼痛或医学问题，只给一般运动安全建议，并提醒必要时咨询医生或康复师。"
         "如果提供了训练分析上下文，只能基于这些数据做推断，不要编造视频中不存在的细节。"
         "回答不要使用 Markdown 标题、星号加粗、井号、代码块或项目符号占位符；"
-        "请用自然中文短段落输出，必要时用“一、二、三”编号。"
-    )
+        "请用自然中文短段落输出，必要时用\"一、二、三\"编号。"
+    ),
+    "en": (
+        "You are the AI badminton coach of \"BadmintonAI\". Answer professionally, concretely, and actionably, "
+        "focusing on badminton technique, footwork, training plans, match review, recovery, and safety. "
+        "If asked about injury or medical issues, give general safety advice and recommend consulting a doctor. "
+        "If training context is provided, infer only from that data; do not fabricate details. "
+        "Do not use markdown headers, bold asterisks, code blocks, or bullet placeholders; "
+        "use natural short paragraphs, numbered with \"1. 2. 3.\" when needed."
+    ),
+    "ja": (
+        "あなたは「BadmintonAI」のバドミントンAIコーチです。技術、フットワーク、練習計画、試合复盘、リカバリー、安全について、"
+        "専門的で具体的かつ実行可能な回答をしてください。怪我や痛みについては一般的な安全アドバイスにとどめ、医師への相談を推奨してください。"
+        "分析コンテキストがある場合はそのデータのみに基づき、動画にない詳細を捏造しないでください。"
+        "Markdownの見出し、太字、コードブロック、箇条書きは使わず、自然な短い段落で、必要に応じて「1. 2. 3.」で番号付けしてください。"
+    ),
+    "ko": (
+        "당신은 'BadmintonAI'의 배드민턴 AI 코치입니다. 기술, 풋워크, 훈련 계획, 경기 복기, 회복, 안전에 대해 "
+        "전문적이고 구체적이며 실행 가능한 답변을 하세요. 부상에 관한 질문에는 일반적 안전 조언만 하고 의사 상담을 권장하세요. "
+        "분석 컨텍스트가 제공되면 그 데이터만 기반으로 추론하고, 영상에 없는 세부사항을 지어내지 마세요. "
+        "Markdown 제목, 굵은 글씨, 코드 블록, 글머리 기호는 사용하지 말고 자연스러운 짧은 단락으로, 필요시 '1. 2. 3.'으로 번호 매기세요."
+    ),
+    "id": (
+        "Anda adalah pelatih bulu tangkis AI dari 'BadmintonAI'. Jawablah secara profesional, konkret, dan dapat dijalankan, "
+        "fokus pada teknik, footwork, rencana latihan, review tanding, pemulihan, dan keselamatan. "
+        "Jika ditanya cedera, berikan saran keamanan umum dan sarankan konsultasi dokter. "
+        "Jika konteks analisis diberikan, simpulkan hanya dari data itu; jangan mengarang detail. "
+        "Jangan gunakan heading markdown, blok kode, atau bullet; gunakan paragraf pendek alami, bernomor '1. 2. 3.' bila perlu."
+    ),
+}
+
+CHAT_CONTEXT_PROMPTS = {
+    "zh": "本次训练分析上下文如下：\n",
+    "en": "Training analysis context:\n",
+    "ja": "今回のトレーニング分析コンテキスト：\n",
+    "ko": "이번 훈련 분석 컨텍스트:\n",
+    "id": "Konteks analisis latihan:\n",
+}
+
+CHAT_STREAM_STATUS = {
+    "zh": ["正在理解你的问题", "正在结合训练报告和羽毛球训练知识", "正在组织可执行的训练建议"],
+    "en": ["Understanding your question", "Combining report with badminton knowledge", "Drafting actionable advice"],
+    "ja": ["質問を理解しています", "レポートとバドミントン知識を統合しています", "実行可能なアドバイスを作成中"],
+    "ko": ["질문을 이해하는 중", "리포트와 배드민턴 지식을 결합하는 중", "실행 가능한 조언을 구성하는 중"],
+    "id": ["Memahami pertanyaan Anda", "Menggabungkan laporan dengan pengetahuan bulu tangkis", "Menyusun saran yang dapat dijalankan"],
+}
+
+
+def build_coach_chat_messages(question, history=None, report=None, language="zh"):
+    history = history or []
+    context = compact_chat_report(report)
+    lang = language if language in CHAT_SYSTEM_PROMPTS else "zh"
+    system = CHAT_SYSTEM_PROMPTS[lang]
     messages = [{"role": "system", "content": system}]
     if context:
         messages.append(
             {
                 "role": "system",
-                "content": "本次训练分析上下文如下：\n"
+                "content": CHAT_CONTEXT_PROMPTS[lang]
                 + json.dumps(context, ensure_ascii=False, indent=2),
             }
         )
@@ -766,19 +942,27 @@ async def api_precheck(video: UploadFile = File(...)):
 
 
 @app.get("/api/history")
-def api_history_list(limit: int = 50):
+def api_history_list(limit: int = 50, language: str = "zh"):
+    lang = language if language in {"zh", "en", "ja", "ko", "id"} else "zh"
     items = get_history_list(limit=min(limit, 200))
     for item in items:
         item["created_at_display"] = item["created_at"].replace("T", " ")[:19] if item.get("created_at") else ""
+        if item.get("dominant_action"):
+            item["dominant_action"] = translate_action_name(item["dominant_action"], lang)
     return {"items": items}
 
 
 @app.get("/api/history/{session_id}")
-def api_history_detail(session_id: int):
+def api_history_detail(session_id: int, language: str = "zh"):
+    lang = language if language in {"zh", "en", "ja", "ko", "id"} else "zh"
     detail = get_history_detail(session_id)
     if not detail:
         raise HTTPException(status_code=404, detail="Session not found")
     detail["created_at_display"] = detail["created_at"].replace("T", " ")[:19] if detail.get("created_at") else ""
+    if detail.get("dominant_action"):
+        detail["dominant_action"] = translate_action_name(detail["dominant_action"], lang)
+    if detail.get("report"):
+        translate_report(detail["report"], lang)
     return detail
 
 
@@ -797,6 +981,9 @@ def coach_chat(payload: dict = Body(...)):
     provider = str(payload.get("provider") or "qwen").strip().lower()
     if provider not in {"qwen", "zhipu"}:
         provider = "qwen"
+    language = str(payload.get("language") or "zh").strip().lower()
+    if language not in CHAT_SYSTEM_PROMPTS:
+        language = "zh"
 
     defaults = provider_defaults(provider)
     api_key = get_api_key(provider)
@@ -808,6 +995,7 @@ def coach_chat(payload: dict = Body(...)):
         question,
         history=payload.get("history") or [],
         report=payload.get("report") if payload.get("use_report_context", True) else None,
+        language=language,
     )
     try:
         answer = chat_completions(
@@ -836,6 +1024,9 @@ def coach_chat_stream(payload: dict = Body(...)):
     provider = str(payload.get("provider") or "qwen").strip().lower()
     if provider not in {"qwen", "zhipu"}:
         provider = "qwen"
+    language = str(payload.get("language") or "zh").strip().lower()
+    if language not in CHAT_SYSTEM_PROMPTS:
+        language = "zh"
 
     defaults = provider_defaults(provider)
     api_key = get_api_key(provider)
@@ -847,13 +1038,14 @@ def coach_chat_stream(payload: dict = Body(...)):
         question,
         history=payload.get("history") or [],
         report=payload.get("report") if payload.get("use_report_context", True) else None,
+        language=language,
     )
+    status_lines = CHAT_STREAM_STATUS.get(language, CHAT_STREAM_STATUS["zh"])
 
     def stream():
         try:
-            yield sse_payload("status", {"text": "正在理解你的问题"})
-            yield sse_payload("status", {"text": "正在结合训练报告和羽毛球训练知识"})
-            yield sse_payload("status", {"text": "正在组织可执行的训练建议"})
+            for line in status_lines:
+                yield sse_payload("status", {"text": line})
             for chunk in chat_completions_stream(
                 defaults["base_url"],
                 api_key,
@@ -1004,149 +1196,231 @@ def analyze_video(video: UploadFile = File(...), config: str = Form("{}")):
     if not DEFAULT_POSE_MODEL.exists():
         raise HTTPException(status_code=500, detail=f"Pose model not found: {DEFAULT_POSE_MODEL}")
 
+    import queue
+    import threading
+
+    progress_q = queue.Queue()
+
+    def worker():
+        try:
+            video_path = progress_q.path
+            _do_analyze(video_path, video, cfg, progress_q)
+        except Exception as exc:
+            import traceback
+            traceback.print_exc()
+            try:
+                progress_q.put({"event": "error", "message": str(exc)})
+            except Exception:
+                pass
+
     try:
         video_path = save_upload(video)
-        video_metadata = read_video_metadata(video_path)
-        use_cpu = bool(cfg.get("use_cpu", False))
-        model, checkpoint, label_names, device_name = cached_model(str(DEFAULT_CHECKPOINT), use_cpu)
-        device = torch.device(device_name)
+        progress_q.path = video_path
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Upload failed: {exc}") from exc
 
-        preset = preset_values(cfg.get("analysis_preset"))
-        target_player = cfg.get("target_player") or "near"
-        target_bbox = cfg.get("target_bbox")
-        if target_bbox is not None:
-            target_bbox = tuple(float(item) for item in target_bbox)
+    thread = threading.Thread(target=worker, daemon=True)
+    thread.start()
 
-        target_roi = config_roi(cfg.get("target_roi"))
+    def event_generator():
+        yield sse_payload("start", {"message": "开始分析..."})
+        while True:
+            try:
+                evt = progress_q.get(timeout=60)
+            except queue.Empty:
+                yield sse_payload("heartbeat", {})
+                continue
+            ev_type = evt.get("event", "progress")
+            if ev_type == "done":
+                thread.join(timeout=5)
+                if "report" in evt:
+                    ui_language = str(cfg.get("language") or cfg.get("llm_language") or "zh").strip().lower()
+                    if ui_language in {"zh", "en", "ja", "ko", "id"}:
+                        translate_report(evt["report"], ui_language)
+                    yield sse_payload("result", evt["report"])
+                break
+            if ev_type == "error":
+                thread.join(timeout=5)
+                yield sse_payload("error", {"message": evt.get("message", "unknown error")})
+                break
+            yield sse_payload("progress", evt)
+        yield "data: [DONE]\n\n"
 
+    return StreamingResponse(event_generator(), media_type="text/event-stream", headers={
+        "Cache-Control": "no-cache",
+        "X-Accel-Buffering": "no",
+    })
+
+
+def _do_analyze(video_path, video, cfg, q):
+    def emit(percent, message):
         try:
-            quick_check = precheck_video(video_path, DEFAULT_POSE_MODEL, conf_threshold=0.2)
-            auto_scene = quick_check.get("scene_type", "closeup")
-            if auto_scene == "match_wide" and not cfg.get("conf_threshold"):
-                cfg["conf_threshold"] = 0.2
-                print(f"[INFO] Auto-detected match_wide scene, using conf_threshold=0.2 for better small-person detection")
-            if auto_scene == "match_wide" and target_player == "near" and not cfg.get("target_player"):
-                target_player = "largest"
-                print(f"[INFO] Auto-detected match_wide scene, using largest target selection")
+            q.put({"event": "progress", "percent": int(percent), "message": message})
         except Exception:
             pass
 
-        pose_seq, sampled_indices, video_fps = cached_pose_result(
-            str(video_path.resolve()),
-            str(DEFAULT_POSE_MODEL.resolve()),
-            float(cfg.get("conf_threshold", 0.3)),
-            preset["max_frames"],
-            int(cfg.get("batch_size", 32)),
-            target_player,
-            target_roi,
-            target_bbox,
-        )
+    emit(3, "读取视频元数据...")
+    video_metadata = read_video_metadata(video_path)
+    use_cpu = bool(cfg.get("use_cpu", False))
+    model, checkpoint, label_names, device_name = cached_model(str(DEFAULT_CHECKPOINT), use_cpu)
+    device = torch.device(device_name)
 
-        windows, aggregate_probs = predict_windows(
-            model,
-            checkpoint,
-            pose_seq,
-            device,
-            window_size=int(cfg.get("window_size", preset["window_size"])),
-            stride=int(cfg.get("stride", preset["stride"])),
-            topk=3,
-        )
-        top_predictions = aggregate_predictions(
-            windows,
-            aggregate_probs,
-            topk=5,
-            num_classes=int(checkpoint.get("num_classes", 18)),
-        )
-        summary = compute_motion_summary(pose_seq, conf_threshold=float(cfg.get("conf_threshold", 0.3)))
-        report = build_report(video_path, top_predictions, label_names, summary)
-        report["video_metadata"] = video_metadata
-        analysis_fps = effective_pose_fps(sampled_indices, video_fps)
-        report["hit_events"] = detect_hit_events(pose_seq, windows=windows, label_names=label_names, fps=analysis_fps)
-        report["shot_events"] = classify_hit_events(
-            model,
-            checkpoint,
-            pose_seq,
-            report["hit_events"],
-            label_names,
-            device,
-            fps=analysis_fps,
-            topk=3,
-        )
-        for event in report["hit_events"]:
-            event["time_sec"] = round(float(event.get("frame", 0)) / max(analysis_fps, 1e-6), 3)
-        for event in report["shot_events"]:
-            event["time_sec"] = round(float(event.get("frame", 0)) / max(analysis_fps, 1e-6), 3)
-        report["footwork_scores"] = compute_footwork_scores(pose_seq)
-        report["footwork_trace"] = build_footwork_trace(
-            pose_seq,
-            sampled_indices=sampled_indices,
-            frame_size=video_metadata,
-            conf_threshold=float(cfg.get("conf_threshold", 0.3)),
-        )
-        report["coach_report"] = build_coach_report(report)
+    preset = preset_values(cfg.get("analysis_preset"))
+    target_player = cfg.get("target_player") or "near"
+    target_bbox = cfg.get("target_bbox")
+    if target_bbox is not None:
+        target_bbox = tuple(float(item) for item in target_bbox)
+    target_roi = config_roi(cfg.get("target_roi"))
 
-        llm_provider = cfg.get("llm_provider") or "qwen"
-        if bool(cfg.get("generate_llm_report", False)):
-            try:
-                llm_result = generate_segmented_llm_coach_report(
-                    report,
-                    provider=llm_provider,
-                    timeout=int(cfg.get("llm_timeout", 120)),
-                    shots_per_group=int(cfg.get("llm_shots_per_group", 8)),
-                    max_groups=cfg.get("llm_max_groups"),
-                )
-                report["llm_provider"] = llm_provider
-                report["llm_coach_mode"] = llm_result.get("mode", "segmented")
-                report["llm_coach_report"] = llm_result.get("summary", "")
-                report["llm_coach_segments"] = llm_result.get("segments", [])
-            except Exception as exc:
-                report["llm_provider"] = llm_provider
-                report["llm_coach_error"] = str(exc)
+    try:
+        quick_check = precheck_video(video_path, DEFAULT_POSE_MODEL, conf_threshold=0.2)
+        auto_scene = quick_check.get("scene_type", "closeup")
+        if auto_scene == "match_wide" and not cfg.get("conf_threshold"):
+            cfg["conf_threshold"] = 0.2
+            print(f"[INFO] Auto-detected match_wide scene, using conf_threshold=0.2 for better small-person detection")
+        if auto_scene == "match_wide" and target_player == "near" and not cfg.get("target_player"):
+            target_player = "largest"
+            print(f"[INFO] Auto-detected match_wide scene, using largest target selection")
+    except Exception:
+        pass
 
-        annotated_video = ANNOTATED_DIR / f"{video_path.stem}_annotated.mp4"
-        status_text = f"Target: {target_player}"
-        write_full_length_annotated_video(
-            video_path,
-            pose_seq,
-            sampled_indices,
-            windows,
-            label_names,
-            annotated_video,
-            conf_threshold=float(cfg.get("conf_threshold", 0.3)),
-            hit_events=report.get("shot_events") or report["hit_events"],
-            status_text=status_text,
-        )
-        report["shot_events"] = write_shot_clips(video_path, report["shot_events"], SHOT_CLIP_DIR / video_path.stem)
-        report["annotated_video"] = str(annotated_video)
-        video_warning = _check_browser_playable(annotated_video)
-        if video_warning:
-            report["video_warning"] = video_warning
-        preview_path = extract_video_preview(
-            annotated_video,
-            PREVIEW_DIR / f"{video_path.stem}_annotated_preview.jpg",
-            time_sec=1.0,
-        )
-        if preview_path:
-            report["annotated_preview"] = str(preview_path)
-        report["runtime"] = {
-            "device": device_name,
-            "target_player": target_player,
-            "target_bbox": target_bbox,
-            "analysis_preset": cfg.get("analysis_preset", "adaptive"),
-            "footwork_map_mode": cfg.get("footwork_map_mode", "image"),
-        }
-        frontend_report = format_frontend_report(report)
+    emit(10, "提取姿态序列...")
+    pose_seq, sampled_indices, video_fps = cached_pose_result(
+        str(video_path.resolve()),
+        str(DEFAULT_POSE_MODEL.resolve()),
+        float(cfg.get("conf_threshold", 0.3)),
+        preset["max_frames"],
+        int(cfg.get("batch_size", 32)),
+        target_player,
+        target_roi,
+        target_bbox,
+    )
+
+    emit(35, "动作分类中...")
+    windows, aggregate_probs = predict_windows(
+        model,
+        checkpoint,
+        pose_seq,
+        device,
+        window_size=int(cfg.get("window_size", preset["window_size"])),
+        stride=int(cfg.get("stride", preset["stride"])),
+        topk=3,
+    )
+    top_predictions = aggregate_predictions(
+        windows,
+        aggregate_probs,
+        topk=5,
+        num_classes=int(checkpoint.get("num_classes", 18)),
+    )
+    summary = compute_motion_summary(pose_seq, conf_threshold=float(cfg.get("conf_threshold", 0.3)))
+    report = build_report(video_path, top_predictions, label_names, summary)
+    report["video_metadata"] = video_metadata
+    analysis_fps = effective_pose_fps(sampled_indices, video_fps)
+
+    emit(50, "检测击球事件...")
+    report["hit_events"] = detect_hit_events(pose_seq, windows=windows, label_names=label_names, fps=analysis_fps)
+    emit(62, "分类击球类型...")
+    report["shot_events"] = classify_hit_events(
+        model,
+        checkpoint,
+        pose_seq,
+        report["hit_events"],
+        label_names,
+        device,
+        fps=analysis_fps,
+        topk=3,
+    )
+    for event in report["hit_events"]:
+        event["time_sec"] = round(float(event.get("frame", 0)) / max(analysis_fps, 1e-6), 3)
+    for event in report["shot_events"]:
+        event["time_sec"] = round(float(event.get("frame", 0)) / max(analysis_fps, 1e-6), 3)
+
+    emit(72, "分析步伐轨迹...")
+    report["footwork_scores"] = compute_footwork_scores(pose_seq)
+    report["footwork_trace"] = build_footwork_trace(
+        pose_seq,
+        sampled_indices=sampled_indices,
+        frame_size=video_metadata,
+        conf_threshold=float(cfg.get("conf_threshold", 0.3)),
+        fps=video_fps,
+    )
+    ui_language = str(cfg.get("language") or cfg.get("llm_language") or "zh").strip().lower()
+    if ui_language not in {"zh", "en", "ja", "ko", "id"}:
+        ui_language = "zh"
+
+    # Build coach/LLM reports using translated action names for better localization
+    llm_input_report = translate_report(copy.deepcopy(report), ui_language) if ui_language != "en" else report
+    report["coach_report"] = build_coach_report(llm_input_report)
+
+    llm_provider = cfg.get("llm_provider") or "qwen"
+    llm_language = str(cfg.get("llm_language") or "zh").strip().lower()
+    if llm_language not in {"zh", "en", "ja", "ko", "id"}:
+        llm_language = "zh"
+    if bool(cfg.get("generate_llm_report", False)):
+        emit(78, "AI教练点评中...")
         try:
-            save_history(
-                video_name=video.filename,
-                report=frontend_report,
-                annotated_video_url=frontend_report.get("annotated_video_url"),
-                annotated_preview_url=frontend_report.get("annotated_preview_url"),
+            llm_result = generate_segmented_llm_coach_report(
+                llm_input_report,
+                provider=llm_provider,
+                timeout=int(cfg.get("llm_timeout", 120)),
+                shots_per_group=int(cfg.get("llm_shots_per_group", 8)),
+                max_groups=cfg.get("llm_max_groups"),
+                language=llm_language,
             )
-        except Exception as hist_exc:
-            print(f"[WARN] Failed to save history: {hist_exc}")
-        return frontend_report
-    except HTTPException:
-        raise
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
+            report["llm_provider"] = llm_provider
+            report["llm_language"] = llm_language
+            report["llm_coach_mode"] = llm_result.get("mode", "segmented")
+            report["llm_coach_report"] = llm_result.get("summary", "")
+            report["llm_coach_segments"] = llm_result.get("segments", [])
+        except Exception as exc:
+            report["llm_provider"] = llm_provider
+            report["llm_language"] = llm_language
+            report["llm_coach_error"] = str(exc)
+
+    emit(85, "生成标注视频...")
+    annotated_video = ANNOTATED_DIR / f"{video_path.stem}_annotated.mp4"
+    status_text = f"Target: {target_player}"
+    write_full_length_annotated_video(
+        video_path,
+        pose_seq,
+        sampled_indices,
+        windows,
+        label_names,
+        annotated_video,
+        conf_threshold=float(cfg.get("conf_threshold", 0.3)),
+        hit_events=report.get("shot_events") or report["hit_events"],
+        status_text=status_text,
+    )
+    report["shot_events"] = write_shot_clips(video_path, report["shot_events"], SHOT_CLIP_DIR / video_path.stem)
+    report["annotated_video"] = str(annotated_video)
+    video_warning = _check_browser_playable(annotated_video)
+    if video_warning:
+        report["video_warning"] = video_warning
+    preview_path = extract_video_preview(
+        annotated_video,
+        PREVIEW_DIR / f"{video_path.stem}_annotated_preview.jpg",
+        time_sec=1.0,
+    )
+    if preview_path:
+        report["annotated_preview"] = str(preview_path)
+    report["runtime"] = {
+        "device": device_name,
+        "target_player": target_player,
+        "target_bbox": target_bbox,
+        "analysis_preset": cfg.get("analysis_preset", "adaptive"),
+        "footwork_map_mode": cfg.get("footwork_map_mode", "image"),
+    }
+
+    emit(95, "整理报告...")
+    frontend_report = format_frontend_report(report)
+    try:
+        save_history(
+            video_name=video.filename,
+            report=frontend_report,
+            annotated_video_url=frontend_report.get("annotated_video_url"),
+            annotated_preview_url=frontend_report.get("annotated_preview_url"),
+        )
+    except Exception as hist_exc:
+        print(f"[WARN] Failed to save history: {hist_exc}")
+
+    q.put({"event": "done", "percent": 100, "message": "分析完成！", "report": frontend_report})

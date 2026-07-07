@@ -1,0 +1,67 @@
+<view class="container chat-container">
+  <view class="header">
+    <view class="kicker">AI COACH</view>
+    <view class="title">智能教练</view>
+    <view class="subtitle">AI为你提供专业羽毛球技术指导</view>
+  </view>
+
+  <scroll-view class="chat-messages" scroll-y="{{true}}" scroll-into-view="msg-{{messages.length - 1}}" scroll-with-animation="{{true}}">
+    <view wx:if="{{messages.length === 0}}" class="welcome-section">
+      <view class="welcome-icon">🏸</view>
+      <view class="welcome-title">你好！我是你的AI羽毛球教练</view>
+      <view class="welcome-desc">上传视频分析后，我可以为你点评动作、给出训练建议。你也可以直接问我羽毛球相关问题。</view>
+      <view class="quick-questions">
+        <view class="quick-q" bindtap="sendQuickQuestion" data-q="如何正确握拍？">
+          如何正确握拍？
+        </view>
+        <view class="quick-q" bindtap="sendQuickQuestion" data-q="后场高远球技巧">
+          后场高远球技巧
+        </view>
+        <view class="quick-q" bindtap="sendQuickQuestion" data-q="网前小球怎么练？">
+          网前小球怎么练？
+        </view>
+        <view class="quick-q" bindtap="sendQuickQuestion" data-q="步伐训练方法">
+          步伐训练方法
+        </view>
+      </view>
+    </view>
+
+    <view wx:for="{{messages}}" wx:key="id" id="msg-{{index}}" class="message-row {{item.role === 'user' ? 'user' : 'assistant'}}">
+      <view wx:if="{{item.role === 'assistant'}}" class="avatar coach-avatar">AI</view>
+      <view class="message-bubble {{item.role === 'user' ? 'user-bubble' : 'coach-bubble'}}">
+        <text>{{item.content}}</text>
+      </view>
+      <view wx:if="{{item.role === 'user'}}" class="avatar user-avatar">
+        <text wx:if="{{userInfo && userInfo.nickname}}">{{userInfo.nickname[0]}}</text>
+        <text wx:else>我</text>
+      </view>
+    </view>
+
+    <view wx:if="{{sending}}" class="message-row assistant">
+      <view class="avatar coach-avatar">AI</view>
+      <view class="message-bubble coach-bubble typing">
+        <view class="typing-dots">
+          <view class="dot"></view>
+          <view class="dot"></view>
+          <view class="dot"></view>
+        </view>
+      </view>
+    </view>
+  </scroll-view>
+
+  <view class="chat-input-area">
+    <input 
+      class="chat-input" 
+      placeholder="向AI教练提问..." 
+      placeholder-class="input-placeholder"
+      value="{{inputText}}"
+      bindinput="onInputChange"
+      confirm-type="send"
+      bindconfirm="sendMessage"
+      disabled="{{sending}}"
+    />
+    <button class="send-btn" bindtap="sendMessage" disabled="{{!inputText.trim() || sending}}">
+      发送
+    </button>
+  </view>
+</view>

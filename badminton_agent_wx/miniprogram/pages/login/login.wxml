@@ -1,0 +1,65 @@
+<view class="login-container">
+  <view class="bg-decoration">
+    <view class="orb orb-1"></view>
+    <view class="orb orb-2"></view>
+    <view class="orb orb-3"></view>
+  </view>
+
+  <view class="login-content">
+    <view class="logo-section">
+      <view class="logo-icon">🏸</view>
+      <view class="logo-text">羽动智练</view>
+      <view class="logo-subtitle">AI 羽毛球智能训练助手</view>
+    </view>
+
+    <view class="login-card">
+      <view class="tab-bar">
+        <view class="tab {{activeTab === 'wechat' ? 'active' : ''}}" bindtap="switchTab" data-tab="wechat">
+          微信登录
+        </view>
+        <view class="tab {{activeTab === 'account' ? 'active' : ''}}" bindtap="switchTab" data-tab="account">
+          账号登录
+        </view>
+      </view>
+
+      <view wx:if="{{activeTab === 'wechat'}}" class="wechat-login">
+        <view class="wechat-desc">
+          使用微信账号一键登录，自动同步训练数据，与网页版互通
+        </view>
+        <button class="btn-wechat w-full" bindtap="handleWechatLogin" disabled="{{loading}}">
+          <text wx:if="{{!loading}}">微信一键登录</text>
+          <text wx:else>登录中...</text>
+        </button>
+      </view>
+
+      <view wx:if="{{activeTab === 'account'}}" class="account-login">
+        <view class="form-item">
+          <input class="form-input" placeholder="请输入用户名或邮箱" placeholder-class="input-placeholder" value="{{username}}" bindinput="onUsernameInput" />
+        </view>
+        <view class="form-item">
+          <input class="form-input" placeholder="请输入密码" placeholder-class="input-placeholder" password="{{true}}" value="{{password}}" bindinput="onPasswordInput" />
+        </view>
+        <view wx:if="{{errorMsg}}" class="error-msg">{{errorMsg}}</view>
+        <button class="btn-primary w-full" bindtap="handleAccountLogin" disabled="{{loading}}">
+          <text wx:if="{{!loading}}">登录</text>
+          <text wx:else>登录中...</text>
+        </button>
+        <view class="register-link" bindtap="goToRegister">
+          还没有账号？立即注册
+        </view>
+      </view>
+    </view>
+
+    <view class="agreement">
+      登录即表示同意
+      <text class="link">《用户协议》</text>
+      和
+      <text class="link">《隐私政策》</text>
+    </view>
+  </view>
+</view>
+
+<view wx:if="{{loading}}" class="loading-overlay">
+  <view class="loading-spinner"></view>
+  <view class="loading-text">{{loadingText}}</view>
+</view>

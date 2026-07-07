@@ -41,3 +41,7 @@ wandb/
 *.egg-info/
 dist/
 build/
+
+# Local app state / private IDE config
+data/users.db
+badminton_agent_wx/project.private.config.json

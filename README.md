@@ -1,151 +1,334 @@
-# 羽动智练 - Badminton AI Coach
+﻿# 羽动智练 Badminton AI Coach
 
-基于 YOLOv8-Pose 的羽毛球姿态分析与动作识别项目。
+羽动智练是一个面向羽毛球训练复盘的 AI 分析项目。当前仓库同时包含 Python 后端推理服务、独立 Web 前端、Streamlit 原型和微信小程序端，核心能力是上传训练或比赛视频后进行人体姿态提取、动作分类、击球事件检测、步伐分析、标注视频生成和 AI 教练反馈。
 
-## 项目结构
+## 当前项目状态
 
-```
+项目已经从早期的姿态提取与模型训练脚本，发展为一个可端到端演示的应用：
+
+- 后端：FastAPI 服务，提供视频预检、视频分析、历史记录、媒体播放、账号登录注册、微信小程序登录和 AI 教练问答接口。
+- 模型：默认使用 `yolov8s-pose.pt` 做人体姿态估计，使用 `models/pose_sequence_tcn_gru.pt` 做羽毛球动作序列分类。
+- Web 前端：`frontend/` 是独立 HTML/CSS/JS 工作台，可通过 FastAPI 静态服务访问。
+- Streamlit 原型：`src/app/streamlit_app.py` 仍保留，用于快速测试视频分析流程。
+- 微信小程序：`badminton_agent_wx/` 已包含登录、训练、分析、AI 教练、历史、个人中心等页面。
+- 数据与输出：`data/` 保存特征和用户数据库，`outputs/` 保存上传视频、标注视频、片段、历史记录等运行产物。
+
+## 目录结构
+
+```text
 badminton-agent/
-├── configs/              # 配置文件
-│   └── dataset.yaml      # 数据集配置
-├── data/                 # 数据目录
-│   ├── pose_features/    # 姿态关键点特征 (NPY)
-│   └── visualizations/   # 可视化结果
-├── src/                  # 源代码
-│   ├── pose_estimation/  # 姿态估计
-│   │   ├── extract_pose.py     # 批量提取姿态
-│   │   └── visualize_pose.py   # 姿态可视化
-│   ├── feature_engineering/    # 特征工程
-│   │   └── extract_features.py # 羽毛球专项特征提取
-│   └── action_classification/  # 动作分类（待实现）
-├── models/               # 模型权重保存目录
-├── notebooks/            # Jupyter 分析笔记本
-├── requirements.txt      # 依赖
-├── test_setup.py         # 环境验证
-└── README.md             # 本文件
+├─ configs/                    # 数据集配置
+│  └─ dataset.yaml
+├─ data/                       # 本地数据与特征
+│  ├─ raw_videos/              # 原始视频数据，按需放置
+│  ├─ pose_features/           # YOLOv8-Pose 提取后的姿态序列
+│  ├─ visualizations/          # 姿态可视化结果
+│  ├─ badminton_features.json  # 手工/工程特征结果
+│  └─ users.db                 # 用户账号数据库 SQLite
+├─ frontend/                   # 独立 Web 前端工作台
+│  ├─ index.html
+│  ├─ styles.css
+│  ├─ app.js
+│  └─ assets/
+├─ badminton_agent_wx/         # 微信小程序端
+│  ├─ miniprogram/
+│  │  ├─ app.js / app.json / app.wxss
+│  │  ├─ utils/api.js
+│  │  └─ pages/
+│  │     ├─ login/             # 登录/注册/微信登录
+│  │     ├─ training/          # 训练视频上传与分析入口
+│  │     ├─ analysis/          # 分析结果展示
+│  │     ├─ coach/             # AI 教练问答
+│  │     ├─ history/           # 历史记录
+│  │     └─ profile/           # 个人中心
+│  └─ cloudfunctions/          # 微信云开发 quickstart 函数，目前不是主业务后端
+├─ models/                     # 动作分类模型、标签和评估结果
+│  ├─ pose_sequence_tcn_gru.pt
+│  ├─ pose_sequence_labels.json
+│  ├─ hierarchical*/
+│  └─ evaluation/
+├─ outputs/                    # 运行输出
+│  ├─ api_uploads/             # API 上传的视频
+│  ├─ api_annotated/           # 生成的完整标注视频
+│  ├─ api_previews/            # 视频预览图
+│  ├─ api_shot_clips/          # 逐拍复盘片段
+│  ├─ avatars/                 # 用户头像
+│  └─ history.db               # 训练历史 SQLite
+├─ src/
+│  ├─ api/
+│  │  ├─ server.py             # FastAPI 主服务
+│  │  └─ auth.py               # 用户、Token、微信登录与头像接口
+│  ├─ app/
+│  │  └─ streamlit_app.py      # Streamlit 测试页面
+│  ├─ pose_estimation/         # 姿态提取与可视化
+│  ├─ feature_engineering/     # 羽毛球专项特征提取
+│  ├─ action_classification/   # 动作分类模型训练脚本
+│  └─ inference/               # 视频推理、规则报告、LLM 教练
+├─ requirements.txt
+├─ test_setup.py
+├─ yolov8s-pose.pt
+└─ README.md
+```
+
+## 核心功能
+
+### 视频分析
+
+上传视频后，后端会执行以下流程：
+
+1. 视频质量预检：分辨率、时长、清晰度、人物检测、人物大小和场景类型。
+2. 姿态估计：使用 YOLOv8-Pose 提取人体关键点。
+3. 球员选择与跟踪：支持近端、远端、左侧、右侧、最大人物、首帧框选和 ROI 限定。
+4. 动作分类：基于姿态序列模型识别羽毛球动作类型。
+5. 击球事件检测：识别疑似击球点并对逐拍片段分类。
+6. 步伐分析：生成脚步轨迹、热力图和步伐评分。
+7. 质量评估：输出动作质量、问题标签和训练建议。
+8. 标注视频：生成带骨架、动作标签、置信度和击球事件标记的视频。
+9. 历史记录：将分析结果写入 `outputs/history.db`，供 Web 和小程序查看。
+
+### AI 教练
+
+项目支持本地规则报告和可选的大模型教练反馈：
+
+- Qwen / DashScope OpenAI-compatible 接口
+- 智谱 AI GLM OpenAI-compatible 接口
+- 支持普通问答和流式问答接口
+- 可结合当前训练报告进行追问
+- API Key 不应提交到 Git，建议放在 `.env`
+
+### 账号体系
+
+后端提供本地账号和微信小程序登录：
+
+- 用户名/密码注册与登录
+- Token 会话认证
+- 头像上传
+- 个人资料更新
+- 微信小程序 `code2session` 登录
+- 微信绑定/解绑
+
+如果没有配置 `WECHAT_SECRET`，后端会使用开发模式 openid，方便本地联调。
+
+## 后端接口概览
+
+FastAPI 入口：`src/api/server.py`
+
+常用接口：
+
+```text
+GET    /api/health
+POST   /api/precheck
+POST   /api/frame
+POST   /api/analyze
+GET    /api/history
+GET    /api/history/{session_id}
+DELETE /api/history/{session_id}
+GET    /api/media/{filename}
+POST   /api/coach/chat
+POST   /api/coach/chat/stream
+```
+
+认证接口：
+
+```text
+POST   /api/auth/register
+POST   /api/auth/login
+POST   /api/auth/wechat/miniprogram-login
+GET    /api/auth/me
+POST   /api/auth/logout
+PUT    /api/auth/profile
+POST   /api/auth/avatar
+GET    /api/auth/avatar/{filename}
+POST   /api/auth/change-password
+POST   /api/auth/wechat/bind
+POST   /api/auth/wechat/unbind
+POST   /api/auth/logout-all
 ```
 
 ## 快速开始
 
 ### 1. 安装依赖
 
+建议使用 Python 3.10+，并在虚拟环境中安装依赖：
+
 ```bash
+cd D:\badminton-agent
 pip install -r requirements.txt
 ```
 
-YOLOv8s-Pose 模型会在首次运行时自动下载。
+主要依赖包括：FastAPI、Uvicorn、OpenCV、PyTorch、Ultralytics YOLO、Streamlit、scikit-learn 等。
 
-### 2. 验证环境（30 秒）
+### 2. 配置环境变量
 
-```bash
-python test_setup.py
+复制 `.env.example` 为 `.env`，按需填写大模型和微信配置：
+
+```env
+DASHSCOPE_API_KEY=
+QWEN_API_KEY=
+QWEN_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+QWEN_MODEL=qwen-plus
+
+ZHIPUAI_API_KEY=
+ZHIPU_API_KEY=
+ZHIPU_BASE_URL=https://open.bigmodel.cn/api/paas/v4
+ZHIPU_MODEL=glm-4-plus
+
+WECHAT_APPID=wxa62a3ae0f2c7c0f4
+WECHAT_SECRET=
 ```
 
-### 3. 提取姿态关键点
+`.env` 已加入 `.gitignore`，不要提交真实 API Key。
 
-```bash
-python src/pose_estimation/extract_pose.py
-```
+### 3. 启动 FastAPI 后端
 
-处理全部 7822 个视频，输出 `.npy` 文件到 `data/pose_features/`。
-
-### 4. 可视化验证
-
-```bash
-python src/pose_estimation/visualize_pose.py --samples 2
-```
-
-### 5. 提取羽毛球专项特征
-
-```bash
-python src/feature_engineering/extract_features.py
-```
-
-输出 `data/badminton_features.json`。
-
-### 6. 单视频/姿态文件推理
-
-使用当前最佳姿态序列模型生成动作识别结果和训练建议：
-
-```bash
-python src/inference/predict_video.py --pose-file data/pose_features/14_Smash/example_pose.npy
-```
-
-也可以直接输入视频，脚本会先调用 YOLOv8-Pose 提取关键点：
-
-```bash
-python src/inference/predict_video.py --video demo.mp4 --output outputs/demo_report.json
-```
-
-输出包含预测动作、Top-K 置信度、姿态检测率、动作摘要和中文训练建议。
-
-### 7. Streamlit 测试页面
-
-```bash
-python -m streamlit run src/app/streamlit_app.py --server.port 8501 --server.address 127.0.0.1
-```
-
-打开 `http://127.0.0.1:8501`，可上传视频或 `.npy` 姿态文件进行测试。
-视频模式会生成带人体骨架、分段动作标签、置信度和疑似击球点标记的标注视频。
-页面还会生成“同步标注 + 步伐热力图”视频：左侧是标注画面，右侧是半场矩形步伐地图，播放时实时显示脚步轨迹和热力变化。
-多人画面可在侧边栏选择“跟踪球员”，用于锁定近端、远端、左侧或右侧球员，减少误跟踪到对方。
-如果选择“首帧目标框”，页面会在上传视频后显示首帧，支持直接拖出目标球员矩形框；系统会用该框初始化目标并做连续跟踪。若未安装 `streamlit-drawable-canvas`，页面会自动退回到带预览图的滑块框选。
-可通过“分析区域 ROI”限定上半场、下半场、左右半场或自定义矩形区域，让多人比赛画面优先跟踪目标区域内的球员。
-步伐热力图支持自动轨迹范围和手动四点球场标定；手动标定后会将脚步位置映射到固定半场面板。
-系统会围绕疑似击球点截取短片段并进行逐拍动作识别，在总览和标注视频面板中展示每拍时间、动作类别和置信度。
-逐拍结果会附带质量评分、问题标签和训练建议，例如击球点偏低、挥拍加速不足、回位慢或重心稳定性不足。
-视频模式还会导出每拍复盘小片段，可在页面中逐拍播放和下载。
-页面包含总览、标注视频、步伐监测和训练报告四个面板；步伐监测会基于脚踝、髋部和重心变化生成汇总指标。
-页面内置项目说明页，便于展示系统流程、核心算法、当前局限和后续方向；训练报告支持 JSON 和 Markdown 导出。
-可选启用大模型教练反馈，当前预留 Qwen 和智谱AI OpenAI-compatible 接口；可在页面输入 API Key，或设置 `DASHSCOPE_API_KEY` / `QWEN_API_KEY` / `ZHIPUAI_API_KEY`。
-大模型反馈支持两种模式：“快速总结”只发送少量代表性拍次，适合调试接口；“全程分段总结”会按拍次分组生成小结，再汇总成完整训练报告，更适合正式复盘长视频。
-页面默认使用“自适应最佳”模式，会尽量逐帧分析以减少漏检；长视频处理较慢时可切换为快速/均衡模式。
-
-### 7.1 独立 HTML 前端
-
-项目已提供独立前端工作台，便于后续产品落地和接入 Web 后端：
-
-```text
-frontend/index.html
-```
-
-直接在浏览器打开即可体验上传视频、首帧框选、分析状态、结果面板和训练报告的前端流程。当前默认使用前端演示数据；后续可通过 `POST /api/analyze` 接入 FastAPI/Flask 后端，接口说明见：
-
-```text
-frontend/README.md
-```
-
-也可以启动内置 FastAPI 后端，直接用真实模型分析视频：
+本机 Web 调试：
 
 ```bash
 python -m uvicorn src.api.server:app --host 127.0.0.1 --port 8000
 ```
 
-然后打开：
+手机或微信小程序局域网调试：
+
+```bash
+python -m uvicorn src.api.server:app --host 0.0.0.0 --port 8000
+```
+
+启动后访问：
 
 ```text
 http://127.0.0.1:8000/frontend/
 ```
 
-### 8. 大模型配置
+健康检查：
 
-项目会自动读取根目录 `.env` 中的大模型配置。可参考 `.env.example` 填写：
-
-```bash
-DASHSCOPE_API_KEY=你的通义千问Key
-QWEN_MODEL=qwen-plus
-ZHIPUAI_API_KEY=你的智谱AI Key
-ZHIPU_MODEL=glm-4-plus
+```text
+http://127.0.0.1:8000/api/health
 ```
 
-`.env` 已加入 `.gitignore`，不要提交真实 API Key。
+### 4. 启动 Streamlit 原型
 
-如果页面提示大模型反馈 `read operation timed out`，说明视觉分析和本地规则报告已完成，只是外部大模型接口超时。可在侧边栏提高“大模型超时秒数”、切换为“快速总结”、限制全程分段总结的分组数，或稍后重试。
+```bash
+python -m streamlit run src/app/streamlit_app.py --server.port 8501 --server.address 127.0.0.1
+```
 
-## 下一步
+访问：
 
-- [ ] 训练动作分类模型（Video Swin / TimeSformer）
-- [ ] 构建标准动作模板库
-- [ ] 实现动作质量评分（DTW 对比）
-- [x] 接入 LLM 生成训练建议
-- [x] 开发前端界面
+```text
+http://127.0.0.1:8501
+```
+
+### 5. 命令行推理
+
+使用姿态序列文件：
+
+```bash
+python src/inference/predict_video.py --pose-file data/pose_features/14_Smash/example_pose.npy
+```
+
+直接分析视频：
+
+```bash
+python src/inference/predict_video.py --video demo.mp4 --output outputs/demo_report.json
+```
+
+### 6. 微信小程序调试
+
+小程序目录：
+
+```text
+D:\badminton-agent\badminton_agent_wx
+```
+
+使用微信开发者工具导入该目录。当前小程序页面包括：
+
+```text
+pages/login/login
+pages/training/training
+pages/analysis/analysis
+pages/coach/coach
+pages/history/history
+pages/profile/profile
+```
+
+调试前需要修改：
+
+```text
+badminton_agent_wx/miniprogram/app.js
+```
+
+将 `API_BASE` 改成你电脑的局域网地址，例如：
+
+```js
+const API_BASE = 'http://192.168.1.5:8000';
+```
+
+同时后端必须用 `0.0.0.0:8000` 启动，并保证手机和电脑在同一 WiFi。微信开发者工具里当前 `urlCheck` 为 `false`，便于本地调试；正式发布时需要配置合法域名和 HTTPS。
+
+## 模型与训练脚本
+
+当前主要模型：
+
+- `yolov8s-pose.pt`：人体姿态估计模型。
+- `models/pose_sequence_tcn_gru.pt`：默认动作序列分类模型。
+- `models/pose_sequence_labels.json`：动作类别标签。
+- `models/hierarchical*/`：分层动作分类实验模型。
+- `models/evaluation/`：混淆矩阵、分类报告和每类指标。
+
+训练与数据处理脚本：
+
+```bash
+python src/pose_estimation/extract_pose.py
+python src/pose_estimation/visualize_pose.py --samples 2
+python src/feature_engineering/extract_features.py
+python src/action_classification/train_pose_sequence_classifier.py
+python src/action_classification/train_hierarchical_classifier.py
+```
+
+`test_setup.py` 用于验证 YOLOv8-Pose 环境，但其中数据集路径目前指向 `G:/VideoBadminton_Dataset/VideoBadminton_Dataset`，在新机器上需要改成实际数据集路径。
+
+## 前端说明
+
+### Web 前端
+
+`frontend/` 是完整的单页 Web 工作台。推荐通过 FastAPI 访问：
+
+```text
+http://127.0.0.1:8000/frontend/
+```
+
+它会调用：
+
+- `POST /api/precheck`
+- `POST /api/frame`
+- `POST /api/analyze`
+- `GET /api/history`
+- `POST /api/coach/chat`
+- `POST /api/coach/chat/stream`
+
+### 微信小程序
+
+小程序复用 FastAPI 后端接口，主要通过：
+
+```text
+badminton_agent_wx/miniprogram/utils/api.js
+```
+
+封装请求、登录、注册、视频上传分析、历史记录和教练问答。当前云函数目录仍是微信云开发 quickstart，不是主要业务服务。
+
+## 当前注意事项
+
+- 仓库里已有 `data/users.db` 和 `outputs/history.db` 等本地运行数据，提交代码前需要确认是否要保留。
+- 多个源码文件中的中文字符串在当前环境显示为乱码，功能逻辑仍可读，但后续建议统一保存为 UTF-8。
+- `.env` 中的真实 Key 不要提交。
+- 小程序本地调试依赖局域网 IP，换网络后要更新 `API_BASE`。
+- 上传视频分析会生成较多输出文件，主要位于 `outputs/api_*` 目录。
+- `yolov8s-pose.pt` 和模型权重较大，若迁移仓库需确认是否使用 Git LFS 或外部下载方式。
+
+## 后续建议
+
+- 统一清理中文编码问题，保证 README、前端文案、后端错误信息均为 UTF-8。
+- 将小程序 `API_BASE` 改为环境化配置，避免手动改源码。
+- 梳理 `outputs/`、`data/*.db`、模型权重是否应纳入版本控制。
+- 为 FastAPI 接口补充 OpenAPI 使用说明和示例请求。
+- 为视频分析流程增加更小的 sample video 和 smoke test。
+- 小程序正式发布前配置 HTTPS 域名、微信 AppSecret 和隐私合规说明。
