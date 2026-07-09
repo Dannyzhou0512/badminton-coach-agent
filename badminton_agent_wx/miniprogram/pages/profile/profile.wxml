@@ -80,6 +80,12 @@
       </view>
     </block>
     <view class="menu-divider"></view>
+    <view class="menu-item" bindtap="bindWebAccount">
+      <view class="menu-icon">🔗</view>
+      <text class="menu-text">绑定网页账号</text>
+      <text class="menu-arrow">›</text>
+    </view>
+    <view class="menu-divider"></view>
     <view class="menu-item" bindtap="switchAccount">
       <view class="menu-icon">🔄</view>
       <text class="menu-text">切换账号</text>

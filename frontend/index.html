@@ -742,6 +742,19 @@
   </div>
 </div>
 
+<!-- Bind WeChat Modal -->
+<div class="modal-overlay" id="bindWechatModal" hidden>
+  <div class="modal-content bind-wechat-modal">
+    <button class="modal-close" id="btnCloseBindWechatModal">×</button>
+    <h2 class="modal-title" data-i18n="bindWechatTitle">绑定微信小程序</h2>
+    <p class="bind-wechat-desc" data-i18n="bindWechatDesc">打开微信小程序，在「我的」页面点击「绑定网页账号」，输入下方绑定码</p>
+    <div class="bind-code-display" id="bindCodeDisplay">------</div>
+    <button type="button" class="btn btn-secondary btn-copy-bind-code" id="btnCopyBindCode" data-i18n="copyBindCode">复制绑定码</button>
+    <div class="bind-status" id="bindStatus" data-i18n="bindWaiting">等待绑定...</div>
+    <div class="bind-timer" id="bindTimer">10:00</div>
+  </div>
+</div>
+
 <!-- Onboarding Tour -->
 <div class="tour-overlay" id="tourOverlay" hidden>
   <div class="tour-highlight" id="tourHighlight"></div>

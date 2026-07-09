@@ -13,8 +13,11 @@ Run (allow mobile preview on LAN):
 import copy
 import hashlib
 import json
+import os
+import shutil
 import sqlite3
 import sys
+import time
 from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
@@ -31,6 +34,13 @@ from fastapi.staticfiles import StaticFiles
 ROOT = Path(__file__).resolve().parents[2]
 INFERENCE_DIR = ROOT / "src" / "inference"
 API_DIR = ROOT / "src" / "api"
+
+# Load .env file if exists
+try:
+    from dotenv import load_dotenv
+    load_dotenv(ROOT / ".env")
+except ImportError:
+    pass
 if str(INFERENCE_DIR) not in sys.path:
     sys.path.insert(0, str(INFERENCE_DIR))
 if str(API_DIR) not in sys.path:
@@ -96,6 +106,28 @@ ACTION_NAME_I18N = {
     "Short Flat Shot": {"zh": "前场平抽", "en": "Short Flat Shot", "ja": "ショートフラットショット", "ko": "숏 플랫 샷", "id": "Short Flat Shot"},
 }
 
+ACTION_NAME_ZH_FALLBACK = {
+    "Short Serve": "\u77ed\u53d1\u7403",
+    "Cross Court Flight": "\u659c\u7ebf\u9ad8\u8fdc\u7403",
+    "Lift": "\u6311\u7403",
+    "Tap Smash": "\u70b9\u6740",
+    "Block": "\u6321\u7f51",
+    "Drop Shot": "\u540a\u7403",
+    "Push Shot": "\u63a8\u7403",
+    "Transitional Slice": "\u8fc7\u6e21\u5288\u540a",
+    "Cut": "\u6413\u7403",
+    "Rush Shot": "\u7a81\u51fb\u7403",
+    "Defensive Clear": "\u9632\u5b88\u9ad8\u8fdc\u7403",
+    "Defensive Drive": "\u9632\u5b88\u62bd\u7403",
+    "Clear": "\u9ad8\u8fdc\u7403",
+    "Long Serve": "\u957f\u53d1\u7403",
+    "Smash": "\u6740\u7403",
+    "Flat Shot": "\u5e73\u62bd\u7403",
+    "Rear Court Flat Drive": "\u540e\u573a\u5e73\u62bd",
+    "Short Flat Shot": "\u524d\u573a\u5e73\u62bd",
+}
+
+
 QUALITY_LEVEL_I18N = {
     "数据不足": {"zh": "数据不足", "en": "Insufficient Data", "ja": "データ不足", "ko": "데이터 부족", "id": "Data Tidak Cukup"},
     "优秀": {"zh": "优秀", "en": "Excellent", "ja": "優秀", "ko": "우수", "id": "Sangat Baik"},
@@ -107,7 +139,10 @@ QUALITY_LEVEL_I18N = {
 
 def translate_action_name(name, language):
     lang = language if language in {"zh", "en", "ja", "ko", "id"} else "en"
-    mapping = ACTION_NAME_I18N.get(name) or ACTION_NAME_I18N.get(name.strip())
+    clean_name = name.strip() if isinstance(name, str) else name
+    if lang == "zh" and clean_name in ACTION_NAME_ZH_FALLBACK:
+        return ACTION_NAME_ZH_FALLBACK[clean_name]
+    mapping = ACTION_NAME_I18N.get(clean_name)
     if mapping:
         return mapping.get(lang, name)
     return name
@@ -193,9 +228,70 @@ app.add_middleware(
 app.include_router(auth_router)
 
 
+@app.on_event("startup")
+async def startup_check():
+    print("=" * 60)
+    print("🏸 羽毛球AI教练系统启动中...")
+    print("=" * 60)
+
+    # Check model files
+    checkpoint_path = DEFAULT_CHECKPOINT
+    yolo_path = DEFAULT_POSE_MODEL
+    models_ok = True
+    if not checkpoint_path.exists():
+        print(f"❌ 错误: 姿态分类模型缺失: {checkpoint_path}")
+        models_ok = False
+    else:
+        print(f"✅ 姿态分类模型已加载: {checkpoint_path.name}")
+
+    if not yolo_path.exists():
+        print(f"⚠️  YOLOv8姿态模型未找到，首次分析时将自动下载")
+    else:
+        print(f"✅ YOLOv8姿态模型已就绪: {yolo_path.name}")
+
+    # Check CUDA
+    if torch.cuda.is_available():
+        gpu_name = torch.cuda.get_device_name(0)
+        print(f"✅ GPU加速已启用: {gpu_name}")
+    else:
+        print("⚠️  未检测到NVIDIA GPU，将使用CPU模式（速度较慢）")
+        print("   如需GPU加速，请安装CUDA版本的PyTorch")
+
+    # Check FFmpeg
+    ffmpeg_path = shutil.which("ffmpeg")
+    if ffmpeg_path:
+        print(f"✅ FFmpeg已就绪: {ffmpeg_path}")
+    else:
+        print("⚠️  未检测到FFmpeg，标注视频生成速度可能较慢")
+        print("   安装FFmpeg可启用NVENC硬件加速，速度提升3-5倍")
+
+    # Check LLM API keys
+    llm_configured = False
+    for key in ["DASHSCOPE_API_KEY", "QWEN_API_KEY", "ZHIPUAI_API_KEY", "ZHIPU_API_KEY"]:
+        if os.environ.get(key):
+            llm_configured = True
+            break
+    if llm_configured:
+        print("✅ AI教练API Key已配置")
+    else:
+        print("ℹ️  AI教练API Key未配置（可选功能，不影响核心分析）")
+        print("   如需使用AI教练点评，请在.env文件中配置API Key")
+
+    # Ensure directories exist
+    for d in [UPLOAD_DIR, ANNOTATED_DIR, SHOT_CLIP_DIR, PREVIEW_DIR]:
+        d.mkdir(parents=True, exist_ok=True)
+
+    init_db()
+    print("=" * 60)
+    print("🚀 服务启动完成！请在浏览器中访问:")
+    print("   http://127.0.0.1:8000/frontend/")
+    print("=" * 60)
+
+
 def init_db():
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(str(DB_PATH))
+    conn.row_factory = sqlite3.Row
     conn.execute(
         """CREATE TABLE IF NOT EXISTS history (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -211,6 +307,35 @@ def init_db():
         )"""
     )
     conn.commit()
+    # Backfill avg_quality_score and dominant_action for older records that stored null scores
+    rows = conn.execute(
+        "SELECT id, report_json FROM history WHERE avg_quality_score IS NULL OR dominant_action IS NULL"
+    ).fetchall()
+    for row in rows:
+        try:
+            report = json.loads(row["report_json"])
+            shots = report.get("shot_events", []) or []
+            scores = []
+            for s in shots:
+                score = s.get("quality_score")
+                if score is None and isinstance(s.get("quality"), dict):
+                    score = s["quality"].get("overall")
+                if score is not None:
+                    scores.append(float(score))
+            avg_score = round(float(np.mean(scores)), 1) if scores else None
+            action_counts = {}
+            for s in shots:
+                name = s.get("shot_action") or s.get("action_name") or s.get("predicted_action") or "unknown"
+                action_counts[name] = action_counts.get(name, 0) + 1
+            dominant = max(action_counts, key=action_counts.get) if action_counts else None
+            conn.execute(
+                "UPDATE history SET avg_quality_score = ?, dominant_action = ? WHERE id = ?",
+                (avg_score, dominant, row["id"]),
+            )
+        except Exception as e:
+            print(f"[WARN] Failed to backfill history score for id={row['id']}: {e}")
+    if rows:
+        conn.commit()
     conn.close()
 
 
@@ -218,7 +343,13 @@ def save_history(video_name, report, annotated_video_url=None, annotated_preview
     init_db()
     conn = sqlite3.connect(str(DB_PATH))
     shots = report.get("shot_events", []) or []
-    scores = [s.get("quality", {}).get("overall", 0) for s in shots if s.get("quality")]
+    scores = []
+    for s in shots:
+        score = s.get("quality_score")
+        if score is None and isinstance(s.get("quality"), dict):
+            score = s["quality"].get("overall")
+        if score is not None:
+            scores.append(float(score))
     avg_score = round(float(np.mean(scores)), 1) if scores else None
     action_counts = {}
     for s in shots:
@@ -521,6 +652,7 @@ def cached_pose_result(
     target_player,
     target_roi,
     target_bbox,
+    sample_stride=2,
 ):
     pose_seq, _, sampled_indices, video_fps = extract_pose_and_frames_from_video(
         video_path,
@@ -532,6 +664,7 @@ def cached_pose_result(
         target_point=None,
         target_roi=target_roi,
         target_bbox=target_bbox,
+        sample_stride=sample_stride,
     )
     return pose_seq, tuple(sampled_indices), float(video_fps)
 
@@ -559,6 +692,31 @@ def parse_config(raw_config):
         raise HTTPException(status_code=400, detail=f"Invalid config JSON: {exc}") from exc
 
 
+def localized_label_names(label_names, language):
+    return {
+        int(label): translate_action_name(clean_class_name(name), language)
+        for label, name in (label_names or {}).items()
+    }
+
+
+def normalize_court_corners(value):
+    if not isinstance(value, dict):
+        return None
+    required = ["top_left", "top_right", "bottom_left", "bottom_right"]
+    normalized = {}
+    for key in required:
+        point = value.get(key)
+        if not isinstance(point, (list, tuple)) or len(point) != 2:
+            return None
+        try:
+            x = float(point[0])
+            y = float(point[1])
+        except (TypeError, ValueError):
+            return None
+        normalized[key] = [min(max(x, 0.0), 1.0), min(max(y, 0.0), 1.0)]
+    return normalized
+
+
 def config_roi(value):
     presets = {
         "full": None,
@@ -574,12 +732,33 @@ def config_roi(value):
 
 def preset_values(name):
     presets = {
-        "adaptive": {"max_frames": None, "window_size": 32, "stride": 8},
-        "fast": {"max_frames": 300, "window_size": 64, "stride": 32},
-        "balanced": {"max_frames": 600, "window_size": 32, "stride": 16},
-        "full": {"max_frames": None, "window_size": 24, "stride": 4},
+        "adaptive": {"max_frames": None, "sample_stride": 2, "batch_size": 128, "window_size": 32, "stride": 8},
+        "fast": {"max_frames": None, "sample_stride": 3, "batch_size": 128, "window_size": 32, "stride": 16},
+        "balanced": {"max_frames": None, "sample_stride": 2, "batch_size": 128, "window_size": 32, "stride": 12},
+        "full": {"max_frames": None, "sample_stride": 1, "batch_size": 64, "window_size": 24, "stride": 4},
+        "match_far": {"max_frames": None, "sample_stride": 3, "batch_size": 128, "window_size": 32, "stride": 16},
+        "training_close": {"max_frames": None, "sample_stride": 2, "batch_size": 128, "window_size": 32, "stride": 8},
+        "standard": {"max_frames": None, "sample_stride": 2, "batch_size": 128, "window_size": 32, "stride": 12},
     }
     return presets.get(name or "adaptive", presets["adaptive"])
+
+
+def render_cache_key(cfg, target_player, target_bbox, target_roi, ui_language):
+    payload = {
+        "version": 2,
+        "target_player": target_player,
+        "target_bbox": list(target_bbox) if target_bbox is not None else None,
+        "target_roi": list(target_roi) if target_roi is not None else None,
+        "conf_threshold": round(float(cfg.get("conf_threshold", 0.3)), 4),
+        "analysis_preset": cfg.get("analysis_preset", "adaptive"),
+        "sample_stride": cfg.get("sample_stride"),
+        "window_size": cfg.get("window_size"),
+        "stride": cfg.get("stride"),
+        "language": ui_language,
+        "browser_video_profile": "h264-baseline-ultrafast",
+        "annotated_output_fps": cfg.get("annotated_output_fps"),
+    }
+    return digest_bytes(json.dumps(payload, sort_keys=True, ensure_ascii=False).encode("utf-8"))
 
 
 def aggregate_predictions(windows, aggregate_probs, topk, num_classes):
@@ -686,7 +865,7 @@ def read_video_metadata(video_path):
     }
 
 
-def build_footwork_trace(pose_seq, sampled_indices=None, frame_size=None, conf_threshold=0.3, max_points=360, fps=None):
+def build_footwork_trace(pose_seq, sampled_indices=None, frame_size=None, conf_threshold=0.3, max_points=360, fps=None, court_corners=None):
     centers = filter_footwork_jumps(footwork_centers(pose_seq, conf_threshold=conf_threshold))
     valid = [(idx, center) for idx, center in enumerate(centers) if center is not None]
     if len(valid) < 2:
@@ -696,6 +875,20 @@ def build_footwork_trace(pose_seq, sampled_indices=None, frame_size=None, conf_t
     if frame_size and frame_size.get("width") and frame_size.get("height"):
         scale = np.asarray([max(float(frame_size["width"]), 1.0), max(float(frame_size["height"]), 1.0)], dtype=np.float32)
         normalized_points = np.clip(points / scale, 0.0, 1.0)
+        if court_corners:
+            source = np.asarray(
+                [
+                    [court_corners["top_left"][0], court_corners["top_left"][1]],
+                    [court_corners["top_right"][0], court_corners["top_right"][1]],
+                    [court_corners["bottom_left"][0], court_corners["bottom_left"][1]],
+                    [court_corners["bottom_right"][0], court_corners["bottom_right"][1]],
+                ],
+                dtype=np.float32,
+            )
+            destination = np.asarray([[0.0, 0.0], [1.0, 0.0], [0.0, 1.0], [1.0, 1.0]], dtype=np.float32)
+            matrix = cv2.getPerspectiveTransform(source, destination)
+            mapped = cv2.perspectiveTransform(normalized_points.reshape(-1, 1, 2).astype(np.float32), matrix)
+            normalized_points = np.clip(mapped.reshape(-1, 2), 0.0, 1.0)
     else:
         mins = np.min(points, axis=0)
         maxs = np.max(points, axis=0)
@@ -1259,6 +1452,15 @@ def _do_analyze(video_path, video, cfg, q):
         except Exception:
             pass
 
+    _stage_start = [time.perf_counter()]
+    _t0 = _stage_start[0]
+
+    def lap(label):
+        now = time.perf_counter()
+        elapsed = now - _stage_start[0]
+        print(f"[TIMING] {label}: {elapsed:.2f}s")
+        _stage_start[0] = now
+
     emit(3, "读取视频元数据...")
     video_metadata = read_video_metadata(video_path)
     use_cpu = bool(cfg.get("use_cpu", False))
@@ -1271,18 +1473,27 @@ def _do_analyze(video_path, video, cfg, q):
     if target_bbox is not None:
         target_bbox = tuple(float(item) for item in target_bbox)
     target_roi = config_roi(cfg.get("target_roi"))
+    court_corners = normalize_court_corners(cfg.get("court_corners"))
+    footwork_map_mode = str(cfg.get("footwork_map_mode") or "image").strip().lower()
+    if court_corners is not None:
+        footwork_map_mode = "calibrated"
 
-    try:
-        quick_check = precheck_video(video_path, DEFAULT_POSE_MODEL, conf_threshold=0.2)
-        auto_scene = quick_check.get("scene_type", "closeup")
-        if auto_scene == "match_wide" and not cfg.get("conf_threshold"):
-            cfg["conf_threshold"] = 0.2
-            print(f"[INFO] Auto-detected match_wide scene, using conf_threshold=0.2 for better small-person detection")
-        if auto_scene == "match_wide" and target_player == "near" and not cfg.get("target_player"):
-            target_player = "largest"
-            print(f"[INFO] Auto-detected match_wide scene, using largest target selection")
-    except Exception:
-        pass
+    if not bool(cfg.get("skip_backend_precheck", False)):
+        try:
+            quick_check = precheck_video(video_path, DEFAULT_POSE_MODEL, conf_threshold=0.2)
+            auto_scene = quick_check.get("scene_type", "closeup")
+            if auto_scene == "match_wide" and not cfg.get("conf_threshold"):
+                cfg["conf_threshold"] = 0.2
+                print(f"[INFO] Auto-detected match_wide scene, using conf_threshold=0.2 for better small-person detection")
+            if auto_scene == "match_wide" and target_player == "near" and not cfg.get("target_player"):
+                target_player = "largest"
+                print(f"[INFO] Auto-detected match_wide scene, using largest target selection")
+        except Exception:
+            pass
+    else:
+        print("[INFO] Skipping backend precheck because frontend already completed video precheck")
+    lap("load model + precheck")
+    print(f"[INFO] Using device={device_name}, preset={cfg.get('analysis_preset', 'adaptive')}, max_frames={preset['max_frames']}, sample_stride={preset.get('sample_stride', 2)}, batch_size={preset.get('batch_size', 64)}")
 
     emit(10, "提取姿态序列...")
     pose_seq, sampled_indices, video_fps = cached_pose_result(
@@ -1290,11 +1501,13 @@ def _do_analyze(video_path, video, cfg, q):
         str(DEFAULT_POSE_MODEL.resolve()),
         float(cfg.get("conf_threshold", 0.3)),
         preset["max_frames"],
-        int(cfg.get("batch_size", 32)),
+        int(cfg.get("batch_size", preset.get("batch_size", 64))),
         target_player,
         target_roi,
         target_bbox,
+        sample_stride=int(cfg.get("sample_stride", preset.get("sample_stride", 2))),
     )
+    lap("pose extraction")
 
     emit(35, "动作分类中...")
     windows, aggregate_probs = predict_windows(
@@ -1316,6 +1529,7 @@ def _do_analyze(video_path, video, cfg, q):
     report = build_report(video_path, top_predictions, label_names, summary)
     report["video_metadata"] = video_metadata
     analysis_fps = effective_pose_fps(sampled_indices, video_fps)
+    lap("action classification + report")
 
     emit(50, "检测击球事件...")
     report["hit_events"] = detect_hit_events(pose_seq, windows=windows, label_names=label_names, fps=analysis_fps)
@@ -1334,6 +1548,7 @@ def _do_analyze(video_path, video, cfg, q):
         event["time_sec"] = round(float(event.get("frame", 0)) / max(analysis_fps, 1e-6), 3)
     for event in report["shot_events"]:
         event["time_sec"] = round(float(event.get("frame", 0)) / max(analysis_fps, 1e-6), 3)
+    lap("hit detection + shot classification")
 
     emit(72, "分析步伐轨迹...")
     report["footwork_scores"] = compute_footwork_scores(pose_seq)
@@ -1343,7 +1558,9 @@ def _do_analyze(video_path, video, cfg, q):
         frame_size=video_metadata,
         conf_threshold=float(cfg.get("conf_threshold", 0.3)),
         fps=video_fps,
+        court_corners=court_corners,
     )
+    lap("footwork trace")
     ui_language = str(cfg.get("language") or cfg.get("llm_language") or "zh").strip().lower()
     if ui_language not in {"zh", "en", "ja", "ko", "id"}:
         ui_language = "zh"
@@ -1351,6 +1568,7 @@ def _do_analyze(video_path, video, cfg, q):
     # Build coach/LLM reports using translated action names for better localization
     llm_input_report = translate_report(copy.deepcopy(report), ui_language) if ui_language != "en" else report
     report["coach_report"] = build_coach_report(llm_input_report)
+    lap("rule-based coach report")
 
     llm_provider = cfg.get("llm_provider") or "qwen"
     llm_language = str(cfg.get("llm_language") or "zh").strip().lower()
@@ -1376,22 +1594,40 @@ def _do_analyze(video_path, video, cfg, q):
             report["llm_provider"] = llm_provider
             report["llm_language"] = llm_language
             report["llm_coach_error"] = str(exc)
+    lap("llm coach report (if enabled)")
 
     emit(85, "生成标注视频...")
-    annotated_video = ANNOTATED_DIR / f"{video_path.stem}_annotated.mp4"
+    render_key = render_cache_key(cfg, target_player, target_bbox, target_roi, ui_language)
+    annotated_video = ANNOTATED_DIR / f"{video_path.stem}_{render_key}_annotated.mp4"
     status_text = f"Target: {target_player}"
-    write_full_length_annotated_video(
-        video_path,
-        pose_seq,
-        sampled_indices,
-        windows,
-        label_names,
-        annotated_video,
-        conf_threshold=float(cfg.get("conf_threshold", 0.3)),
-        hit_events=report.get("shot_events") or report["hit_events"],
-        status_text=status_text,
+    video_label_names = localized_label_names(label_names, ui_language)
+    video_event_key = "shot_events" if report.get("shot_events") else "hit_events"
+    video_event_report = {"hit_events": [], "shot_events": []}
+    video_event_report[video_event_key] = copy.deepcopy(report.get(video_event_key) or [])
+    video_hit_events = translate_report(video_event_report, ui_language)[video_event_key]
+    reuse_annotated_video = bool(cfg.get("reuse_annotated_video", True))
+    reused_annotated_video = (
+        reuse_annotated_video
+        and annotated_video.exists()
+        and annotated_video.stat().st_size > 0
     )
-    report["shot_events"] = write_shot_clips(video_path, report["shot_events"], SHOT_CLIP_DIR / video_path.stem)
+    if reused_annotated_video:
+        print(f"[INFO] Reusing annotated video cache: {annotated_video.name}")
+    else:
+        write_full_length_annotated_video(
+            video_path,
+            pose_seq,
+            sampled_indices,
+            windows,
+            video_label_names,
+            annotated_video,
+            conf_threshold=float(cfg.get("conf_threshold", 0.3)),
+            hit_events=video_hit_events,
+            status_text=status_text,
+            output_fps=cfg.get("annotated_output_fps"),
+        )
+    if bool(cfg.get("write_shot_clips", False)):
+        report["shot_events"] = write_shot_clips(video_path, report["shot_events"], SHOT_CLIP_DIR / video_path.stem)
     report["annotated_video"] = str(annotated_video)
     video_warning = _check_browser_playable(annotated_video)
     if video_warning:
@@ -1403,12 +1639,16 @@ def _do_analyze(video_path, video, cfg, q):
     )
     if preview_path:
         report["annotated_preview"] = str(preview_path)
+    lap("annotated video + shot clips")
     report["runtime"] = {
         "device": device_name,
         "target_player": target_player,
         "target_bbox": target_bbox,
         "analysis_preset": cfg.get("analysis_preset", "adaptive"),
-        "footwork_map_mode": cfg.get("footwork_map_mode", "image"),
+        "footwork_map_mode": footwork_map_mode,
+        "court_calibrated": court_corners is not None,
+        "reused_annotated_video": reused_annotated_video,
+        "write_shot_clips": bool(cfg.get("write_shot_clips", False)),
     }
 
     emit(95, "整理报告...")
@@ -1422,5 +1662,8 @@ def _do_analyze(video_path, video, cfg, q):
         )
     except Exception as hist_exc:
         print(f"[WARN] Failed to save history: {hist_exc}")
+    lap("format & save report")
+    total = time.perf_counter() - _t0
+    print(f"[TIMING] total analysis time: {total:.2f}s")
 
     q.put({"event": "done", "percent": 100, "message": "分析完成！", "report": frontend_report})

@@ -1,0 +1,29 @@
+<view class="container">
+  <view class="bind-card card">
+    <view class="bind-icon">🔗</view>
+    <view class="bind-title">绑定网页账号</view>
+    <view class="bind-desc">
+      在网页端「设置」中点击「绑定微信」，将显示的 6 位绑定码输入下方，即可把网页账号与当前微信关联。
+    </view>
+
+    <input
+      class="bind-input"
+      type="text"
+      maxlength="6"
+      placeholder="请输入 6 位绑定码"
+      value="{{bindCode}}"
+      bindinput="onCodeInput"
+    />
+
+    <button
+      class="bind-btn {{bindCode.length === 6 ? 'active' : ''}}"
+      loading="{{loading}}"
+      disabled="{{bindCode.length !== 6 || loading}}"
+      bindtap="confirmBind"
+    >
+      确认绑定
+    </button>
+  </view>
+
+  <view class="bind-tip">绑定成功后，网页端与小程序将共享同一账号</view>
+</view>

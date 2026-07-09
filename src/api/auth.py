@@ -68,6 +68,18 @@ def _init_db():
         );
         CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
         CREATE INDEX IF NOT EXISTS idx_users_openid ON users(wechat_openid);
+        CREATE TABLE IF NOT EXISTS bind_tokens (
+            token TEXT PRIMARY KEY,
+            user_id INTEGER NOT NULL,
+            status TEXT DEFAULT 'pending',
+            bound_openid TEXT,
+            created_at INTEGER NOT NULL,
+            expires_at INTEGER NOT NULL,
+            confirmed_at INTEGER,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        );
+        CREATE INDEX IF NOT EXISTS idx_bind_tokens_user ON bind_tokens(user_id);
+        CREATE INDEX IF NOT EXISTS idx_bind_tokens_status ON bind_tokens(status);
     """)
     conn.commit()
     conn.close()
@@ -305,10 +317,10 @@ def update_user_profile(user_id: int, nickname: str = None, avatar: str = None, 
         conn.close()
 
 
-def bind_wechat(user_id: int, js_code: str) -> dict:
-    import hashlib
+def _wechat_code2openid(js_code: str) -> tuple:
     if not WECHAT_SECRET:
         openid = "dev_" + hashlib.md5(js_code.encode()).hexdigest()[:16]
+        unionid = ""
         session_key = "dev_session"
     else:
         params = {
@@ -325,15 +337,21 @@ def bind_wechat(user_id: int, js_code: str) -> dict:
         if "openid" not in data:
             raise HTTPException(status_code=401, detail=f"微信绑定失败: {data.get('errmsg', 'unknown')}")
         openid = data["openid"]
+        unionid = data.get("unionid", "")
         session_key = data.get("session_key", "")
+    return openid, unionid, session_key
+
+
+def bind_wechat(user_id: int, js_code: str) -> dict:
+    openid, unionid, session_key = _wechat_code2openid(js_code)
     conn = _get_db()
     try:
         existing = conn.execute("SELECT id FROM users WHERE wechat_openid = ? AND id != ?", (openid, user_id)).fetchone()
         if existing:
             raise HTTPException(status_code=409, detail="该微信已绑定其他账号")
         conn.execute(
-            "UPDATE users SET wechat_openid = ?, wechat_session_key = ?, updated_at = ? WHERE id = ?",
-            (openid, session_key, _now(), user_id),
+            "UPDATE users SET wechat_openid = ?, wechat_session_key = ?, wechat_unionid = COALESCE(NULLIF(?, ''), wechat_unionid), updated_at = ? WHERE id = ?",
+            (openid, session_key, unionid, _now(), user_id),
         )
         conn.commit()
         row = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
@@ -529,3 +547,106 @@ async def api_logout_all(authorization: Optional[str] = Header(None), user: dict
     token = (authorization or "").replace("Bearer ", "") if authorization else ""
     delete_all_user_sessions(user["id"], except_token=token)
     return {"ok": True}
+
+
+def _generate_bind_code(length: int = 6) -> str:
+    alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+    return "".join(secrets.choice(alphabet) for _ in range(length))
+
+
+def create_bind_token(user_id: int) -> dict:
+    conn = _get_db()
+    try:
+        now = _now()
+        expires = now + 600  # 10 minutes
+        code = _generate_bind_code()
+        # ensure unique
+        while conn.execute("SELECT 1 FROM bind_tokens WHERE token = ?", (code,)).fetchone():
+            code = _generate_bind_code()
+        conn.execute(
+            "INSERT INTO bind_tokens (token, user_id, status, created_at, expires_at) VALUES (?, ?, ?, ?, ?)",
+            (code, user_id, "pending", now, expires),
+        )
+        conn.commit()
+        return {"token": code, "expires_at": expires}
+    finally:
+        conn.close()
+
+
+def get_bind_token_status(token: str) -> dict:
+    conn = _get_db()
+    try:
+        row = conn.execute("SELECT * FROM bind_tokens WHERE token = ?", (token,)).fetchone()
+        if not row:
+            return {"status": "not_found"}
+        if row["status"] == "confirmed":
+            user = _user_to_dict(conn.execute("SELECT * FROM users WHERE id = ?", (row["user_id"],)).fetchone())
+            return {"status": "confirmed", "user": user}
+        if row["expires_at"] < _now():
+            return {"status": "expired"}
+        return {"status": "pending", "expires_at": row["expires_at"]}
+    finally:
+        conn.close()
+
+
+def confirm_bind_token(token: str, js_code: str) -> dict:
+    conn = _get_db()
+    try:
+        row = conn.execute("SELECT * FROM bind_tokens WHERE token = ?", (token,)).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="绑定码不存在")
+        if row["status"] == "confirmed":
+            raise HTTPException(status_code=409, detail="绑定码已使用")
+        if row["expires_at"] < _now():
+            raise HTTPException(status_code=410, detail="绑定码已过期")
+
+        user_id = row["user_id"]
+        openid, unionid, session_key = _wechat_code2openid(js_code)
+
+        # If another temporary mini-program account already uses this openid,
+        # remove it so the web account becomes the canonical one.
+        existing = conn.execute(
+            "SELECT id FROM users WHERE wechat_openid = ? AND id != ?", (openid, user_id)
+        ).fetchone()
+        if existing:
+            conn.execute("DELETE FROM sessions WHERE user_id = ?", (existing["id"],))
+            conn.execute("DELETE FROM users WHERE id = ?", (existing["id"],))
+
+        conn.execute(
+            "UPDATE users SET wechat_openid = ?, wechat_session_key = ?, wechat_unionid = COALESCE(NULLIF(?, ''), wechat_unionid), updated_at = ? WHERE id = ?",
+            (openid, session_key, unionid, _now(), user_id),
+        )
+        conn.execute(
+            "UPDATE bind_tokens SET status = ?, confirmed_at = ?, bound_openid = ? WHERE token = ?",
+            ("confirmed", _now(), openid, token),
+        )
+        conn.commit()
+        row = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+        return _user_to_dict(row)
+    finally:
+        conn.close()
+
+
+class BindTokenReq(BaseModel):
+    pass
+
+
+class ConfirmBindReq(BaseModel):
+    token: str
+    js_code: str
+
+
+@router.post("/wechat/bind-token")
+async def api_create_bind_token(user: dict = Depends(get_current_user)):
+    return create_bind_token(user["id"])
+
+
+@router.get("/wechat/bind-token/{token}/status")
+async def api_bind_token_status(token: str):
+    return get_bind_token_status(token)
+
+
+@router.post("/wechat/confirm-bind")
+async def api_confirm_bind(req: ConfirmBindReq):
+    user = confirm_bind_token(req.token.upper().strip(), req.js_code)
+    return {"user": user}

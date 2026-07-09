@@ -6,6 +6,7 @@ function request(options) {
     wx.request({
       url: app.globalData.apiBase + options.url,
       method: options.method || 'GET',
+      timeout: options.timeout || 30000,
       data: options.data || {},
       header: {
         'Content-Type': 'application/json',
@@ -165,6 +166,14 @@ module.exports = {
     return request({ url: '/api/auth/wechat/unbind', method: 'POST' });
   },
 
+  confirmBind(token, jsCode) {
+    return request({
+      url: '/api/auth/wechat/confirm-bind',
+      method: 'POST',
+      data: { token: token, js_code: jsCode }
+    });
+  },
+
   logout() {
     return request({ url: '/api/auth/logout', method: 'POST' });
   },
@@ -177,6 +186,10 @@ module.exports = {
         analysis_preset: config.analysis_preset || 'adaptive',
         llm_provider: config.llm_provider || 'qwen',
         conf_threshold: config.conf_threshold || 0.3,
+        annotated_output_fps: config.analysis_preset === 'match_far' ? 15 : null,
+        reuse_annotated_video: true,
+        write_shot_clips: false,
+        generate_llm_report: false,
         language: app.globalData.language,
         ...(config.extra || {})
       });

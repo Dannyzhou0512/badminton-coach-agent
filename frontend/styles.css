@@ -2606,6 +2606,48 @@ input[type="range"]::-moz-range-thumb {
   padding: 32px;
 }
 
+.bind-wechat-modal {
+  max-width: 420px;
+  padding: 32px;
+  text-align: center;
+}
+
+.bind-wechat-desc {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.bind-code-display {
+  font-family: 'SF Mono', monospace;
+  font-size: 42px;
+  font-weight: 700;
+  letter-spacing: 8px;
+  color: var(--accent);
+  background: rgba(94, 255, 159, 0.08);
+  border: 1px dashed rgba(94, 255, 159, 0.3);
+  border-radius: 12px;
+  padding: 20px 16px;
+  margin-bottom: 16px;
+}
+
+.btn-copy-bind-code {
+  margin-bottom: 24px;
+}
+
+.bind-status {
+  font-size: 14px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.bind-timer {
+  font-size: 13px;
+  color: var(--muted);
+  opacity: 0.7;
+}
+
 .modal-title {
   font-size: 20px;
   font-weight: 700;

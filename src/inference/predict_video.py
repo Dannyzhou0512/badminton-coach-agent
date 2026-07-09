@@ -18,10 +18,21 @@ import cv2
 import numpy as np
 import torch
 
+try:
+    from PIL import Image, ImageDraw, ImageFont
+except ImportError:
+    Image = ImageDraw = ImageFont = None
+
 
 ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 if str(ROOT / "src" / "action_classification") not in sys.path:
     sys.path.insert(0, str(ROOT / "src" / "action_classification"))
+if str(ROOT / "src") not in sys.path:
+    sys.path.insert(0, str(ROOT / "src"))
+
+from court.mapper import CourtMapper  # noqa: E402
 
 from train_pose_sequence_classifier import (  # noqa: E402
     PoseTCNGRUClassifier,
@@ -79,26 +90,40 @@ def sample_frame_indices(total_frames, max_frames):
     return set(np.linspace(0, total_frames - 1, max_frames, dtype=int).tolist())
 
 
-def read_sampled_frames(video_path, max_frames=180):
+def read_sampled_frames(video_path, max_frames=None, sample_stride=1):
     cap = cv2.VideoCapture(str(video_path))
     if not cap.isOpened():
         raise RuntimeError(f"Cannot open video: {video_path}")
 
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     fps = cap.get(cv2.CAP_PROP_FPS) or 30
-    frame_indices = sample_frame_indices(total_frames, max_frames)
+
+    if sample_stride > 1:
+        target_indices = set(range(0, total_frames, sample_stride))
+    elif max_frames is not None and total_frames > max_frames:
+        target_indices = set(np.linspace(0, total_frames - 1, max_frames, dtype=int).tolist())
+    else:
+        target_indices = None
+
     frames = []
     original_indices = []
     frame_idx = 0
 
     while True:
+        if target_indices is not None and frame_idx not in target_indices:
+            ok = cap.grab()
+            if not ok:
+                break
+            frame_idx += 1
+            continue
+
         ok, frame = cap.read()
         if not ok:
             break
-        if frame_indices is None or frame_idx in frame_indices:
-            frames.append(frame)
-            original_indices.append(frame_idx)
+        frames.append(frame)
+        original_indices.append(frame_idx)
         frame_idx += 1
+
     cap.release()
 
     if not frames:
@@ -130,14 +155,15 @@ def extract_pose_from_video(
     video_path,
     pose_model_path,
     conf_threshold=0.3,
-    max_frames=180,
-    batch_size=32,
+    max_frames=None,
+    batch_size=64,
     target_player="near",
     target_point=None,
     target_roi=None,
     target_bbox=None,
+    sample_stride=1,
 ):
-    pose_seq, _, _, _ = extract_pose_and_frames_from_video(
+    pose_seq, frames, original_indices, fps = extract_pose_and_frames_from_video(
         video_path,
         pose_model_path,
         conf_threshold=conf_threshold,
@@ -147,28 +173,42 @@ def extract_pose_from_video(
         target_point=target_point,
         target_roi=target_roi,
         target_bbox=target_bbox,
+        sample_stride=sample_stride,
     )
-    return pose_seq
+    return pose_seq, original_indices, fps
 
 
 def extract_pose_and_frames_from_video(
     video_path,
     pose_model_path,
     conf_threshold=0.3,
-    max_frames=180,
-    batch_size=32,
+    max_frames=None,
+    batch_size=64,
     target_player="near",
     target_point=None,
     target_roi=None,
     target_bbox=None,
+    sample_stride=1,
 ):
-    frames, original_indices, fps = read_sampled_frames(video_path, max_frames=max_frames)
+    frames, original_indices, fps = read_sampled_frames(video_path, max_frames=max_frames, sample_stride=sample_stride)
     model = cached_yolo_pose_model(str(Path(pose_model_path).resolve()))
+    yolo_device = "cuda" if torch.cuda.is_available() else "cpu"
+    yolo_half = yolo_device == "cuda"
+    print(f"[INFO] YOLO pose inference device={yolo_device}, half={yolo_half}, frames={len(frames)}, batch_size={batch_size}, sample_stride={sample_stride}")
     sequences = []
     previous_center = None
     frame_counter = 0
     for start in range(0, len(frames), batch_size):
-        results = model(frames[start : start + batch_size], verbose=False, conf=conf_threshold)
+        try:
+            results = model(
+                frames[start : start + batch_size],
+                verbose=False,
+                conf=conf_threshold,
+                device=yolo_device,
+                half=yolo_half,
+            )
+        except Exception:
+            results = model(frames[start : start + batch_size], verbose=False, conf=conf_threshold)
         for result in results:
             keypoints, previous_center = result_to_keypoints(
                 result,
@@ -451,6 +491,39 @@ def map_sample_windows_to_original_frames(windows, sampled_indices, total_frames
     return mapped
 
 
+@lru_cache(maxsize=8)
+def unicode_font(font_size):
+    if ImageFont is None:
+        return None
+    font_candidates = [
+        "C:/Windows/Fonts/msyh.ttc",
+        "C:/Windows/Fonts/simhei.ttf",
+        "C:/Windows/Fonts/simsun.ttc",
+        "C:/Windows/Fonts/arial.ttf",
+    ]
+    for font_path in font_candidates:
+        if Path(font_path).exists():
+            try:
+                return ImageFont.truetype(font_path, font_size)
+            except Exception:
+                continue
+    return ImageFont.load_default()
+
+
+def draw_unicode_text(frame, text, origin, font_size=26, color=(255, 255, 255), cv_scale=0.8, thickness=2):
+    if not text:
+        return frame
+    if all(ord(char) < 128 for char in str(text)) or Image is None or ImageDraw is None:
+        cv2.putText(frame, str(text), origin, cv2.FONT_HERSHEY_SIMPLEX, cv_scale, color, thickness)
+        return frame
+    font = unicode_font(font_size)
+    rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    image = Image.fromarray(rgb)
+    draw = ImageDraw.Draw(image)
+    draw.text(origin, str(text), font=font, fill=(color[2], color[1], color[0]))
+    return cv2.cvtColor(np.asarray(image), cv2.COLOR_RGB2BGR)
+
+
 def draw_pose_on_frame(frame, keypoints, label_text=None, conf_threshold=0.3):
     output = frame.copy()
     for idx1, idx2 in SKELETON:
@@ -467,7 +540,7 @@ def draw_pose_on_frame(frame, keypoints, label_text=None, conf_threshold=0.3):
 
     if label_text:
         cv2.rectangle(output, (12, 12), (520, 66), (0, 0, 0), -1)
-        cv2.putText(output, label_text, (24, 48), cv2.FONT_HERSHEY_SIMPLEX, 0.85, (255, 255, 255), 2)
+        output = draw_unicode_text(output, label_text, (24, 28), font_size=28, color=(255, 255, 255), cv_scale=0.85, thickness=2)
     return output
 
 
@@ -489,7 +562,7 @@ def draw_hit_marker(frame, event_text):
     cv2.putText(output, "HIT", (w - 112, 108), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (255, 255, 255), 2)
     if event_text:
         cv2.rectangle(output, (12, 72), (620, 118), (0, 0, 0), -1)
-        cv2.putText(output, event_text, (24, 104), cv2.FONT_HERSHEY_SIMPLEX, 0.72, (255, 255, 255), 2)
+        output = draw_unicode_text(output, event_text, (24, 84), font_size=23, color=(255, 255, 255), cv_scale=0.72, thickness=2)
     return output
 
 
@@ -612,6 +685,38 @@ def filter_footwork_jumps(centers):
     return filtered
 
 
+def _resolve_court_corners(court_corners, frame_size):
+    """Convert various court corner formats to pixel coordinates for CourtMapper.
+
+    Supports:
+      - dict with keys top_left, top_right, bottom_left, bottom_right (normalized)
+      - list/array of 4 points (normalized [tl,tr,bl,br] or pixel [tl,tr,br,bl])
+    Returns a (4, 2) float32 array of pixel coordinates in [tl, tr, br, bl] order.
+    """
+    frame_w, frame_h = frame_size
+    if isinstance(court_corners, dict):
+        ordered = [
+            court_corners["top_left"],
+            court_corners["top_right"],
+            court_corners["bottom_right"],
+            court_corners["bottom_left"],
+        ]
+    else:
+        ordered = list(court_corners)
+        if len(ordered) == 4 and np.max(np.asarray(ordered, dtype=np.float32)) <= 1.0:
+            # Normalized list follows dict key order [tl, tr, bl, br];
+            # remap to CourtMapper's expected [tl, tr, br, bl].
+            ordered = [ordered[0], ordered[1], ordered[3], ordered[2]]
+    pts = np.asarray(ordered, dtype=np.float32)
+    if pts.size == 0:
+        return pts
+    if np.max(pts) <= 1.0:
+        pts = pts.copy()
+        pts[:, 0] *= frame_w
+        pts[:, 1] *= frame_h
+    return pts
+
+
 def draw_half_court_panel(centers, frame_idx, panel_size, heat_decay=0.95, court_corners=None, frame_size=None, map_mode="image"):
     panel_w, panel_h = panel_size
     panel = np.full((panel_h, panel_w, 3), (34, 116, 88), dtype=np.uint8)
@@ -630,8 +735,17 @@ def draw_half_court_panel(centers, frame_idx, panel_size, heat_decay=0.95, court
     cv2.putText(panel, "Footwork Tracking", (left, max(28, top - 18)), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
 
     if court_corners is not None and frame_size is not None:
-        mapper = calibrated_court_mapper(court_corners, frame_size, (left, top, right, bottom))
-        cv2.putText(panel, "CALIBRATED", (left, top + 26), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 255, 255), 2)
+        pixel_corners = _resolve_court_corners(court_corners, frame_size)
+        mapper = CourtMapper(pixel_corners)
+
+        def map_point(point):
+            phys = mapper.image_to_court(point)
+            # Full court is 6.1m x 13.4m; display the lower half (6.1m x 6.7m).
+            x = int(np.clip(left + (float(phys[0]) / 6.1) * (right - left), left, right))
+            y = int(np.clip(top + ((float(phys[1]) - 6.7) / 6.7) * (bottom - top), top, bottom))
+            return x, y
+
+        cv2.putText(panel, "COURT MAPPER", (left, top + 26), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 255, 255), 2)
     elif map_mode == "image" and frame_size is not None:
         mapper = image_court_mapper(frame_size, (left, top, right, bottom))
         cv2.putText(panel, "IMAGE MAP", (left, top + 26), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (220, 255, 220), 2)
@@ -714,10 +828,24 @@ def _try_opencv_h264_transcode(input_path, output_path):
     return output_path
 
 
-def transcode_for_browser(input_path, output_path):
+def _nvenc_available(ffmpeg):
+    try:
+        result = subprocess.run(
+            [ffmpeg, "-h", "encoder=h264_nvenc"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
+        return result.returncode == 0
+    except Exception:
+        return False
+
+
+def transcode_for_browser(input_path, output_path, allow_nvenc=True):
     """Transcode a video to browser-playable H.264/mp4.
 
-    Prefers ffmpeg; falls back to OpenCV avc1; raises if neither works.
+    Prefers ffmpeg with NVENC hardware encoding when available; falls back to
+    libx264 software encoding; finally falls back to OpenCV avc1.
     """
     input_path = Path(input_path)
     output_path = Path(output_path)
@@ -727,37 +855,70 @@ def transcode_for_browser(input_path, output_path):
     if ffmpeg is None:
         return _try_opencv_h264_transcode(input_path, output_path)
 
-    cmd = [
-        ffmpeg,
-        "-y",
-        "-i",
-        str(input_path),
-        "-vf",
-        "scale=trunc(iw/2)*2:trunc(ih/2)*2,format=yuv420p",
-        "-c:v",
-        "libx264",
-        "-profile:v",
-        "baseline",
-        "-level",
-        "4.0",
-        "-preset",
-        "superfast",
-        "-crf",
-        "23",
-        "-x264-params",
-        "bframes=0:cabac=0",
-        "-pix_fmt",
-        "yuv420p",
-        "-tag:v",
-        "avc1",
-        "-movflags",
-        "+faststart",
-        "-an",
-        str(output_path),
-    ]
+    use_nvenc = allow_nvenc and _nvenc_available(ffmpeg)
+    if use_nvenc:
+        cmd = [
+            ffmpeg,
+            "-y",
+            "-i",
+            str(input_path),
+            "-vf",
+            "scale=trunc(iw/2)*2:trunc(ih/2)*2,format=yuv420p",
+            "-c:v",
+            "h264_nvenc",
+            "-preset",
+            "p1",
+            "-tune",
+            "hq",
+            "-cq",
+            "26",
+            "-b:v",
+            "0",
+            "-pix_fmt",
+            "yuv420p",
+            "-tag:v",
+            "avc1",
+            "-movflags",
+            "+faststart",
+            "-an",
+            str(output_path),
+        ]
+    else:
+        cmd = [
+            ffmpeg,
+            "-y",
+            "-i",
+            str(input_path),
+            "-vf",
+            "scale=trunc(iw/2)*2:trunc(ih/2)*2,format=yuv420p",
+            "-c:v",
+            "libx264",
+            "-profile:v",
+            "baseline",
+            "-level",
+            "4.0",
+            "-preset",
+            "ultrafast",
+            "-crf",
+            "26",
+            "-x264-params",
+            "bframes=0:cabac=0:ref=1",
+            "-pix_fmt",
+            "yuv420p",
+            "-tag:v",
+            "avc1",
+            "-movflags",
+            "+faststart",
+            "-an",
+            str(output_path),
+        ]
     result = subprocess.run(cmd, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
     if result.returncode != 0:
+        if use_nvenc:
+            print(f"[WARN] NVENC transcode failed, falling back to libx264: {(result.stderr or '').strip()[-400:]}")
+            return transcode_for_browser(input_path, output_path, allow_nvenc=False)
         raise RuntimeError(f"ffmpeg transcode failed: {(result.stderr or '').strip()[-800:]}")
+    print(f"[INFO] Transcoded with {'NVENC' if use_nvenc else 'libx264'}: {input_path.name} -> {output_path.name}")
     if ffprobe is not None:
         probe = subprocess.run(
             [
@@ -863,6 +1024,7 @@ def write_tracking_video(
     labels = frame_window_labels(windows, len(frames))
     centers = filter_footwork_jumps(footwork_centers(pose_seq, conf_threshold=conf_threshold))
     event_lookup = {int(event["frame"]): event for event in hit_events or []}
+    normalized_corners = _resolve_court_corners(court_corners, (w, h)) if court_corners is not None else None
 
     for idx, frame in enumerate(frames):
         label_info = labels[idx] if idx < len(labels) else None
@@ -884,7 +1046,7 @@ def write_tracking_video(
             centers,
             idx,
             (panel_w, h),
-            court_corners=court_corners,
+            court_corners=normalized_corners,
             frame_size=(w, h),
             map_mode=footwork_map_mode,
         )
@@ -906,22 +1068,36 @@ def expand_sampled_pose_to_full(sampled_pose_seq, sampled_indices, total_frames)
     if len(sampled_pose_seq) != len(sampled_indices):
         raise ValueError("sampled_pose_seq and sampled_indices must have the same length")
 
-    full_pose_seq = np.zeros((total_frames, 17, 3), dtype=np.float32)
-    sampled_indices = list(sampled_indices)
-    for seq_idx, frame_idx in enumerate(sampled_indices):
-        if 0 <= frame_idx < total_frames:
-            full_pose_seq[frame_idx] = sampled_pose_seq[seq_idx]
+    if len(sampled_indices) == 0:
+        return np.zeros((total_frames, 17, 3), dtype=np.float32)
 
-    sampled_set = set(sampled_indices)
-    last_pose = np.zeros((17, 3), dtype=np.float32)
-    sample_cursor = 0
-    for frame_idx in range(total_frames):
-        if frame_idx in sampled_set:
-            while sample_cursor < len(sampled_indices) and sampled_indices[sample_cursor] < frame_idx:
-                sample_cursor += 1
-            if sample_cursor < len(sampled_indices) and sampled_indices[sample_cursor] == frame_idx:
-                last_pose = sampled_pose_seq[sample_cursor]
-        full_pose_seq[frame_idx] = last_pose
+    sampled_indices_arr = np.asarray(sampled_indices, dtype=np.int64)
+    first_idx = int(sampled_indices_arr[0])
+    last_idx = int(sampled_indices_arr[-1])
+
+    full_pose_seq = np.empty((total_frames, 17, 3), dtype=np.float32)
+    full_pose_seq[:first_idx] = sampled_pose_seq[0]
+    full_pose_seq[last_idx:] = sampled_pose_seq[-1]
+
+    if first_idx >= last_idx:
+        return full_pose_seq
+
+    frame_indices = np.arange(first_idx, last_idx + 1, dtype=np.int64)
+    right_pos = np.searchsorted(sampled_indices_arr, frame_indices, side='right')
+    right_pos = np.clip(right_pos, 1, len(sampled_indices_arr) - 1)
+    left_pos = right_pos - 1
+
+    left_sample_indices = sampled_indices_arr[left_pos]
+    right_sample_indices = sampled_indices_arr[right_pos]
+
+    alpha = (frame_indices - left_sample_indices) / (right_sample_indices - left_sample_indices).astype(np.float32)
+    alpha = alpha[:, None, None]
+
+    left_poses = sampled_pose_seq[left_pos]
+    right_poses = sampled_pose_seq[right_pos]
+
+    full_pose_seq[first_idx:last_idx + 1] = (1.0 - alpha) * left_poses + alpha * right_poses
+
     return full_pose_seq
 
 
@@ -949,24 +1125,157 @@ def write_full_length_annotated_video(
     conf_threshold=0.3,
     hit_events=None,
     status_text=None,
+    max_height=720,
+    output_fps=None,
 ):
-    frames, fps = read_all_video_frames(video_path)
-    total_frames = len(frames)
-    sampled_indices = list(sampled_indices)
-    full_pose_seq = expand_sampled_pose_to_full(sampled_pose_seq, sampled_indices, total_frames)
-    mapped_windows = map_sample_windows_to_original_frames(windows, sampled_indices, total_frames)
-    mapped_events = map_sample_events_to_original_frames(hit_events, sampled_indices, fps)
-    return write_annotated_video(
-        frames,
-        full_pose_seq,
-        mapped_windows,
-        label_names,
-        output_path,
-        fps=float(fps),
-        conf_threshold=conf_threshold,
-        hit_events=mapped_events,
-        status_text=status_text,
-    )
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    ffmpeg = shutil.which("ffmpeg")
+
+    cap = cv2.VideoCapture(str(video_path))
+    if not cap.isOpened():
+        raise RuntimeError(f"Cannot open video: {video_path}")
+
+    fps = float(cap.get(cv2.CAP_PROP_FPS) or 30.0)
+    orig_w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH) or 640)
+    orig_h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT) or 480)
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+    scale = min(1.0, max_height / float(orig_h)) if max_height else 1.0
+    out_w = int(orig_w * scale)
+    out_h = int(orig_h * scale)
+    out_w = out_w if out_w % 2 == 0 else out_w + 1
+    out_h = out_h if out_h % 2 == 0 else out_h + 1
+
+    render_stride = 1
+    if output_fps is not None:
+        try:
+            requested_fps = float(output_fps)
+            if requested_fps > 0 and requested_fps < fps:
+                render_stride = max(1, int(round(fps / requested_fps)))
+        except (TypeError, ValueError):
+            render_stride = 1
+    render_fps = fps / float(render_stride)
+
+    sampled_indices_list = list(sampled_indices)
+    full_pose_seq = expand_sampled_pose_to_full(sampled_pose_seq, sampled_indices_list, total_frames)
+    mapped_windows = map_sample_windows_to_original_frames(windows, sampled_indices_list, total_frames)
+    mapped_events = map_sample_events_to_original_frames(hit_events, sampled_indices_list, fps)
+    labels = frame_window_labels(mapped_windows, total_frames)
+    event_lookup = {int(event["frame"]): event for event in mapped_events or []}
+
+    pose_scale_x = out_w / float(orig_w) if orig_w > 0 else 1.0
+    pose_scale_y = out_h / float(orig_h) if orig_h > 0 else 1.0
+
+    use_nvenc = ffmpeg is not None and _nvenc_available(ffmpeg)
+
+    if ffmpeg is not None:
+        if use_nvenc:
+            cmd = [
+                ffmpeg, "-y",
+                "-f", "rawvideo",
+                "-vcodec", "rawvideo",
+                "-s", f"{out_w}x{out_h}",
+                "-pix_fmt", "bgr24",
+                "-r", str(render_fps),
+                "-i", "-",
+                "-c:v", "h264_nvenc",
+                "-preset", "p1",
+                "-tune", "hq",
+                "-cq", "26",
+                "-b:v", "0",
+                "-pix_fmt", "yuv420p",
+                "-tag:v", "avc1",
+                "-movflags", "+faststart",
+                "-an",
+                str(output_path),
+            ]
+        else:
+            cmd = [
+                ffmpeg, "-y",
+                "-f", "rawvideo",
+                "-vcodec", "rawvideo",
+                "-s", f"{out_w}x{out_h}",
+                "-pix_fmt", "bgr24",
+                "-r", str(render_fps),
+                "-i", "-",
+                "-c:v", "libx264",
+                "-preset", "ultrafast",
+                "-crf", "26",
+                "-pix_fmt", "yuv420p",
+                "-tag:v", "avc1",
+                "-movflags", "+faststart",
+                "-an",
+                str(output_path),
+            ]
+        proc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        writer = proc.stdin
+    else:
+        temp_path = output_path.with_name(f"{output_path.stem}_raw.mp4")
+        writer_obj = cv2.VideoWriter(str(temp_path), cv2.VideoWriter_fourcc(*"mp4v"), render_fps, (out_w, out_h))
+        proc = None
+
+    try:
+        for frame_idx in range(total_frames):
+            if render_stride > 1 and frame_idx % render_stride != 0:
+                if not cap.grab():
+                    break
+                continue
+            ok, frame = cap.read()
+            if not ok:
+                break
+            if out_w != orig_w or out_h != orig_h:
+                frame = cv2.resize(frame, (out_w, out_h), interpolation=cv2.INTER_AREA)
+
+            keypoints = full_pose_seq[frame_idx].copy()
+            keypoints[:, 0] *= pose_scale_x
+            keypoints[:, 1] *= pose_scale_y
+
+            label_info = labels[frame_idx] if frame_idx < len(labels) else None
+            label_text = None
+            if label_info is not None:
+                label, confidence = label_info
+                class_name = clean_class_name(label_names.get(label, str(label)))
+                label_text = f"{class_name}  {confidence:.2f}"
+
+            annotated = draw_pose_on_frame(frame, keypoints, label_text=label_text, conf_threshold=conf_threshold)
+            annotated = draw_status_text(annotated, status_text)
+
+            if frame_idx in event_lookup:
+                event = event_lookup[frame_idx]
+                if event.get("shot_action"):
+                    event_text = f"Shot #{event.get('index')}  {event['shot_action']}  {event.get('shot_confidence', 0):.2f}  {event.get('quality_level', '')}"
+                else:
+                    event_text = f"Hit event  speed={event['wrist_speed']:.2f}"
+                annotated = draw_hit_marker(annotated, event_text)
+
+            if proc is not None:
+                writer.write(annotated.tobytes())
+            else:
+                writer_obj.write(annotated)
+    finally:
+        cap.release()
+        if proc is not None:
+            writer.close()
+            proc.wait()
+        else:
+            writer_obj.release()
+
+    if ffmpeg is None:
+        try:
+            transcode_for_browser(temp_path, output_path)
+            if temp_path.exists():
+                temp_path.unlink()
+        except Exception:
+            if temp_path.exists():
+                temp_path.replace(output_path)
+
+    if use_nvenc or ffmpeg is None:
+        print(f"[INFO] Annotated video encoded with {'NVENC pipe' if use_nvenc else 'OpenCV fallback'}: {output_path.name}")
+    if render_stride > 1:
+        print(f"[INFO] Annotated video render fps={render_fps:.2f}, stride={render_stride}, source fps={fps:.2f}")
+
+    return output_path
 
 
 def write_full_length_tracking_video(
@@ -984,6 +1293,11 @@ def write_full_length_tracking_video(
 ):
     frames, fps = read_all_video_frames(video_path)
     total_frames = len(frames)
+    if court_corners is None:
+        from src.court.detector import auto_detect_court_corners
+        corners, _mask, _debug = auto_detect_court_corners(frames[0])
+        if corners is not None:
+            court_corners = corners
     sampled_indices = list(sampled_indices)
     full_pose_seq = expand_sampled_pose_to_full(sampled_pose_seq, sampled_indices, total_frames)
     mapped_windows = map_sample_windows_to_original_frames(windows, sampled_indices, total_frames)
@@ -1539,6 +1853,12 @@ def main():
     parser.add_argument("--conf-threshold", type=float, default=0.3)
     parser.add_argument("--topk", type=int, default=5)
     parser.add_argument(
+        "--process-every-n-frames",
+        type=int,
+        default=1,
+        help="Process every N frames (1=all frames, 2=every second frame, etc.)",
+    )
+    parser.add_argument(
         "--target-player",
         choices=["near", "far", "left", "right", "custom", "manual_box", "largest"],
         default="near",
@@ -1577,6 +1897,7 @@ def main():
             target_player=args.target_player,
             target_point=(args.target_x, args.target_y) if args.target_player == "custom" else None,
             target_bbox=tuple(args.target_bbox) if args.target_bbox is not None else None,
+            process_every_n_frames=args.process_every_n_frames,
         )
 
     top_predictions = predict_pose_sequence(model, checkpoint, pose_seq, device, topk=args.topk)

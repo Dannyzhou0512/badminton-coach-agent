@@ -136,17 +136,12 @@ Page({
   },
 
   useWechatAvatar() {
-    wx.getUserProfile({
-      desc: '用于获取微信头像',
-      success: (profileRes) => {
-        const avatarUrl = profileRes.userInfo.avatarUrl;
-        if (avatarUrl) {
-          this.setData({ editAvatar: avatarUrl, editAvatarUrl: avatarUrl });
-        }
-      },
-      fail: () => {
-        wx.showToast({ title: '获取微信头像失败', icon: 'none' });
-      }
+    // 微信已废弃 wx.getUserProfile 获取真实头像，统一返回默认头像
+    wx.showModal({
+      title: '提示',
+      content: '微信已调整授权策略，无法直接获取微信头像，请从相册选择头像上传',
+      showCancel: false,
+      confirmText: '我知道了'
     });
   },
 
@@ -238,6 +233,10 @@ Page({
       showCancel: false,
       confirmText: '知道了'
     });
+  },
+
+  bindWebAccount() {
+    wx.navigateTo({ url: '/pages/bind-web/bind-web' });
   },
 
   bindWechat() {

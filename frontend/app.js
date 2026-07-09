@@ -171,6 +171,13 @@
       wechatBound: "已绑定微信",
       wechatNotBound: "未绑定微信",
       bindWechat: "绑定微信",
+      bindWechatTitle: "绑定微信小程序",
+      bindWechatDesc: "打开微信小程序，在「我的」页面点击「绑定网页账号」，输入下方绑定码",
+      copyBindCode: "复制绑定码",
+      bindWaiting: "等待绑定...",
+      bindSuccess: "绑定成功",
+      bindExpired: "绑定码已过期，请重新获取",
+      bindFailed: "绑定失败，请重试",
       wechatLogin: "微信登录",
       wechatRegister: "微信注册",
       orLoginWith: "或使用以下方式登录",
@@ -362,6 +369,13 @@
       wechatBound: "WeChat bound",
       wechatNotBound: "WeChat not bound",
       bindWechat: "Bind WeChat",
+      bindWechatTitle: "Bind WeChat Mini Program",
+      bindWechatDesc: "Open the WeChat Mini Program, tap 'Bind Web Account' in 'My' page, and enter the code below",
+      copyBindCode: "Copy Code",
+      bindWaiting: "Waiting for binding...",
+      bindSuccess: "Binding successful",
+      bindExpired: "Code expired, please get a new one",
+      bindFailed: "Binding failed, please try again",
       wechatLogin: "WeChat Login",
       wechatRegister: "Register with WeChat",
       orLoginWith: "Or login with",
@@ -553,6 +567,13 @@
       wechatBound: "WeChat連携済み",
       wechatNotBound: "WeChat未連携",
       bindWechat: "WeChatを連携",
+      bindWechatTitle: "WeChatミニプログラムを連携",
+      bindWechatDesc: "WeChatミニプログラムを開き、「マイ」ページの「Webアカウントを連携」から以下のコードを入力してください",
+      copyBindCode: "コードをコピー",
+      bindWaiting: "連携待ち...",
+      bindSuccess: "連携しました",
+      bindExpired: "コードの有効期限が切れました。再度取得してください",
+      bindFailed: "連携に失敗しました。もう一度お試しください",
       wechatLogin: "WeChatログイン",
       wechatRegister: "WeChatで新規登録",
       orLoginWith: "または次の方法でログイン",
@@ -744,6 +765,13 @@
       wechatBound: "위챗 연동됨",
       wechatNotBound: "위챗 미연동",
       bindWechat: "위챗 연동",
+      bindWechatTitle: "위챗 미니프로그램 연동",
+      bindWechatDesc: "위챗 미니프로그램을 열고 '내' 페이지의 '웹 계정 연동'을 탭한 후 아래 코드를 입력하세요",
+      copyBindCode: "코드 복사",
+      bindWaiting: "연동 대기 중...",
+      bindSuccess: "연동 성공",
+      bindExpired: "코드가 만료되었습니다. 다시 받아주세요",
+      bindFailed: "연동 실패. 다시 시도해주세요",
       wechatLogin: "위챗 로그인",
       wechatRegister: "위챗으로 회원가입",
       orLoginWith: "또는 다음으로 로그인",
@@ -935,6 +963,13 @@
       wechatBound: "WeChat terhubung",
       wechatNotBound: "WeChat belum terhubung",
       bindWechat: "Hubungkan WeChat",
+      bindWechatTitle: "Hubungkan Mini Program WeChat",
+      bindWechatDesc: "Buka Mini Program WeChat, ketuk 'Hubungkan Akun Web' di halaman 'Saya', dan masukkan kode di bawah",
+      copyBindCode: "Salin Kode",
+      bindWaiting: "Menunggu penghubungan...",
+      bindSuccess: "Penghubungan berhasil",
+      bindExpired: "Kode sudah kedaluwarsa, silakan dapatkan yang baru",
+      bindFailed: "Penghubungan gagal, silakan coba lagi",
       wechatLogin: "Masuk dengan WeChat",
       wechatRegister: "Daftar dengan WeChat",
       orLoginWith: "Atau masuk dengan",
@@ -1149,6 +1184,7 @@
     analysisReport: null,
     frameImage: null,
     bbox: null,
+    courtCorners: [],
     detections: 0,
     fps: 0,
     latency: 0,
@@ -1347,6 +1383,14 @@
     btnCancelProfile: document.getElementById("btnCancelProfile"),
     btnSaveProfile: document.getElementById("btnSaveProfile"),
 
+    // Bind WeChat
+    bindWechatModal: document.getElementById("bindWechatModal"),
+    btnCloseBindWechatModal: document.getElementById("btnCloseBindWechatModal"),
+    bindCodeDisplay: document.getElementById("bindCodeDisplay"),
+    btnCopyBindCode: document.getElementById("btnCopyBindCode"),
+    bindStatus: document.getElementById("bindStatus"),
+    bindTimer: document.getElementById("bindTimer"),
+
     // Tour
     tourOverlay: document.getElementById("tourOverlay"),
     tourHighlight: document.getElementById("tourHighlight"),
@@ -1364,6 +1408,8 @@
   const API_BASE = window.location.protocol.startsWith("http")
     ? window.location.origin
     : "http://127.0.0.1:8000";
+  const COURT_CORNER_KEYS = ["top_left", "top_right", "bottom_left", "bottom_right"];
+  const COURT_CORNER_LABELS = ["TL", "TR", "BL", "BR"];
   const DELIVERY_ANALYSIS_CONFIG = Object.freeze({
     target_player: "largest",
     target_bbox: null,
@@ -1374,6 +1420,9 @@
     llm_provider: "qwen",
     llm_timeout: 120,
     llm_shots_per_group: 8,
+    reuse_annotated_video: true,
+    write_shot_clips: false,
+    skip_backend_precheck: true,
     use_cpu: false,
   });
 
@@ -1615,13 +1664,71 @@
   }
 
   // ---- Drawing Functions ----
+  function courtCornersPayload() {
+    if (!Array.isArray(state.courtCorners) || state.courtCorners.length !== 4) return null;
+    return COURT_CORNER_KEYS.reduce((payload, key, idx) => {
+      const point = state.courtCorners[idx];
+      payload[key] = [Number(point.x.toFixed(4)), Number(point.y.toFixed(4))];
+      return payload;
+    }, {});
+  }
+
+  function drawCourtCalibration() {
+    if (!state.courtCorners || !state.courtCorners.length) return;
+    const canvas = elements.frameCanvas;
+    const points = state.courtCorners.map((point) => ({
+      x: point.x * canvas.width,
+      y: point.y * canvas.height,
+    }));
+    ctx.save();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "#ffd166";
+    ctx.fillStyle = "rgba(255, 209, 102, 0.22)";
+    if (points.length >= 2) {
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      for (let i = 1; i < points.length; i += 1) ctx.lineTo(points[i].x, points[i].y);
+      if (points.length === 4) ctx.closePath();
+      ctx.stroke();
+      if (points.length === 4) ctx.fill();
+    }
+    points.forEach((point, idx) => {
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, 7, 0, Math.PI * 2);
+      ctx.fillStyle = "#ffd166";
+      ctx.fill();
+      ctx.strokeStyle = "#1f2937";
+      ctx.stroke();
+      ctx.fillStyle = "#1f2937";
+      ctx.font = "bold 11px JetBrains Mono, monospace";
+      ctx.fillText(COURT_CORNER_LABELS[idx], point.x + 10, point.y - 10);
+    });
+    ctx.restore();
+  }
+
+  function addCourtCornerFromEvent(event) {
+    if (!state.frameImage || !elements.frameCanvas) return;
+    const rect = elements.frameCanvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    if (state.courtCorners.length >= 4) state.courtCorners = [];
+    const x = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+    const y = Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height));
+    state.courtCorners.push({ x, y });
+    drawFrame();
+    const nextLabel = COURT_CORNER_LABELS[state.courtCorners.length] || "OK";
+    const message = state.courtCorners.length === 4
+      ? "Court calibration complete. Footwork map will use calibrated mapping."
+      : `Court corner ${state.courtCorners.length}/4 saved. Next: ${nextLabel}`;
+    showToast(message, state.courtCorners.length === 4 ? "success" : "info");
+  }
+
   function drawFrame(previewBox = null) {
     if (!state.frameImage) return;
     ctx.clearRect(0, 0, elements.frameCanvas.width, elements.frameCanvas.height);
     ctx.drawImage(state.frameImage, 0, 0, elements.frameCanvas.width, elements.frameCanvas.height);
 
     const box = previewBox || state.bbox;
-    if (!box) return;
+    if (box) {
 
     const x1 = box.x1 * elements.frameCanvas.width;
     const y1 = box.y1 * elements.frameCanvas.height;
@@ -1637,6 +1744,8 @@
     ctx.font = "bold 14px JetBrains Mono, monospace";
     ctx.fillText("TARGET", x1 + 8, Math.max(20, y1 - 8));
     ctx.restore();
+    }
+    drawCourtCalibration();
   }
 
   function showUploadHint(text) {
@@ -1668,6 +1777,7 @@
     img.onload = () => {
       state.frameImage = img;
       state.bbox = null;
+      state.courtCorners = [];
       elements.emptyMedia.style.display = "none";
       elements.frameCanvasWrap.style.display = "block";
       if (elements.analysisVideo) {
@@ -1696,6 +1806,7 @@
       elements.frameCanvas.height = targetH;
       state.frameImage = img;
       state.bbox = null;
+      state.courtCorners = [];
       elements.emptyMedia.style.display = "none";
       elements.frameCanvasWrap.style.display = "block";
       if (elements.analysisVideo) {
@@ -1884,9 +1995,16 @@
 
   function buildAnalyzeConfig() {
     const lang = state.uiLanguage || "zh";
+    const analysisPreset = state.precheckResult?.scene_type === "match_wide"
+      ? "match_far"
+      : DELIVERY_ANALYSIS_CONFIG.analysis_preset;
+    const annotatedOutputFps = analysisPreset === "match_far" ? 15 : null;
     return {
       ...DELIVERY_ANALYSIS_CONFIG,
-      generate_llm_report: true,
+      analysis_preset: analysisPreset,
+      annotated_output_fps: annotatedOutputFps,
+      court_corners: courtCornersPayload(),
+      generate_llm_report: false,
       language: SUPPORTED_LANGS.includes(lang) ? lang : "zh",
       llm_language: SUPPORTED_LANGS.includes(lang) ? lang : "zh",
     };
@@ -3628,7 +3746,11 @@ ${footworkText || "暂无步伐评分数据"}
   }
 
   if (elements.frameCanvasWrap) {
-  elements.frameCanvasWrap.addEventListener("click", () => {
+  elements.frameCanvasWrap.addEventListener("click", (event) => {
+    if (state.frameImage && event.target === elements.frameCanvas) {
+      addCourtCornerFromEvent(event);
+      return;
+    }
     if (!state.user) {
       showAuthModal("login");
       return;
@@ -3949,6 +4071,106 @@ ${footworkText || "暂无步伐评分数据"}
   function hideProfileModal() {
     if (elements.profileModal) elements.profileModal.hidden = true;
     if (elements.profileError) elements.profileError.hidden = true;
+  }
+
+  // ---- Bind WeChat Modal ----
+  let bindPollTimer = null;
+  let bindCountdownTimer = null;
+  let currentBindToken = null;
+
+  function showBindWechatModal() {
+    if (!state.user) {
+      showAuthModal(true);
+      return;
+    }
+    if (state.user && state.user.has_wechat) {
+      showToast(coachT("wechatBound"), "info");
+      return;
+    }
+    if (elements.bindWechatModal) elements.bindWechatModal.hidden = false;
+    createBindToken();
+  }
+
+  function hideBindWechatModal() {
+    if (elements.bindWechatModal) elements.bindWechatModal.hidden = true;
+    stopBindPolling();
+  }
+
+  async function createBindToken() {
+    try {
+      const data = await authApi("/api/auth/wechat/bind-token", { method: "POST", body: JSON.stringify({}) });
+      currentBindToken = data.token;
+      if (elements.bindCodeDisplay) elements.bindCodeDisplay.textContent = data.token;
+      if (elements.bindStatus) elements.bindStatus.textContent = coachT("bindWaiting");
+      startBindPolling(data.token, data.expires_at);
+    } catch (err) {
+      if (elements.bindStatus) elements.bindStatus.textContent = coachT("bindFailed");
+      showToast(err.message || coachT("bindFailed"), "error");
+    }
+  }
+
+  function startBindPolling(token, expiresAt) {
+    stopBindPolling();
+    const deadline = expiresAt ? expiresAt * 1000 : Date.now() + 600000;
+    updateBindTimer(deadline);
+    bindCountdownTimer = setInterval(() => updateBindTimer(deadline), 1000);
+
+    const poll = async () => {
+      try {
+        const status = await authApi(`/api/auth/wechat/bind-token/${token}/status`);
+        if (status.status === "confirmed") {
+          stopBindPolling();
+          if (elements.bindStatus) elements.bindStatus.textContent = coachT("bindSuccess");
+          state.user = status.user;
+          localStorage.setItem("badminton_user", JSON.stringify(state.user));
+          updateAuthUI();
+          showToast(coachT("bindSuccess"), "success");
+          setTimeout(hideBindWechatModal, 1500);
+          return;
+        }
+        if (status.status === "expired") {
+          stopBindPolling();
+          if (elements.bindStatus) elements.bindStatus.textContent = coachT("bindExpired");
+          return;
+        }
+      } catch (e) {
+        // ignore poll errors
+      }
+      bindPollTimer = setTimeout(poll, 2000);
+    };
+    poll();
+  }
+
+  function stopBindPolling() {
+    if (bindPollTimer) {
+      clearTimeout(bindPollTimer);
+      bindPollTimer = null;
+    }
+    if (bindCountdownTimer) {
+      clearInterval(bindCountdownTimer);
+      bindCountdownTimer = null;
+    }
+  }
+
+  function updateBindTimer(deadline) {
+    const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+    const min = String(Math.floor(remaining / 60)).padStart(2, "0");
+    const sec = String(remaining % 60).padStart(2, "0");
+    if (elements.bindTimer) elements.bindTimer.textContent = `${min}:${sec}`;
+    if (remaining <= 0) {
+      stopBindPolling();
+      if (elements.bindStatus) elements.bindStatus.textContent = coachT("bindExpired");
+    }
+  }
+
+  async function copyBindCode() {
+    if (!currentBindToken) return;
+    try {
+      await navigator.clipboard.writeText(currentBindToken);
+      showToast("绑定码已复制", "success");
+    } catch (e) {
+      showToast("复制失败，请手动长按复制", "info");
+    }
   }
 
   // ---- Onboarding Tour ----
@@ -4309,9 +4531,18 @@ ${footworkText || "暂无步伐评分数据"}
     });
   }
   if (elements.btnBindWechat) {
-    elements.btnBindWechat.addEventListener("click", () => {
-      showToast("微信绑定功能需要在微信小程序中操作", "info");
+    elements.btnBindWechat.addEventListener("click", showBindWechatModal);
+  }
+  if (elements.btnCloseBindWechatModal) {
+    elements.btnCloseBindWechatModal.addEventListener("click", hideBindWechatModal);
+  }
+  if (elements.bindWechatModal) {
+    elements.bindWechatModal.addEventListener("click", (e) => {
+      if (e.target === elements.bindWechatModal) hideBindWechatModal();
     });
+  }
+  if (elements.btnCopyBindCode) {
+    elements.btnCopyBindCode.addEventListener("click", copyBindCode);
   }
 
   // Restore auth from localStorage

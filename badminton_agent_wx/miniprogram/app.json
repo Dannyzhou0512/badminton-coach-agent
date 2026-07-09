@@ -5,7 +5,8 @@
     "pages/analysis/analysis",
     "pages/coach/coach",
     "pages/history/history",
-    "pages/profile/profile"
+    "pages/profile/profile",
+    "pages/bind-web/bind-web"
   ],
   "window": {
     "backgroundColor": "#0a1a14",

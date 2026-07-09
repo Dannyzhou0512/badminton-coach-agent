@@ -38,42 +38,37 @@ Page({
 
     this.setData({ loading: true, loadingText: '正在登录...' });
 
+    // 10 秒总超时保护，避免网络异常导致一直转圈
+    const loginTimeoutId = setTimeout(() => {
+      if (this.data.loading) {
+        this.setData({ loading: false });
+        wx.showToast({ title: '登录超时，请检查网络或后端服务', icon: 'none', duration: 3000 });
+      }
+    }, 10000);
+
     wx.login({
       success: (res) => {
         if (res.code) {
-          this.doWechatLogin(res.code);
+          this.sendWechatLoginRequest(res.code, '', '', loginTimeoutId);
         } else {
+          clearTimeout(loginTimeoutId);
           this.setData({ loading: false });
           wx.showToast({ title: '获取微信授权失败', icon: 'none' });
         }
       },
-      fail: () => {
+      fail: (err) => {
+        clearTimeout(loginTimeoutId);
         this.setData({ loading: false });
-        wx.showToast({ title: '微信登录失败', icon: 'none' });
+        wx.showToast({ title: err.errMsg || '微信登录失败', icon: 'none', duration: 3000 });
       }
     });
   },
 
-  doWechatLogin(code) {
-    let nickname = '';
-    let avatar = '';
-
-    wx.getUserProfile({
-      desc: '用于完善用户资料',
-      success: (profileRes) => {
-        nickname = profileRes.userInfo.nickName;
-        avatar = profileRes.userInfo.avatarUrl;
-        this.sendWechatLoginRequest(code, nickname, avatar);
-      },
-      fail: () => {
-        this.sendWechatLoginRequest(code, '', '');
-      }
-    });
-  },
-
-  sendWechatLoginRequest(code, nickname, avatar) {
+  sendWechatLoginRequest(code, nickname, avatar, loginTimeoutId) {
     api.wechatLogin(code, nickname, avatar)
       .then((data) => {
+        clearTimeout(loginTimeoutId);
+        this.setData({ loading: false });
         app.setAuth(data.token, data.user);
         wx.showToast({ title: '登录成功', icon: 'success' });
         setTimeout(() => {
@@ -81,8 +76,9 @@ Page({
         }, 500);
       })
       .catch((err) => {
+        clearTimeout(loginTimeoutId);
         this.setData({ loading: false });
-        wx.showToast({ title: err.message || '登录失败', icon: 'none' });
+        wx.showToast({ title: err.message || '登录失败', icon: 'none', duration: 3000 });
       });
   },
 
