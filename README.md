@@ -1,12 +1,21 @@
 # 羽动智练 Badminton AI Coach
 
+<p align="center">
+  <a href="./README.md"><img src="https://img.shields.io/badge/语言-中文-2ea44f?style=for-the-badge" alt="中文 README"></a>
+  <a href="./README_EN.md"><img src="https://img.shields.io/badge/Language-English-0969da?style=for-the-badge" alt="English README"></a>
+  <img src="https://img.shields.io/badge/Web-FastAPI%20%2B%20HTML-14b8a6?style=for-the-badge" alt="Web">
+  <img src="https://img.shields.io/badge/Mini%20Program-WeChat-07c160?style=for-the-badge" alt="WeChat Mini Program">
+</p>
+
 羽动智练是一套面向羽毛球训练复盘的 AI 智能教练系统。系统支持上传训练或比赛视频，自动完成姿态识别、动作分类、击球事件检测、步伐热力图、训练报告生成，并提供网页端与微信小程序端的联动体验。
 
 项目目标是让普通羽毛球爱好者、校园社团和业余训练者，在没有专业教练长期陪伴的情况下，也能通过手机或网页获得可视化、数据化、个性化的训练反馈。
 
 ## 效果演示
 
-![羽动智练视频分析演示](badminton_from_2s_to_end.gif)
+<p align="center">
+  <img src="./badminton_from_2s_to_end.gif" alt="羽动智练视频分析演示" width="920">
+</p>
 
 > 说明：上方 GIF 展示了上传视频后，系统生成标注视频、动作识别结果和步伐热力图的完整流程。
 
@@ -88,41 +97,59 @@
 
 训练检测页会先给出拍摄建议和视频质量检查，再进入后端分析流程。
 
-![网页端实时训练检测](docs/images/web/a4350beb-58f5-408a-ac12-7dbdc8accd59.png)
+<p align="center">
+  <img src="./docs/images/web/a4350beb-58f5-408a-ac12-7dbdc8accd59.png" alt="网页端实时训练检测" width="920">
+</p>
 
 分析完成后，网页端可以播放标注视频，同时展示半场步伐热力图、逐拍时间轴和实时指标。
 
-![网页端逐拍时间轴与实时指标](docs/images/web/6ae47972-f9a9-4c0f-ad03-78478759863c.png)
+<p align="center">
+  <img src="./docs/images/web/6ae47972-f9a9-4c0f-ad03-78478759863c.png" alt="网页端逐拍时间轴与实时指标" width="920">
+</p>
 
 标注视频会叠加动作类别、置信度、人体姿态骨架和脚步热力图，用于训练复盘。
 
-![网页端标注视频与步伐热力图](docs/images/web/db082873-8659-469c-b01e-635b87382c72.png)
+<p align="center">
+  <img src="./docs/images/web/db082873-8659-469c-b01e-635b87382c72.png" alt="网页端标注视频与步伐热力图" width="920">
+</p>
 
 AI 教练支持 Qwen 和智谱 AI，可结合本次训练报告回答技术、步伐、训练计划和比赛复盘问题。
 
-![网页端 AI 教练](docs/images/web/b18f1a22-76ad-4e70-93aa-5d6ccb7ecba9.png)
+<p align="center">
+  <img src="./docs/images/web/b18f1a22-76ad-4e70-93aa-5d6ccb7ecba9.png" alt="网页端 AI 教练" width="920">
+</p>
 
 系统设置页包含账号绑定、语言切换和交付后的固定配置入口，客户侧默认使用推荐参数。
 
-![网页端系统设置](docs/images/web/5e9d1bd5-5ef4-4957-bd85-b58bd964b22e.png)
+<p align="center">
+  <img src="./docs/images/web/5e9d1bd5-5ef4-4957-bd85-b58bd964b22e.png" alt="网页端系统设置" width="920">
+</p>
 
 ### 微信小程序端
 
 小程序端可以通过网页端生成的 6 位绑定码绑定同一账号。
 
-![小程序绑定网页账号](docs/images/wechat/41d3b8ec12b4c9bae537efa3e9e1cb75.jpg)
+<p align="center">
+  <img src="./docs/images/wechat/41d3b8ec12b4c9bae537efa3e9e1cb75.jpg" alt="小程序绑定网页账号" width="360">
+</p>
 
 绑定后，小程序端会展示训练数据、训练历史、语言设置和账号管理入口。
 
-![小程序我的页面](docs/images/wechat/c142b2d0e000befde040d6eb6c068dcc.jpg)
+<p align="center">
+  <img src="./docs/images/wechat/c142b2d0e000befde040d6eb6c068dcc.jpg" alt="小程序我的页面" width="360">
+</p>
 
 小程序 AI 教练提供羽毛球技术问答入口，适合移动端快速咨询。
 
-![小程序 AI 教练](docs/images/wechat/baa7aacc45dcc2df0b0e87bce30e6879.jpg)
+<p align="center">
+  <img src="./docs/images/wechat/baa7aacc45dcc2df0b0e87bce30e6879.jpg" alt="小程序 AI 教练" width="360">
+</p>
 
 语言设置支持简体中文、English、日本語、한국어 和 Bahasa Indonesia。
 
-![小程序语言设置](docs/images/wechat/aa18615bb4c5dfcd97637f413fcacc33.jpg)
+<p align="center">
+  <img src="./docs/images/wechat/aa18615bb4c5dfcd97637f413fcacc33.jpg" alt="小程序语言设置" width="360">
+</p>
 
 ## 技术架构
 
