@@ -82,33 +82,47 @@
 4. 点击「绑定网页账号」并输入绑定码。
 5. 确认绑定后，网页端和小程序端共享同一账号。
 
-## 截图说明
+## 产品截图
 
-本 README 已预留产品截图展示位置。由于聊天窗口中的截图没有以文件形式落到仓库，若需要在 GitHub 中展示你发来的截图，请将图片保存到 `docs/images/` 后按以下文件名放置：
+### 网页端
 
-```text
-docs/images/web-training.png
-docs/images/web-ai-coach.png
-docs/images/web-settings.png
-docs/images/web-bind-modal.png
-docs/images/wx-bind-account.jpg
-docs/images/wx-profile.jpg
-docs/images/wx-ai-coach.jpg
-docs/images/wx-language.jpg
-```
+训练检测页会先给出拍摄建议和视频质量检查，再进入后端分析流程。
 
-放入后可取消下面注释中的图片引用：
+![网页端实时训练检测](docs/images/web/a4350beb-58f5-408a-ac12-7dbdc8accd59.png)
 
-```md
-![网页端训练检测](docs/images/web-training.png)
-![网页端 AI 教练](docs/images/web-ai-coach.png)
-![网页端系统设置](docs/images/web-settings.png)
-![网页端绑定微信](docs/images/web-bind-modal.png)
-![小程序绑定网页账号](docs/images/wx-bind-account.jpg)
-![小程序我的页面](docs/images/wx-profile.jpg)
-![小程序 AI 教练](docs/images/wx-ai-coach.jpg)
-![小程序语言设置](docs/images/wx-language.jpg)
-```
+分析完成后，网页端可以播放标注视频，同时展示半场步伐热力图、逐拍时间轴和实时指标。
+
+![网页端逐拍时间轴与实时指标](docs/images/web/6ae47972-f9a9-4c0f-ad03-78478759863c.png)
+
+标注视频会叠加动作类别、置信度、人体姿态骨架和脚步热力图，用于训练复盘。
+
+![网页端标注视频与步伐热力图](docs/images/web/db082873-8659-469c-b01e-635b87382c72.png)
+
+AI 教练支持 Qwen 和智谱 AI，可结合本次训练报告回答技术、步伐、训练计划和比赛复盘问题。
+
+![网页端 AI 教练](docs/images/web/b18f1a22-76ad-4e70-93aa-5d6ccb7ecba9.png)
+
+系统设置页包含账号绑定、语言切换和交付后的固定配置入口，客户侧默认使用推荐参数。
+
+![网页端系统设置](docs/images/web/5e9d1bd5-5ef4-4957-bd85-b58bd964b22e.png)
+
+### 微信小程序端
+
+小程序端可以通过网页端生成的 6 位绑定码绑定同一账号。
+
+![小程序绑定网页账号](docs/images/wechat/41d3b8ec12b4c9bae537efa3e9e1cb75.jpg)
+
+绑定后，小程序端会展示训练数据、训练历史、语言设置和账号管理入口。
+
+![小程序我的页面](docs/images/wechat/c142b2d0e000befde040d6eb6c068dcc.jpg)
+
+小程序 AI 教练提供羽毛球技术问答入口，适合移动端快速咨询。
+
+![小程序 AI 教练](docs/images/wechat/baa7aacc45dcc2df0b0e87bce30e6879.jpg)
+
+语言设置支持简体中文、English、日本語、한국어 和 Bahasa Indonesia。
+
+![小程序语言设置](docs/images/wechat/aa18615bb4c5dfcd97637f413fcacc33.jpg)
 
 ## 技术架构
 
@@ -275,4 +289,3 @@ python -m uvicorn src.api.server:app --host 0.0.0.0 --port 8000
 - `.env`、`outputs/`、模型调试输出和用户数据库不会提交到 GitHub。
 - 视频分析速度与 GPU、视频长度、分辨率和 FFmpeg 环境有关。
 - AI 教练回答仅作为训练建议，不替代专业医疗或康复建议。
-
