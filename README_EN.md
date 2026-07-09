@@ -229,6 +229,33 @@ models/pose_sequence_tcn_gru.pt
 yolov8s-pose.pt
 ```
 
+`yolov8s-pose.pt` can be downloaded automatically by Ultralytics. The action classification model `pose_sequence_tcn_gru.pt` should be placed under the `models/` directory.
+
+## Training and Dataset Source
+
+The action classification experiments in this project use the public badminton video dataset [VideoBadminton](https://github.com/qilimk/VideoBadminton) as the main data source. The dataset provides badminton match clips and action labels, which are suitable for badminton action recognition, pose-sequence modeling, and shot-level classification experiments.
+
+Training and feature extraction code is kept in this repository:
+
+```text
+src/pose_estimation/extract_pose.py              # Batch keypoint extraction with YOLOv8-Pose
+src/pose_estimation/visualize_pose.py            # Pose result visualization
+src/feature_engineering/extract_features.py      # Badminton-specific pose and motion features
+src/action_classification/train_classifier.py    # Early action classification training script
+src/action_classification/train_classifier_v2.py # Improved action classification training script
+src/action_classification/train_pose_sequence_classifier.py # Main pose-sequence classifier training script
+src/action_classification/train_hierarchical_classifier.py  # Hierarchical classification experiment
+```
+
+To keep the repository lightweight and respect the public dataset distribution workflow, the following files are not committed:
+
+- Raw VideoBadminton videos and derived video clips.
+- Large pose feature files under `data/pose_features/`.
+- Regenerable feature files such as `data/badminton_features.json`.
+- Model weight files such as `yolov8s-pose.pt` and `models/*.pt`.
+
+To reproduce the experiments, first obtain the dataset from the VideoBadminton repository, then run the pose extraction, feature engineering, and action classification training scripts.
+
 ## Notes
 
 - `.env`, runtime outputs, model debug artifacts, and user databases are not committed.

@@ -234,6 +234,31 @@ yolov8s-pose.pt
 
 `yolov8s-pose.pt` 可由 Ultralytics 自动下载；动作分类模型 `pose_sequence_tcn_gru.pt` 需要放在 `models/` 目录下。
 
+## 训练与数据来源
+
+本项目动作分类训练使用公开羽毛球视频数据集 [VideoBadminton](https://github.com/qilimk/VideoBadminton) 作为主要数据来源。该数据集提供羽毛球比赛视频片段与动作类别标注，适合用于羽毛球动作识别、姿态序列建模和逐拍动作分类实验。
+
+仓库中保留了训练与特征提取相关代码：
+
+```text
+src/pose_estimation/extract_pose.py              # 基于 YOLOv8-Pose 批量提取人体关键点
+src/pose_estimation/visualize_pose.py            # 姿态识别结果可视化
+src/feature_engineering/extract_features.py      # 羽毛球专项姿态与运动特征提取
+src/action_classification/train_classifier.py    # 早期动作分类训练脚本
+src/action_classification/train_classifier_v2.py # 改进版动作分类训练脚本
+src/action_classification/train_pose_sequence_classifier.py # 当前主要姿态序列分类训练脚本
+src/action_classification/train_hierarchical_classifier.py  # 分层动作分类实验脚本
+```
+
+为了控制仓库体积并尊重公开数据集分发方式，以下内容不直接提交到 GitHub：
+
+- VideoBadminton 原始视频与派生片段。
+- `data/pose_features/` 中的大量姿态特征 `.npy` 文件。
+- `data/badminton_features.json` 等可重新生成的特征文件。
+- `yolov8s-pose.pt`、`models/*.pt` 等模型权重文件。
+
+如需复现实验，请先按 VideoBadminton 仓库说明获取数据集，再运行姿态提取、特征工程和动作分类训练脚本。
+
 ## 性能优化
 
 当前版本已经加入以下优化：
