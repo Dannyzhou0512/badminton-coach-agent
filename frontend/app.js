@@ -205,6 +205,76 @@
       tourNext: "下一步",
       tourSkip: "跳过",
       tourFinish: "完成",
+      helpGuide: "使用指南",
+      helpTitle: "羽动智练 · 使用指南",
+      helpQuickStart: "快速上手（4步开始分析）",
+      helpStep1Title: "上传视频",
+      helpStep1Desc: "点击页面中间的上传区域，选择羽毛球训练视频（支持MP4/MOV/AVI/MKV格式）",
+      helpStep2Title: "选择球员",
+      helpStep2Desc: "上传后系统会自动检测画面中的球员并弹出选择窗口，点击你想追踪分析的球员方框（支持选择近端或远端球员），选中后框会变绿，点击「确认选择」即可",
+      helpStep3Title: "等待分析",
+      helpStep3Desc: "系统将自动进行姿态识别、动作分类、击球检测和步伐追踪，进度条会实时显示分析进度",
+      helpStep4Title: "查看报告",
+      helpStep4Desc: "分析完成后可查看标注视频、步伐热力图、逐拍时间轴和训练报告，也可向AI教练提问",
+      helpVideoTips: "拍摄建议（获得最佳分析效果）",
+      helpTip1Title: "横屏拍摄",
+      helpTip1Desc: "横屏拍摄画面更稳定，人物更完整",
+      helpTip2Title: "拍摄距离",
+      helpTip2Desc: "距离场地边线3-5米，确保全身在画面中",
+      helpTip3Title: "拍摄角度",
+      helpTip3Desc: "站在场地侧面，与球网平行拍摄",
+      helpTip4Title: "光线充足",
+      helpTip4Desc: "确保场地光线明亮，避免逆光拍摄",
+      helpTip5Title: "画面稳定",
+      helpTip5Desc: "使用支架固定手机，避免手持晃动",
+      helpTip6Title: "时长建议",
+      helpTip6Desc: "10秒-3分钟片段，包含完整击球动作",
+      helpFeatures: "功能说明",
+      helpFeat0Title: "球员选择",
+      helpFeat0Desc: "上传视频后自动检测画面中的所有球员，点击即可选择要追踪的目标，支持选择近端或远端球员，多帧采样确保选到最清晰的画面",
+      helpFeat1Title: "标注视频",
+      helpFeat1Desc: "在视频上实时绘制骨骼关键点、动作标签和击球标记",
+      helpFeat2Title: "步伐热力图",
+      helpFeat2Desc: "追踪球员在球场上的移动轨迹，展示高频活动区域",
+      helpFeat3Title: "逐拍时间轴",
+      helpFeat3Desc: "记录每次击球的时间、动作类型、置信度和质量评分",
+      helpFeat4Title: "训练报告",
+      helpFeat4Desc: "统计数据、技术亮点、问题分析、改进建议和训练计划",
+      helpFeat5Title: "AI教练",
+      helpFeat5Desc: "基于AI大模型的智能教练，可针对你的问题进行个性化解答",
+      helpFeat6Title: "历史记录",
+      helpFeat6Desc: "所有分析记录自动保存，可随时回看并追踪进步趋势",
+      helpFaq: "常见问题",
+      helpFaq0Q: "如何选择远端球员进行分析？",
+      helpFaq0A: "上传视频后系统会自动弹出球员选择窗口，画面中检测到的每个人物都会被方框标出。直接点击你想分析的远端球员（画面上方/对面场地的球员），选中后框会变成绿色，然后点击「确认选择并开始分析」即可。系统会持续追踪你选择的球员，不会跳到近端。你还可以切换顶部的「帧1/帧2...」标签，在不同时间点的画面中选择球员最清晰的一帧。如果不想手动选择，可以点击「自动选择(近侧)」使用默认模式。",
+      helpFaq1Q: "为什么分析速度很慢？",
+      helpFaq1A: "分析速度取决于硬件配置。使用NVIDIA GPU（需安装CUDA版PyTorch）可大幅提速（RTX 4070约1-2分钟/视频），CPU模式需要5-10分钟。视频越长分析越慢，建议使用1分钟以内的片段。",
+      helpFaq2Q: "支持哪些视频格式？",
+      helpFaq2A: "支持 MP4、MOV、AVI、MKV、MPEG 等常见格式。推荐使用MP4格式（H.264编码），兼容性最好。",
+      helpFaq3Q: "视频文件大小有限制吗？",
+      helpFaq3A: "支持最大500MB的视频文件。建议视频时长控制在3分钟以内以获得最佳体验。",
+      helpFaq4Q: "为什么识别不准？",
+      helpFaq4A: "识别精度受视频质量影响较大。请确保：① 光线充足 ② 全身在画面中 ③ 画面稳定不晃动 ④ 侧面角度拍摄。逆光、远距离、快速移动都可能影响精度。比赛远景视频请确保球员足够清晰，避免过远拍摄导致人物过小。",
+      helpFaq5Q: "AI教练为什么不能用？",
+      helpFaq5A: "AI教练功能需要配置通义千问（DashScope）或智谱AI的API Key。请在系统设置中填写API Key，或联系管理员配置。核心分析功能不依赖AI教练，可以正常使用。",
+      helpFaq6Q: "分析后的视频和报告如何下载？",
+      helpFaq6A: "分析完成后，标注视频下方会出现「下载视频」按钮。训练报告和AI教练回复可使用各自的复制/下载按钮保存，也可以使用浏览器的打印功能（Ctrl+P）保存为PDF。",
+      helpFaq7Q: "球员选择窗口没有弹出怎么办？",
+      helpFaq7A: "如果上传视频后没有弹出球员选择窗口，请尝试按 Ctrl+F5 强制刷新页面（清除浏览器缓存）后重新上传。确保您使用的是最新版本的页面。",
+      helpFooter: "羽动智练 — AI羽毛球智能训练助手 v1.0",
+      playerSelectTitle: "选择要追踪的球员",
+      playerSelectHint: "请在画面中点击你要分析的球员（支持选择近端或远端球员）",
+      playerDetecting: "正在检测球员...",
+      playerDetectedCount: "检测到球员:",
+      playerSelected: "已选择:",
+      playerSelectTips: "提示",
+      playerTip1: "点击画面中的球员框进行选择",
+      playerTip2: "可以切换不同时间点的帧选择清晰的画面",
+      playerTip3: "绿色框为当前选中的球员",
+      playerTip4: "如果只有一个球员也可以手动选择确认",
+      playerAutoSelect: "自动选择(近侧)",
+      playerConfirmSelect: "确认选择并开始分析",
+      playerFrame: "帧",
     },
     en: {
       pageTitle: "BadmintonAI — Smart Training System",
@@ -403,6 +473,76 @@
       tourNext: "Next",
       tourSkip: "Skip",
       tourFinish: "Finish",
+      helpGuide: "Guide",
+      helpTitle: "BadmintonAI · User Guide",
+      helpQuickStart: "Quick Start (4 Steps)",
+      helpStep1Title: "Upload Video",
+      helpStep1Desc: "Click the upload area in the middle of the page and select a badminton training video (supports MP4/MOV/AVI/MKV formats)",
+      helpStep2Title: "Select Player",
+      helpStep2Desc: "After upload, the system automatically detects players and shows a selection window. Click the bounding box of the player you want to track (near or far side). The selected box turns green. Click 'Confirm' to proceed.",
+      helpStep3Title: "Wait for Analysis",
+      helpStep3Desc: "The system automatically performs pose estimation, action classification, shot detection and footwork tracking. A progress bar shows real-time status.",
+      helpStep4Title: "View Report",
+      helpStep4Desc: "After analysis, view the annotated video, footwork heatmap, shot timeline and training report. You can also ask the AI Coach questions.",
+      helpVideoTips: "Filming Tips (For Best Results)",
+      helpTip1Title: "Landscape Mode",
+      helpTip1Desc: "Landscape filming provides more stable footage and full player visibility",
+      helpTip2Title: "Distance",
+      helpTip2Desc: "Stand 3-5m from the sideline to ensure the full body is in frame",
+      helpTip3Title: "Angle",
+      helpTip3Desc: "Film from the side, parallel to the net",
+      helpTip4Title: "Lighting",
+      helpTip4Desc: "Ensure bright court lighting, avoid backlit filming",
+      helpTip5Title: "Stable Footage",
+      helpTip5Desc: "Use a tripod or stand to avoid handshake blur",
+      helpTip6Title: "Duration",
+      helpTip6Desc: "10 seconds - 3 minutes clips with complete strokes recommended",
+      helpFeatures: "Features",
+      helpFeat0Title: "Player Selection",
+      helpFeat0Desc: "Automatically detects all players in the video after upload. Click to select your target player — supports near or far court selection. Multi-frame sampling helps you pick the clearest view.",
+      helpFeat1Title: "Annotated Video",
+      helpFeat1Desc: "Real-time skeleton keypoints, action labels, and shot markers on video",
+      helpFeat2Title: "Footwork Heatmap",
+      helpFeat2Desc: "Track player movement on court, showing high-frequency activity areas",
+      helpFeat3Title: "Shot Timeline",
+      helpFeat3Desc: "Record time, action type, confidence, and quality score for each shot",
+      helpFeat4Title: "Training Report",
+      helpFeat4Desc: "Statistics, technical highlights, issue analysis, improvement suggestions, and training plans",
+      helpFeat5Title: "AI Coach",
+      helpFeat5Desc: "AI-powered intelligent coach providing personalized answers to your questions",
+      helpFeat6Title: "History",
+      helpFeat6Desc: "All analysis records are automatically saved for review and progress tracking",
+      helpFaq: "FAQ",
+      helpFaq0Q: "How do I select the far-court player for analysis?",
+      helpFaq0A: "After uploading, a player selection window automatically appears. Every detected person is shown with a bounding box. Simply click the player on the far side (upper half of the frame / opposite court). The selected box turns green, then click 'Confirm & Start Analysis'. The system will continuously track your chosen player without jumping to the near side. You can also switch between Frame 1/2/3... tabs at the top to pick the clearest frame. If you don't want to choose manually, click 'Auto-select (Near side)' for default behavior.",
+      helpFaq1Q: "Why is analysis slow?",
+      helpFaq1A: "Analysis speed depends on hardware. Using an NVIDIA GPU (with CUDA PyTorch) greatly accelerates it (RTX 4070 ~1-2 min/video), CPU mode takes 5-10 minutes. Longer videos take more time; we recommend clips under 1 minute.",
+      helpFaq2Q: "What video formats are supported?",
+      helpFaq2A: "MP4, MOV, AVI, MKV, MPEG and other common formats are supported. MP4 (H.264) is recommended for best compatibility.",
+      helpFaq3Q: "Is there a file size limit?",
+      helpFaq3A: "Maximum 500MB. We recommend videos under 3 minutes for best experience.",
+      helpFaq4Q: "Why is recognition inaccurate?",
+      helpFaq4A: "Accuracy is affected by video quality. Please ensure: ① Good lighting ② Full body in frame ③ Stable footage ④ Side angle. Backlight, long distance, and fast movement can reduce accuracy. For wide-match videos, ensure players are clearly visible and not too small.",
+      helpFaq5Q: "Why isn't AI Coach working?",
+      helpFaq5A: "AI Coach requires a DashScope (Qwen) or ZhipuAI API Key. Please configure it in system settings, or contact your administrator. Core analysis works without AI Coach.",
+      helpFaq6Q: "How to download analyzed videos and reports?",
+      helpFaq6A: "After analysis, a 'Download Video' button appears below the annotated video. Reports and AI Coach replies have their own copy/download buttons, or use browser print (Ctrl+P) to save as PDF.",
+      helpFaq7Q: "The player selection window didn't pop up. What should I do?",
+      helpFaq7A: "If the player selection window doesn't appear after upload, try pressing Ctrl+F5 to force-refresh the page (clearing browser cache) and re-upload. Make sure you're using the latest version.",
+      helpFooter: "BadmintonAI — AI Badminton Smart Training Assistant v1.0",
+      playerSelectTitle: "Select Player to Track",
+      playerSelectHint: "Click on the player you want to analyze (supports selecting near or far court players)",
+      playerDetecting: "Detecting players...",
+      playerDetectedCount: "Players detected:",
+      playerSelected: "Selected:",
+      playerSelectTips: "Tips",
+      playerTip1: "Click on a player box to select them",
+      playerTip2: "Switch between different time frames for a clearer view",
+      playerTip3: "Green box indicates the currently selected player",
+      playerTip4: "If only one player is visible, you can also confirm manually",
+      playerAutoSelect: "Auto-select (near side)",
+      playerConfirmSelect: "Confirm & Start Analysis",
+      playerFrame: "Frame",
     },
     ja: {
       pageTitle: "BadmintonAI — バドミントン智能トレーニング",
@@ -601,6 +741,76 @@
       tourNext: "次へ",
       tourSkip: "スキップ",
       tourFinish: "完了",
+      helpGuide: "ガイド",
+      helpTitle: "BadmintonAI · 使い方ガイド",
+      helpQuickStart: "クイックスタート（4ステップ）",
+      helpStep1Title: "動画をアップロード",
+      helpStep1Desc: "ページ中央のアップロードエリアをクリックし、バドミントン練習動画を選択（MP4/MOV/AVI/MKV形式対応）",
+      helpStep2Title: "プレイヤーを選択",
+      helpStep2Desc: "アップロード後、システムが自動的に選手を検出して選択ウィンドウが表示されます。追跡したい選手のバウンディングボックスをクリック（手前側・奥側どちらも選択可能）。選択されたボックスは緑色に変わります。「確認」をクリックして進みます。",
+      helpStep3Title: "分析を待つ",
+      helpStep3Desc: "システムが自動的に姿勢推定、動作分類、ショット検出、フットワーク追跡を行います。プログレスバーでリアルタイムの進捗を表示します。",
+      helpStep4Title: "レポートを見る",
+      helpStep4Desc: "分析完了後、注釈付き動画、フットワークヒートマップ、ショットタイムライン、トレーニングレポートを確認できます。AIコーチに質問することもできます。",
+      helpVideoTips: "撮影のコツ（最良の分析結果を得るために）",
+      helpTip1Title: "横画面撮影",
+      helpTip1Desc: "横画面で撮影すると、映像が安定し全身が映ります",
+      helpTip2Title: "撮影距離",
+      helpTip2Desc: "コートのサイドラインから3-5m離れて、全身がフレームに入るように",
+      helpTip3Title: "撮影角度",
+      helpTip3Desc: "ネットと平行に横から撮影",
+      helpTip4Title: "照明",
+      helpTip4Desc: "コートを明るく保ち、逆光での撮影を避けて",
+      helpTip5Title: "安定撮影",
+      helpTip5Desc: "三脚やスタンドを使って手ブレを防止",
+      helpTip6Title: "動画の長さ",
+      helpTip6Desc: "ストロークが含まれる10秒〜3分程度のクリップ推奨",
+      helpFeatures: "機能説明",
+      helpFeat0Title: "プレイヤー選択",
+      helpFeat0Desc: "アップロード後に動画内のすべての選手を自動検出。クリックで追跡対象を選択でき、手前側・奥側どちらの選手も選べます。複数フレームサンプリングで最も鮮明な映像を選べます。",
+      helpFeat1Title: "注釈付き動画",
+      helpFeat1Desc: "動画上に骨格キーポイント、動作ラベル、ショットマーカーをリアルタイムで描画",
+      helpFeat2Title: "フットワークヒートマップ",
+      helpFeat2Desc: "コート上のプレイヤーの移動軌跡を追跡し、高頻度エリアを表示",
+      helpFeat3Title: "ショットタイムライン",
+      helpFeat3Desc: "各ショットの時間、動作タイプ、信頼度、品質スコアを記録",
+      helpFeat4Title: "トレーニングレポート",
+      helpFeat4Desc: "統計データ、技術的ハイライト、問題分析、改善提案、トレーニング計画",
+      helpFeat5Title: "AIコーチ",
+      helpFeat5Desc: "AI大規模モデルベースのインテリジェントコーチが、質問に対してパーソナライズされた回答を提供",
+      helpFeat6Title: "履歴記録",
+      helpFeat6Desc: "すべての分析記録は自動保存され、いつでも閲覧して進捗を追跡可能",
+      helpFaq: "よくある質問",
+      helpFaq0Q: "奥側の選手を選択して分析するにはどうすればよいですか？",
+      helpFaq0A: "アップロード後、プレイヤー選択ウィンドウが自動的に表示されます。検出された人物にはバウンディングボックスが表示されるので、分析したい奥側の選手（画面上半分／対面コートの選手）をクリックしてください。選択されたボックスは緑色に変わるので、「選択を確認して分析を開始」をクリックします。システムは選択した選手を継続的に追跡し、手前側にジャンプすることはありません。上部の「フレーム1/2/3...」タブを切り替えて、選手が最も鮮明に写っているフレームを選ぶこともできます。手動選択したくない場合は「自動選択(手前側)」をクリックするとデフォルトモードになります。",
+      helpFaq1Q: "分析が遅いのはなぜですか？",
+      helpFaq1A: "分析速度はハードウェア構成に依存します。NVIDIA GPU（CUDA版PyTorchが必要）を使用すると大幅に高速化され（RTX 4070で約1-2分/動画）、CPUモードでは5-10分かかります。動画が長いほど時間がかかるため、1分以内のクリップ推奨です。",
+      helpFaq2Q: "どの動画形式に対応していますか？",
+      helpFaq2A: "MP4、MOV、AVI、MKV、MPEGなどの一般的な形式に対応。互換性が最も高いMP4形式（H.264エンコード）推奨です。",
+      helpFaq3Q: "動画ファイルサイズに制限はありますか？",
+      helpFaq3A: "最大500MB。最良の体験のため、3分以内の動画を推奨します。",
+      helpFaq4Q: "認識精度が良くないのはなぜですか？",
+      helpFaq4A: "認識精度は動画品質に大きく影響されます。以下を確認してください：① 十分な明るさ ② 全身がフレーム内 ③ 手ブレのない安定した映像 ④ 横からのアングル。逆光、遠距離、速い動きは精度に影響する可能性があります。試合の広角動画では、選手が小さすぎないように注意してください。",
+      helpFaq5Q: "AIコーチが使えないのはなぜですか？",
+      helpFaq5A: "AIコーチ機能には通義千問（DashScope）または智譜AIのAPI Key設定が必要です。システム設定でAPI Keyを入力するか、管理者に連絡してください。コア分析機能はAIコーチなしでも正常に使用できます。",
+      helpFaq6Q: "分析後の動画とレポートはどうやってダウンロードしますか？",
+      helpFaq6A: "分析完了後、注釈付き動画の下に「動画をダウンロード」ボタンが表示されます。トレーニングレポートやAIコーチの回答にはそれぞれコピー/ダウンロードボタンがあり、ブラウザの印刷機能（Ctrl+P）でPDF保存することもできます。",
+      helpFaq7Q: "プレイヤー選択ウィンドウが表示されない場合はどうすればよいですか？",
+      helpFaq7A: "アップロード後にプレイヤー選択ウィンドウが表示されない場合は、Ctrl+F5でページを強制リフレッシュ（ブラウザキャッシュをクリア）してから再アップロードしてください。最新バージョンを使用していることを確認してください。",
+      helpFooter: "BadmintonAI — AIバドミントンインテリジェントトレーニングアシスタント v1.0",
+      playerSelectTitle: "追跡する選手を選択",
+      playerSelectHint: "分析したい選手を画面上でクリックしてください（手前側・奥側どちらも選択可能）",
+      playerDetecting: "選手を検出中...",
+      playerDetectedCount: "検出された選手:",
+      playerSelected: "選択中:",
+      playerSelectTips: "ヒント",
+      playerTip1: "選手のボックスをクリックして選択",
+      playerTip2: "異なる時間のフレームに切り替えて鮮明な映像を選択可能",
+      playerTip3: "緑色のボックスが現在選択中の選手",
+      playerTip4: "選手が1人の場合でも手動で確認可能",
+      playerAutoSelect: "自動選択(手前側)",
+      playerConfirmSelect: "選択を確認して分析開始",
+      playerFrame: "フレーム",
     },
     ko: {
       pageTitle: "BadmintonAI — 배드민턴 스마트 트레이닝",
@@ -799,6 +1009,76 @@
       tourNext: "다음",
       tourSkip: "건너뛰기",
       tourFinish: "완료",
+      helpGuide: "가이드",
+      helpTitle: "BadmintonAI · 사용 가이드",
+      helpQuickStart: "빠른 시작 (4단계)",
+      helpStep1Title: "영상 업로드",
+      helpStep1Desc: "페이지 중앙의 업로드 영역을 클릭하고 배드민턴 훈련 영상을 선택하세요 (MP4/MOV/AVI/MKV 형식 지원)",
+      helpStep2Title: "선수 선택",
+      helpStep2Desc: "업로드 후 시스템이 자동으로 선수를 감지하여 선택 창이 표시됩니다. 추적할 선수의 바운딩 박스를 클릭하세요 (가까운 쪽/먼 쪽 모두 선택 가능). 선택된 박스는 녹색으로 변합니다. '확인'을 클릭하여 진행하세요.",
+      helpStep3Title: "분석 대기",
+      helpStep3Desc: "시스템이 자동으로 자세 추정, 동작 분류, 샷 감지, 풋워크 추적을 수행합니다. 진행률 바가 실시간으로 상태를 표시합니다.",
+      helpStep4Title: "리포트 보기",
+      helpStep4Desc: "분석 완료 후 주석 영상, 풋워크 히트맵, 샷 타임라인, 훈련 리포트를 확인할 수 있습니다. AI 코치에 질문할 수도 있습니다.",
+      helpVideoTips: "촬영 팁 (최상의 결과를 위해)",
+      helpTip1Title: "가로 촬영",
+      helpTip1Desc: "가로 모드로 촬영하면 화면이 안정적이고 전신이 담깁니다",
+      helpTip2Title: "촬영 거리",
+      helpTip2Desc: "코트 사이드라인에서 3-5m 떨어져 전신이 프레임에 들어오게 하세요",
+      helpTip3Title: "촬영 각도",
+      helpTip3Desc: "네트와 평행하게 측면에서 촬영하세요",
+      helpTip4Title: "조명",
+      helpTip4Desc: "코트 조명을 밝게 하고 역광 촬영을 피하세요",
+      helpTip5Title: "안정적인 촬영",
+      helpTip5Desc: "삼각대나 거치대를 사용해 흔들림을 방지하세요",
+      helpTip6Title: "영상 길이",
+      helpTip6Desc: "완전한 타격 동작이 포함된 10초~3분 클립 권장",
+      helpFeatures: "기능 설명",
+      helpFeat0Title: "선수 선택",
+      helpFeat0Desc: "업로드 후 영상 내 모든 선수를 자동 감지합니다. 클릭으로 추적 대상을 선택할 수 있으며, 가까운 쪽/먼 쪽 선수 모두 선택 가능합니다. 다중 프레임 샘플링으로 가장 선명한 화면을 선택할 수 있습니다.",
+      helpFeat1Title: "주석 영상",
+      helpFeat1Desc: "영상에 골격 키포인트, 동작 라벨, 샷 마커를 실시간으로 표시",
+      helpFeat2Title: "풋워크 히트맵",
+      helpFeat2Desc: "코트 위 선수의 이동 궤적을 추적하고 고빈도 활동 영역 표시",
+      helpFeat3Title: "샷 타임라인",
+      helpFeat3Desc: "각 샷의 시간, 동작 유형, 신뢰도, 품질 점수를 기록",
+      helpFeat4Title: "훈련 리포트",
+      helpFeat4Desc: "통계 데이터, 기술적 하이라이트, 문제 분석, 개선 제안 및 훈련 계획",
+      helpFeat5Title: "AI 코치",
+      helpFeat5Desc: "AI 대형 모델 기반 지능형 코치가 질문에 개인화된 답변 제공",
+      helpFeat6Title: "기록",
+      helpFeat6Desc: "모든 분석 기록은 자동 저장되어 언제든 다시 보고 진도 추적 가능",
+      helpFaq: "자주 묻는 질문",
+      helpFaq0Q: "원거리(먼 쪽) 선수를 선택하여 분석하려면 어떻게 하나요?",
+      helpFaq0A: "업로드 후 선수 선택 창이 자동으로 나타납니다. 감지된 모든 사람에게 바운딩 박스가 표시되므로, 분석하고 싶은 먼 쪽 선수(화면 상단/반대편 코트의 선수)를 클릭하세요. 선택된 박스는 녹색으로 변한 후 '선택 확인 및 분석 시작'을 클릭합니다. 시스템은 선택한 선수를 지속적으로 추적하며 가까운 쪽으로 점프하지 않습니다. 상단의 '프레임1/2/3...' 탭을 전환하여 선수가 가장 선명하게 보이는 프레임을 선택할 수도 있습니다. 수동 선택을 원하지 않으면 '자동 선택(가까운 쪽)'을 클릭하여 기본 모드를 사용하세요.",
+      helpFaq1Q: "분석이 왜 느린가요?",
+      helpFaq1A: "분석 속도는 하드웨어에 따라 다릅니다. NVIDIA GPU(CUDA PyTorch 필요) 사용 시 크게 빨라지며(RTX 4070 ~1-2분/영상), CPU 모드는 5-10분 소요됩니다. 영상이 길수록 시간이 더 걸리므로 1분 이내 클립을 권장합니다.",
+      helpFaq2Q: "어떤 영상 형식을 지원하나요?",
+      helpFaq2A: "MP4, MOV, AVI, MKV, MPEG 등 일반적인 형식을 지원합니다. 호환성이 가장 좋은 MP4(H.264) 형식을 권장합니다.",
+      helpFaq3Q: "파일 크기 제한이 있나요?",
+      helpFaq3A: "최대 500MB. 최상의 경험을 위해 3분 이내 영상을 권장합니다.",
+      helpFaq4Q: "인식이 정확하지 않은 이유는?",
+      helpFaq4A: "인식 정확도는 영상 품질에 큰 영향을 받습니다. 다음을 확인하세요: ① 밝은 조명 ② 전신이 프레임에 ③ 흔들림 없는 안정적인 화면 ④ 측면 각도. 역광, 원거리, 빠른 움직임은 정확도를 저하시킬 수 있습니다. 경기 광각 영상의 경우 선수가 너무 작지 않도록 주의하세요.",
+      helpFaq5Q: "AI 코치가 작동하지 않는 이유는?",
+      helpFaq5A: "AI 코치 기능은 DashScope(천천) 또는 즈푸AI API Key 설정이 필요합니다. 시스템 설정에서 API Key를 입력하거나 관리자에게 문의하세요. 핵심 분석 기능은 AI 코치 없이도 정상 작동합니다.",
+      helpFaq6Q: "분석 후 영상과 리포트는 어떻게 다운로드하나요?",
+      helpFaq6A: "분석 완료 후 주석 영상 아래에 '영상 다운로드' 버튼이 표시됩니다. 훈련 리포트와 AI 코치 답변에는 각각 복사/다운로드 버튼이 있으며, 브라우저 인쇄 기능(Ctrl+P)으로 PDF 저장할 수도 있습니다.",
+      helpFaq7Q: "선수 선택 창이 나타나지 않으면 어떻게 하나요?",
+      helpFaq7A: "업로드 후 선수 선택 창이 나타나지 않으면 Ctrl+F5로 페이지를 강력 새로고침(브라우저 캐시 삭제)한 후 다시 업로드하세요. 최신 버전을 사용하고 있는지 확인하세요.",
+      helpFooter: "BadmintonAI — AI 배드민턴 스마트 트레이닝 어시스턴트 v1.0",
+      playerSelectTitle: "추적할 선수 선택",
+      playerSelectHint: "분석할 선수를 화면에서 클릭하세요 (가까운 쪽/먼 쪽 모두 선택 가능)",
+      playerDetecting: "선수 감지 중...",
+      playerDetectedCount: "감지된 선수:",
+      playerSelected: "선택됨:",
+      playerSelectTips: "도움말",
+      playerTip1: "선수 박스를 클릭하여 선택하세요",
+      playerTip2: "다른 시간 프레임으로 전환하여 선명한 화면을 선택할 수 있습니다",
+      playerTip3: "녹색 박스가 현재 선택된 선수입니다",
+      playerTip4: "선수가 1명만 보여도 수동으로 확인할 수 있습니다",
+      playerAutoSelect: "자동 선택(가까운 쪽)",
+      playerConfirmSelect: "선택 확인 후 분석 시작",
+      playerFrame: "프레임",
     },
     id: {
       pageTitle: "BadmintonAI — Sistem Latihan Cerdas Bulu Tangkis",
@@ -997,6 +1277,76 @@
       tourNext: "Lanjut",
       tourSkip: "Lewati",
       tourFinish: "Selesai",
+      helpGuide: "Panduan",
+      helpTitle: "BadmintonAI · Panduan Pengguna",
+      helpQuickStart: "Mulai Cepat (4 Langkah)",
+      helpStep1Title: "Unggah Video",
+      helpStep1Desc: "Klik area unggah di tengah halaman dan pilih video latihan bulu tangkis (mendukung format MP4/MOV/AVI/MKV)",
+      helpStep2Title: "Pilih Pemain",
+      helpStep2Desc: "Setelah unggah, sistem otomatis mendeteksi pemain dan menampilkan jendela pemilihan. Klik kotak pembatas pemain yang ingin dilacak (dekat maupun jauh). Kotak terpilih berubah hijau. Klik 'Konfirmasi' untuk melanjutkan.",
+      helpStep3Title: "Tunggu Analisis",
+      helpStep3Desc: "Sistem secara otomatis melakukan estimasi pose, klasifikasi gerakan, deteksi pukulan, dan pelacakan footwork. Progress bar menampilkan status real-time.",
+      helpStep4Title: "Lihat Laporan",
+      helpStep4Desc: "Setelah analisis selesai, lihat video beranotasi, peta panas footwork, timeline pukulan, dan laporan latihan. Anda juga bisa bertanya ke Pelatih AI.",
+      helpVideoTips: "Tips Pengambilan Video (Untuk Hasil Terbaik)",
+      helpTip1Title: "Mode Lanskap",
+      helpTip1Desc: "Pengambilan lanskap memberikan footage lebih stabil dan pemain terlihat penuh",
+      helpTip2Title: "Jarak",
+      helpTip2Desc: "Berdiri 3-5m dari garis samping lapangan agar seluruh tubuh terlihat",
+      helpTip3Title: "Sudut",
+      helpTip3Desc: "Rekam dari samping, sejajar dengan net",
+      helpTip4Title: "Pencahayaan",
+      helpTip4Desc: "Pastikan pencahayaan lapangan terang, hindari rekaman backlight",
+      helpTip5Title: "Rekaman Stabil",
+      helpTip5Desc: "Gunakan tripod atau penyangga untuk menghindari goyangan",
+      helpTip6Title: "Durasi",
+      helpTip6Desc: "Klip 10 detik - 3 menit dengan pukulan lengkap direkomendasikan",
+      helpFeatures: "Fitur",
+      helpFeat0Title: "Pemilihan Pemain",
+      helpFeat0Desc: "Otomatis mendeteksi semua pemain dalam video setelah unggah. Klik untuk memilih target — mendukung pemain dekat maupun jauh. Multi-frame sampling membantu memilih tampilan paling jelas.",
+      helpFeat1Title: "Video Beranotasi",
+      helpFeat1Desc: "Titik kunci kerangka, label gerakan, dan penanda pukulan real-time pada video",
+      helpFeat2Title: "Peta Panas Footwork",
+      helpFeat2Desc: "Lacak pergerakan pemain di lapangan, tunjukkan area aktivitas tinggi",
+      helpFeat3Title: "Timeline Pukulan",
+      helpFeat3Desc: "Catat waktu, jenis gerakan, kepercayaan, dan skor kualitas untuk setiap pukulan",
+      helpFeat4Title: "Laporan Latihan",
+      helpFeat4Desc: "Data statistik, sorotan teknis, analisis masalah, saran perbaikan, dan rencana latihan",
+      helpFeat5Title: "Pelatih AI",
+      helpFeat5Desc: "Pelatih cerdas berbasis AI model besar yang memberikan jawaban personal untuk pertanyaan Anda",
+      helpFeat6Title: "Riwayat",
+      helpFeat6Desc: "Semua catatan analisis tersimpan otomatis untuk ditinjau dan melacak kemajuan",
+      helpFaq: "FAQ",
+      helpFaq0Q: "Bagaimana cara memilih pemain sisi jauh untuk dianalisis?",
+      helpFaq0A: "Setelah unggah, jendela pemilihan pemain otomatis muncul. Setiap orang yang terdeteksi ditampilkan dengan kotak pembatas. Cukup klik pemain di sisi jauh (bagian atas frame / lapangan berlawanan). Kotak terpilih berubah hijau, lalu klik 'Konfirmasi & Mulai Analisis'. Sistem akan terus melacak pemain pilihan Anda tanpa berpindah ke sisi dekat. Anda juga bisa beralih tab Frame 1/2/3... di atas untuk memilih frame di mana pemain paling jelas. Jika tidak ingin memilih manual, klik 'Pilih Otomatis (Sisi Dekat)' untuk perilaku default.",
+      helpFaq1Q: "Mengapa analisis lambat?",
+      helpFaq1A: "Kecepatan analisis tergantung perangkat keras. Menggunakan GPU NVIDIA (dengan CUDA PyTorch) sangat mempercepat (RTX 4070 ~1-2 menit/video), mode CPU membutuhkan 5-10 menit. Video lebih lama membutuhkan waktu lebih; kami sarankan klip di bawah 1 menit.",
+      helpFaq2Q: "Format video apa yang didukung?",
+      helpFaq2A: "MP4, MOV, AVI, MKV, MPEG dan format umum lainnya didukung. MP4 (H.264) direkomendasikan untuk kompatibilitas terbaik.",
+      helpFaq3Q: "Apakah ada batas ukuran file?",
+      helpFaq3A: "Maksimal 500MB. Kami sarankan video di bawah 3 menit untuk pengalaman terbaik.",
+      helpFaq4Q: "Mengapa pengenalan tidak akurat?",
+      helpFaq4A: "Akurasi dipengaruhi kualitas video. Pastikan: ① Pencahayaan baik ② Seluruh tubuh dalam frame ③ Rekaman stabil tanpa goyangan ④ Sudut samping. Backlight, jarak jauh, dan gerakan cepat dapat mengurangi akurasi. Untuk video lebar pertandingan, pastikan pemain terlihat jelas dan tidak terlalu kecil.",
+      helpFaq5Q: "Mengapa Pelatih AI tidak berfungsi?",
+      helpFaq5A: "Fitur Pelatih AI memerlukan API Key DashScope (Qwen) atau ZhipuAI. Silakan konfigurasi di pengaturan sistem, atau hubungi administrator. Analisis inti berfungsi tanpa Pelatih AI.",
+      helpFaq6Q: "Bagaimana cara mengunduh video dan laporan setelah analisis?",
+      helpFaq6A: "Setelah analisis, tombol 'Unduh Video' muncul di bawah video beranotasi. Laporan dan balasan Pelatih AI memiliki tombol salin/unduh masing-masing, atau gunakan cetak browser (Ctrl+P) untuk menyimpan PDF.",
+      helpFaq7Q: "Jendela pemilihan pemain tidak muncul. Apa yang harus dilakukan?",
+      helpFaq7A: "Jika jendela pemilihan pemain tidak muncul setelah unggah, coba tekan Ctrl+F5 untuk refresh paksa halaman (membersihkan cache browser) dan unggah ulang. Pastikan Anda menggunakan versi terbaru.",
+      helpFooter: "BadmintonAI — Asisten Latihan Cerdas Bulu Tangkis AI v1.0",
+      playerSelectTitle: "Pilih Pemain untuk Dilacak",
+      playerSelectHint: "Klik pemain yang ingin Anda analisis (mendukung pemain dekat maupun jauh)",
+      playerDetecting: "Mendeteksi pemain...",
+      playerDetectedCount: "Pemain terdeteksi:",
+      playerSelected: "Terpilih:",
+      playerSelectTips: "Tips",
+      playerTip1: "Klik kotak pemain untuk memilih",
+      playerTip2: "Beralih antar frame waktu untuk tampilan yang lebih jelas",
+      playerTip3: "Kotak hijau menunjukkan pemain yang sedang dipilih",
+      playerTip4: "Jika hanya satu pemain terlihat, Anda tetap bisa konfirmasi manual",
+      playerAutoSelect: "Pilih Otomatis (dekat)",
+      playerConfirmSelect: "Konfirmasi & Mulai Analisis",
+      playerFrame: "Frame",
     },
   };
 
@@ -1146,31 +1496,37 @@
     </svg>`;
   }
 
-  function spawnShuttlecock() {
+  function spawnShuttlecock(fromMid) {
     const container = document.getElementById("bgAnimation");
     if (!container) return;
     const el = document.createElement("div");
     el.className = "shuttlecock";
-    const size = 16 + Math.random() * 20;
+    const size = 12 + Math.random() * 22;
     el.innerHTML = createShuttlecockSVG(size);
     const startX = Math.random() * 100;
-    const duration = 12 + Math.random() * 18;
-    const delay = Math.random() * 2;
+    const duration = 10 + Math.random() * 20;
+    const delay = Math.random() * 1;
     el.style.left = startX + "%";
-    el.style.bottom = "-40px";
+    if (fromMid) {
+      el.style.bottom = (30 + Math.random() * 50) + "vh";
+    } else {
+      el.style.bottom = "-50px";
+    }
     el.style.animationDuration = duration + "s";
     el.style.animationDelay = delay + "s";
-    const driftX = (Math.random() - 0.5) * 80;
+    const driftX = (Math.random() - 0.5) * 150;
     el.style.setProperty("--drift-x", driftX + "px");
+    el.style.opacity = "0";
     container.appendChild(el);
     setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, (duration + delay) * 1000 + 500);
   }
 
   function initAnimatedBackground() {
-    for (let i = 0; i < 6; i++) {
-      setTimeout(() => spawnShuttlecock(), i * 800);
+    for (let i = 0; i < 12; i++) {
+      setTimeout(() => spawnShuttlecock(i > 6), i * 400);
     }
-    setInterval(spawnShuttlecock, 2500 + Math.random() * 2000);
+    setInterval(() => spawnShuttlecock(false), 1200 + Math.random() * 1000);
+    setInterval(() => spawnShuttlecock(true), 2500 + Math.random() * 1500);
   }
 
   // ---- State ----
@@ -1192,6 +1548,10 @@
     history: [],
     radarData: [0, 0, 0, 0, 0, 0],
     footworkTrace: [],
+    _cachedCleanedTrace: null,
+    _cachedTraceVersion: 0,
+    _cachedHeatmap: null,
+    _cachedHeatmapVersion: 0,
     shotEvents: [],
     playbackDuration: 0,
     coachHistory: [],
@@ -1202,6 +1562,10 @@
     uiLanguage: "zh",
     user: null,
     authToken: null,
+    targetBbox: null,
+    playerDetectResult: null,
+    playerSelectCurrentFrame: 0,
+    playerSelectedBox: null,
   };
 
   // ---- DOM Elements ----
@@ -1246,6 +1610,7 @@
     btnReset: document.getElementById("btnReset"),
     btnSettings: document.getElementById("btnSettings"),
     btnExport: document.getElementById("btnExport"),
+    btnCopyReport: document.getElementById("btnCopyReport"),
     btnSaveSettings: document.getElementById("btnSaveSettings"),
     btnResetSettings: document.getElementById("btnResetSettings"),
 
@@ -1400,6 +1765,25 @@
     tourDots: document.getElementById("tourDots"),
     btnSkipTour: document.getElementById("btnSkipTour"),
     btnNextTour: document.getElementById("btnNextTour"),
+
+    // Help Guide
+    btnHelp: document.getElementById("btnHelp"),
+    helpModal: document.getElementById("helpModal"),
+    btnCloseHelpModal: document.getElementById("btnCloseHelpModal"),
+
+    // Player Selection
+    playerSelectModal: document.getElementById("playerSelectModal"),
+    btnClosePlayerSelect: document.getElementById("btnClosePlayerSelect"),
+    playerSelectImage: document.getElementById("playerSelectImage"),
+    playerSelectBoxes: document.getElementById("playerSelectBoxes"),
+    playerSelectLoading: document.getElementById("playerSelectLoading"),
+    playerFrameWrapper: document.getElementById("playerFrameWrapper"),
+    playerFrameTabs: document.getElementById("playerFrameTabs"),
+    playerCountValue: document.getElementById("playerCountValue"),
+    selectedPlayerInfo: document.getElementById("selectedPlayerInfo"),
+    selectedPlayerLabel: document.getElementById("selectedPlayerLabel"),
+    btnSkipPlayerSelect: document.getElementById("btnSkipPlayerSelect"),
+    btnConfirmPlayerSelect: document.getElementById("btnConfirmPlayerSelect"),
   };
 
   const ctx = elements.frameCanvas.getContext("2d");
@@ -1590,16 +1974,16 @@
   function updateTopbarTitle() {
     const active = document.querySelector(".nav-item.active");
     const tabMap = {
-      "navTraining": { zh: "训练检测", en: "Detection", ja: "検出", ko: "검출", id: "Deteksi" },
-      "navAnalysis": { zh: "动作分析", en: "Analysis", ja: "分析", ko: "분석", id: "Analisis" },
-      "navReport":   { zh: "训练报告", en: "Report", ja: "レポート", ko: "리포트", id: "Laporan" },
-      "navCoach":    { zh: "AI教练问答", en: "AI Coach", ja: "AIコーチ", ko: "AI 코치", id: "Pelatih AI" },
-      "navHistory":  { zh: "训练历史", en: "History", ja: "履歴", ko: "기록", id: "Riwayat" },
-      "navSettings": { zh: "系统设置", en: "Settings", ja: "設定", ko: "설정", id: "Pengaturan" },
+      "training": { zh: "训练检测", en: "Detection", ja: "検出", ko: "검출", id: "Deteksi" },
+      "analysis": { zh: "动作分析", en: "Analysis", ja: "分析", ko: "분석", id: "Analisis" },
+      "report":   { zh: "训练报告", en: "Report", ja: "レポート", ko: "리포트", id: "Laporan" },
+      "coach":    { zh: "AI教练问答", en: "AI Coach", ja: "AIコーチ", ko: "AI 코치", id: "Pelatih AI" },
+      "history":  { zh: "训练历史", en: "History", ja: "履歴", ko: "기록", id: "Riwayat" },
+      "settings": { zh: "系统设置", en: "Settings", ja: "設定", ko: "설정", id: "Pengaturan" },
     };
-    const panel = elements?.topbarTitle?.closest(".topbar-panel");
-    if (active && tabMap[active.id] && elements.topbarTitle) {
-      elements.topbarTitle.textContent = tabMap[active.id][state.uiLanguage] || tabMap[active.id].zh;
+    if (active && active.dataset && active.dataset.tab && elements.topbarTitle) {
+      const tabName = active.dataset.tab;
+      elements.topbarTitle.textContent = tabMap[tabName][state.uiLanguage] || tabMap[tabName].zh || tabName;
     }
   }
 
@@ -1864,6 +2248,8 @@
     state.analysisReport = null;
     state.realVideoLoaded = true;
     state.bbox = null;
+    state.targetBbox = null;
+    state.playerSelectedBox = null;
     state.precheckPassed = false;
     state.precheckResult = null;
     hidePrecheckPanel();
@@ -2007,6 +2393,8 @@
       generate_llm_report: false,
       language: SUPPORTED_LANGS.includes(lang) ? lang : "zh",
       llm_language: SUPPORTED_LANGS.includes(lang) ? lang : "zh",
+      target_bbox: state.targetBbox || null,
+      target_player: state.targetBbox ? "manual_box" : (state.precheckResult?.scene_type === "match_wide" ? "largest" : "near"),
     };
   }
 
@@ -2073,6 +2461,238 @@
     if (elements.analysisProgressBar) elements.analysisProgressBar.style.width = "100%";
   }
 
+  function showPlayerSelectModal() {
+    if (!elements.playerSelectModal) return;
+    elements.playerSelectModal.hidden = false;
+    document.body.style.overflow = "hidden";
+    state.playerSelectedBox = null;
+    state.playerDetectResult = null;
+    state.playerSelectCurrentFrame = 0;
+    state.targetBbox = null;
+    updatePlayerSelectUI();
+  }
+
+  function hidePlayerSelectModal() {
+    if (!elements.playerSelectModal) return;
+    elements.playerSelectModal.hidden = true;
+    document.body.style.overflow = "";
+  }
+
+  function updatePlayerSelectUI() {
+    if (!elements.playerSelectModal) return;
+    document.querySelectorAll("[data-i18n]").forEach((el) => {
+      const key = el.getAttribute("data-i18n");
+      if (GLOBAL_I18N[state.uiLanguage] && GLOBAL_I18N[state.uiLanguage][key]) {
+        el.textContent = GLOBAL_I18N[state.uiLanguage][key];
+      }
+    });
+    if (elements.btnConfirmPlayerSelect) {
+      elements.btnConfirmPlayerSelect.disabled = !state.playerSelectedBox;
+    }
+  }
+
+  function renderPlayerFrame(frameIdx) {
+    if (!state.playerDetectResult || !state.playerDetectResult.frames) return;
+    const frames = state.playerDetectResult.frames;
+    if (frameIdx < 0 || frameIdx >= frames.length) return;
+
+    state.playerSelectCurrentFrame = frameIdx;
+    const frame = frames[frameIdx];
+
+    if (elements.playerSelectImage && frame.image_base64) {
+      elements.playerSelectImage.src = `data:image/jpeg;base64,${frame.image_base64}`;
+    }
+
+    if (elements.playerSelectBoxes) {
+      elements.playerSelectBoxes.innerHTML = "";
+      const img = elements.playerSelectImage;
+      if (img && img.complete && img.naturalWidth > 0) {
+        drawPlayerBoxes(frame, img);
+      } else if (elements.playerSelectImage) {
+        elements.playerSelectImage.onload = () => drawPlayerBoxes(frame, elements.playerSelectImage);
+      }
+    }
+
+    if (elements.playerCountValue) {
+      elements.playerCountValue.textContent = frame.persons ? frame.persons.length : 0;
+    }
+
+    if (elements.playerFrameTabs) {
+      elements.playerFrameTabs.innerHTML = "";
+      frames.forEach((f, i) => {
+        const tab = document.createElement("button");
+        tab.className = "player-frame-tab" + (i === frameIdx ? " active" : "");
+        const frameLabel = GLOBAL_I18N[state.uiLanguage]?.playerFrame || "帧";
+        tab.textContent = `${frameLabel} ${i + 1} (${f.time_sec}s)`;
+        tab.addEventListener("click", () => switchPlayerFrame(i));
+        elements.playerFrameTabs.appendChild(tab);
+      });
+    }
+
+    if (elements.playerSelectLoading) {
+      elements.playerSelectLoading.style.display = "none";
+    }
+  }
+
+  function drawPlayerBoxes(frame, img) {
+    if (!elements.playerSelectBoxes || !frame.persons) return;
+    const wrapper = elements.playerFrameWrapper;
+    if (!wrapper) return;
+
+    const wrapperRect = wrapper.getBoundingClientRect();
+    const imgRect = img.getBoundingClientRect();
+    const scaleX = imgRect.width / (img.naturalWidth || 1);
+    const scaleY = imgRect.height / (img.naturalHeight || 1);
+    const offsetX = imgRect.left - wrapperRect.left;
+    const offsetY = imgRect.top - wrapperRect.top;
+
+    elements.playerSelectBoxes.style.width = wrapperRect.width + "px";
+    elements.playerSelectBoxes.style.height = wrapperRect.height + "px";
+
+    frame.persons.forEach((person, idx) => {
+      const box = document.createElement("div");
+      box.className = "player-box-overlay";
+      const w = (person.x2 - person.x1) * img.naturalWidth * scaleX;
+      const h = (person.y2 - person.y1) * img.naturalHeight * scaleY;
+      const x = person.x1 * img.naturalWidth * scaleX + offsetX;
+      const y = person.y1 * img.naturalHeight * scaleY + offsetY;
+      box.style.left = x + "px";
+      box.style.top = y + "px";
+      box.style.width = w + "px";
+      box.style.height = h + "px";
+
+      const isSelected = state.playerSelectedBox &&
+        state.playerSelectedBox.frameIdx === state.playerSelectCurrentFrame &&
+        state.playerSelectedBox.boxIdx === idx;
+      if (isSelected) {
+        box.classList.add("selected");
+      }
+
+      const label = document.createElement("span");
+      label.className = "player-box-label";
+      label.textContent = `${idx + 1}`;
+      box.appendChild(label);
+
+      box.addEventListener("click", (e) => {
+        e.stopPropagation();
+        selectPlayerBox(idx);
+      });
+
+      elements.playerSelectBoxes.appendChild(box);
+    });
+  }
+
+  function selectPlayerBox(boxIdx) {
+    if (!state.playerDetectResult || !state.playerDetectResult.frames) return;
+    const frame = state.playerDetectResult.frames[state.playerSelectCurrentFrame];
+    if (!frame || !frame.persons || !frame.persons[boxIdx]) return;
+
+    state.playerSelectedBox = {
+      frameIdx: state.playerSelectCurrentFrame,
+      boxIdx: boxIdx,
+      person: frame.persons[boxIdx],
+    };
+    state.targetBbox = [
+      frame.persons[boxIdx].x1,
+      frame.persons[boxIdx].y1,
+      frame.persons[boxIdx].x2,
+      frame.persons[boxIdx].y2,
+    ];
+
+    if (elements.selectedPlayerInfo) {
+      elements.selectedPlayerInfo.style.display = "flex";
+    }
+    if (elements.selectedPlayerLabel) {
+      elements.selectedPlayerLabel.textContent = `#${boxIdx + 1} (${(frame.persons[boxIdx].area_ratio * 100).toFixed(1)}%)`;
+    }
+
+    renderPlayerFrame(state.playerSelectCurrentFrame);
+    updatePlayerSelectUI();
+  }
+
+  function switchPlayerFrame(frameIdx) {
+    renderPlayerFrame(frameIdx);
+  }
+
+  async function detectPlayersForSelection() {
+    if (!state.videoFile) return;
+    if (elements.playerSelectLoading) {
+      elements.playerSelectLoading.style.display = "flex";
+    }
+    if (elements.playerSelectBoxes) {
+      elements.playerSelectBoxes.innerHTML = "";
+    }
+    if (elements.btnConfirmPlayerSelect) elements.btnConfirmPlayerSelect.disabled = true;
+    if (elements.btnSkipPlayerSelect) elements.btnSkipPlayerSelect.disabled = true;
+    if (elements.btnClosePlayerSelect) elements.btnClosePlayerSelect.disabled = true;
+    state.playerDetectResult = null;
+    state.playerSelectedBox = null;
+    state.targetBbox = null;
+    if (elements.selectedPlayerInfo) {
+      elements.selectedPlayerInfo.style.display = "none";
+    }
+
+    try {
+      const form = new FormData();
+      form.append("video", state.videoFile);
+      form.append("conf_threshold", "0.25");
+
+      const headers = {};
+      if (state.authToken) {
+        headers["Authorization"] = `Bearer ${state.authToken}`;
+      }
+
+      const response = await fetch(apiUrl("/api/detect-players"), {
+        method: "POST",
+        headers: headers,
+        body: form,
+      });
+
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+
+      const result = await response.json();
+      state.playerDetectResult = result;
+
+      if (result.frames && result.frames.length > 0) {
+        const recIdx = result.recommended_frame_idx || 0;
+        renderPlayerFrame(recIdx);
+
+        const bestFrame = result.frames[recIdx];
+        if (bestFrame && bestFrame.persons && bestFrame.persons.length === 1) {
+          selectPlayerBox(0);
+        }
+      }
+      if (elements.btnSkipPlayerSelect) elements.btnSkipPlayerSelect.disabled = false;
+      if (elements.btnClosePlayerSelect) elements.btnClosePlayerSelect.disabled = false;
+      updatePlayerSelectUI();
+    } catch (error) {
+      console.error("Player detection failed:", error);
+      if (elements.playerSelectLoading) {
+        elements.playerSelectLoading.style.display = "none";
+      }
+      if (elements.btnSkipPlayerSelect) elements.btnSkipPlayerSelect.disabled = false;
+      if (elements.btnClosePlayerSelect) elements.btnClosePlayerSelect.disabled = false;
+      showUploadHint(`球员检测失败: ${formatFetchError(error)}，将使用自动选择模式`);
+      state.targetBbox = null;
+      hidePlayerSelectModal();
+      await runBackendAnalysis();
+    }
+  }
+
+  async function confirmPlayerSelection() {
+    hidePlayerSelectModal();
+    await runBackendAnalysis();
+  }
+
+  async function skipPlayerSelection() {
+    state.targetBbox = null;
+    state.playerSelectedBox = null;
+    hidePlayerSelectModal();
+    await runBackendAnalysis();
+  }
+
   async function runBackendAnalysis() {
     if (!state.videoFile) {
       showUploadHint("请先点击这里上传视频，再开始分析");
@@ -2094,8 +2714,13 @@
 
     try {
       await ensureBackendReady();
+      const headers = {};
+      if (state.authToken) {
+        headers["Authorization"] = `Bearer ${state.authToken}`;
+      }
       const response = await fetch(apiUrl("/api/analyze"), {
         method: "POST",
+        headers: headers,
         body: form,
       });
       if (!response.ok) {
@@ -2650,45 +3275,48 @@
   }
 
   function cleanTrace(trace) {
+    if (!trace || trace.length < 2) return trace || [];
     const cleaned = [];
     let previous = null;
-    (trace || []).forEach((point) => {
+    for (let i = 0; i < trace.length; i++) {
+      const point = trace[i];
       const t = point && Number.isFinite(Number(point.time_sec)) ? Number(point.time_sec) : null;
       const current = {
-        x: Number.isFinite(Number(point.x)) ? Number(point.x) : 0.5,
-        y: Number.isFinite(Number(point.y)) ? Number(point.y) : 0.5,
+        x: Math.max(0, Math.min(1, Number.isFinite(Number(point.x)) ? Number(point.x) : 0.5)),
+        y: Math.max(0, Math.min(1, Number.isFinite(Number(point.y)) ? Number(point.y) : 0.5)),
         time_sec: t,
       };
       if (previous) {
         const jump = Math.hypot(current.x - previous.x, current.y - previous.y);
-        if (jump > 0.16) return;
+        if (jump > 0.3) continue;
       }
       cleaned.push(current);
       previous = current;
-    });
-    if (cleaned.length < 5) return cleaned;
-    return cleaned.map((pt, index) => {
-      if (index < 2 || index > cleaned.length - 3) return pt;
-      const window = cleaned.slice(index - 2, index + 3);
-      return {
-        x: window.reduce((sum, item) => sum + item.x, 0) / window.length,
-        y: window.reduce((sum, item) => sum + item.y, 0) / window.length,
-        time_sec: pt.time_sec,
-      };
-    });
+    }
+    return cleaned;
   }
 
-  function smoothCourtPoints(points, passes = 2) {
+  function smoothCourtPoints(points, passes = 1) {
     if (!points || points.length < 3) return points || [];
     let smoothed = points.map((point) => ({ ...point }));
     for (let pass = 0; pass < passes; pass += 1) {
       smoothed = smoothed.map((point, index, list) => {
         if (index === 0 || index === list.length - 1) return point;
+        if (index === 1 || index === list.length - 2) {
+          const prev = list[index - 1];
+          const next = list[index + 1];
+          return {
+            x: point.x * 0.6 + (prev.x + next.x) * 0.2,
+            y: point.y * 0.6 + (prev.y + next.y) * 0.2,
+          };
+        }
+        const prev2 = list[index - 2];
         const prev = list[index - 1];
         const next = list[index + 1];
+        const next2 = list[index + 2];
         return {
-          x: point.x * 0.5 + (prev.x + next.x) * 0.25,
-          y: point.y * 0.5 + (prev.y + next.y) * 0.25,
+          x: point.x * 0.36 + prev.x * 0.24 + next.x * 0.24 + prev2.x * 0.08 + next2.x * 0.08,
+          y: point.y * 0.36 + prev.y * 0.24 + next.y * 0.24 + prev2.y * 0.08 + next2.y * 0.08,
         };
       });
     }
@@ -2895,7 +3523,15 @@
       return;
     }
 
-    const cleanedTrace = cleanTrace(trace);
+    let cleanedTrace;
+    if (state._cachedCleanedTrace && state._cachedTraceVersion === trace.length) {
+      cleanedTrace = state._cachedCleanedTrace;
+    } else {
+      cleanedTrace = cleanTrace(trace);
+      state._cachedCleanedTrace = cleanedTrace;
+      state._cachedTraceVersion = trace.length;
+      state._cachedHeatmap = null;
+    }
     if (cleanedTrace.length < 2) return;
 
     let baseIndex;
@@ -2951,58 +3587,87 @@
       const nx = Number.isFinite(Number(point.x)) ? Number(point.x) : 0.5;
       const ny = Number.isFinite(Number(point.y)) ? Number(point.y) : 0.5;
       return {
-        x: left + (0.08 + nx * 0.84) * courtW,
-        y: top + (0.06 + ny * 0.88) * courtH,
+        x: left + (0.02 + nx * 0.96) * courtW,
+        y: top + (0.02 + ny * 0.96) * courtH,
       };
     });
 
-    // Heat layer
+    // Heat layer - pre-rendered once and cached
     const heatCols = 14;
     const heatRows = 16;
-    const heat = new Array(heatCols * heatRows).fill(0);
-    points.forEach((point) => {
-      const gx = Math.max(0, Math.min(heatCols - 1, Math.round(((point.x - left) / courtW) * (heatCols - 1))));
-      const gy = Math.max(0, Math.min(heatRows - 1, Math.round(((point.y - top) / courtH) * (heatRows - 1))));
-      for (let yy = -1; yy <= 1; yy += 1) {
-        for (let xx = -1; xx <= 1; xx += 1) {
-          const nx = gx + xx;
-          const ny = gy + yy;
-          if (nx < 0 || nx >= heatCols || ny < 0 || ny >= heatRows) continue;
-          heat[ny * heatCols + nx] += xx === 0 && yy === 0 ? 3 : 1;
+    const pointMarginX = 0.02;
+    const pointScaleX = 0.96;
+    const pointMarginY = 0.02;
+    const pointScaleY = 0.96;
+
+    if (!state._cachedHeatmap || state._cachedHeatmapVersion !== cleanedTrace.length) {
+      const heat = new Array(heatCols * heatRows).fill(0);
+      const allNormPoints = cleanedTrace.map(pt => ({
+        x: Math.max(0, Math.min(1, pt.x)),
+        y: Math.max(0, Math.min(1, pt.y)),
+      }));
+      allNormPoints.forEach((pt) => {
+        const gx = Math.max(0, Math.min(heatCols - 1, Math.round(pt.x * (heatCols - 1))));
+        const gy = Math.max(0, Math.min(heatRows - 1, Math.round(pt.y * (heatRows - 1))));
+        for (let yy = -1; yy <= 1; yy += 1) {
+          for (let xx = -1; xx <= 1; xx += 1) {
+            const nx = gx + xx;
+            const ny = gy + yy;
+            if (nx < 0 || nx >= heatCols || ny < 0 || ny >= heatRows) continue;
+            heat[ny * heatCols + nx] += xx === 0 && yy === 0 ? 3 : 1;
+          }
+        }
+      });
+      const maxHeat = Math.max(1, ...heat);
+      const offCanvas = document.createElement('canvas');
+      offCanvas.width = w;
+      offCanvas.height = h;
+      const offCtx = offCanvas.getContext('2d');
+      for (let gy = 0; gy < heatRows; gy += 1) {
+        for (let gx = 0; gx < heatCols; gx += 1) {
+          const value = heat[gy * heatCols + gx] / maxHeat;
+          if (value <= 0.04) continue;
+          const cellW = courtW / heatCols;
+          const cellH = courtH / heatRows;
+          const cellX = left + gx * cellW;
+          const cellY = top + gy * cellH;
+          const alpha = 0.08 + value * 0.46;
+          const hue = 155 - value * 105;
+          offCtx.fillStyle = `hsla(${hue}, 95%, ${48 + value * 12}%, ${alpha})`;
+          const rx = cellX - cellW * 0.12;
+          const ry = cellY - cellH * 0.12;
+          const rw = cellW * 1.24;
+          const rh = cellH * 1.24;
+          offCtx.beginPath();
+          if (typeof offCtx.roundRect === "function") {
+            offCtx.roundRect(rx, ry, rw, rh, 10);
+          } else {
+            offCtx.rect(rx, ry, rw, rh);
+          }
+          offCtx.fill();
         }
       }
-    });
-    const maxHeat = Math.max(1, ...heat);
-    for (let gy = 0; gy < heatRows; gy += 1) {
-      for (let gx = 0; gx < heatCols; gx += 1) {
-        const value = heat[gy * heatCols + gx] / maxHeat;
-        if (value <= 0.04) continue;
-        const cellW = courtW / heatCols;
-        const cellH = courtH / heatRows;
-        const cellX = left + gx * cellW;
-        const cellY = top + gy * cellH;
-        const alpha = 0.08 + value * 0.46;
-        const hue = 155 - value * 105;
-        courtCtx.fillStyle = `hsla(${hue}, 95%, ${48 + value * 12}%, ${alpha})`;
-        const rx = cellX - cellW * 0.12;
-        const ry = cellY - cellH * 0.12;
-        const rw = cellW * 1.24;
-        const rh = cellH * 1.24;
-        courtCtx.beginPath();
-        if (typeof courtCtx.roundRect === "function") {
-          courtCtx.roundRect(rx, ry, rw, rh, 10);
-        } else {
-          courtCtx.rect(rx, ry, rw, rh);
-        }
-        courtCtx.fill();
-      }
+      state._cachedHeatmap = offCanvas;
+      state._cachedHeatmapVersion = cleanedTrace.length;
     }
+    courtCtx.drawImage(state._cachedHeatmap, 0, 0);
 
-    // Recent trajectory only, smoothed and interpolated for a stable playback trail.
-    const recent = densifyCourtPoints(smoothCourtPoints(points.slice(-90), 3), 7);
-    drawFootworkTrail(courtCtx, recent);
+    // Draw trail
+    const trailLength = Math.min(points.length, 150);
+    const fullTrail = points;
+    const recentStart = Math.max(0, fullTrail.length - trailLength);
+    const recentTrail = densifyCourtPoints(smoothCourtPoints(fullTrail.slice(recentStart), 1), 5);
 
-    const current = recent[recent.length - 1] || points[points.length - 1];
+    if (fullTrail.length > trailLength) {
+      courtCtx.save();
+      courtCtx.globalAlpha = 0.1;
+      const oldTrail = densifyCourtPoints(fullTrail.slice(0, recentStart), 12);
+      drawFootworkTrail(courtCtx, oldTrail);
+      courtCtx.restore();
+    }
+    drawFootworkTrail(courtCtx, recentTrail);
+
+    const current = points[points.length - 1];
     if (current) {
       const pulse = 10 + Math.sin(Date.now() / 180) * 2;
       courtCtx.fillStyle = "rgba(255, 223, 112, 0.20)";
@@ -3548,21 +4213,138 @@ ${footworkText || "暂无步伐评分数据"}
       .trim();
   }
 
-  function renderCoachStreamingBubble(bubble, steps, answer) {
+  function addMessageActions(bubble, text) {
     if (!bubble) return;
-    const stepText = steps.length
-      ? `${coachT("thinkingStatus")}\n${steps.map((item) => `· ${item}`).join("\n")}\n\n`
-      : "";
-    const answerText = cleanCoachAnswer(answer);
-    bubble.textContent = `${stepText}${answerText || coachT("generating")}`;
+    const existing = bubble.querySelector('.msg-actions');
+    if (existing) existing.remove();
+
+    const actions = document.createElement('div');
+    actions.className = 'msg-actions';
+
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'msg-action-btn';
+    copyBtn.innerHTML = '📋 复制';
+    copyBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(text);
+        copyBtn.classList.add('copied');
+        copyBtn.innerHTML = '✓ 已复制';
+        setTimeout(() => {
+          copyBtn.classList.remove('copied');
+          copyBtn.innerHTML = '📋 复制';
+        }, 2000);
+      } catch (e) {
+        showToast('复制失败', 'error');
+      }
+    });
+
+    const downloadBtn = document.createElement('button');
+    downloadBtn.className = 'msg-action-btn';
+    downloadBtn.innerHTML = '💾 下载';
+    downloadBtn.addEventListener('click', () => {
+      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `AI教练回复_${new Date().toLocaleString('zh-CN').replace(/[/:]/g, '-')}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      downloadBtn.classList.add('copied');
+      downloadBtn.innerHTML = '✓ 已下载';
+      setTimeout(() => {
+        downloadBtn.classList.remove('copied');
+        downloadBtn.innerHTML = '💾 下载';
+      }, 2000);
+    });
+
+    actions.appendChild(copyBtn);
+    actions.appendChild(downloadBtn);
+    bubble.appendChild(actions);
+  }
+
+  let coachThinkingSteps = [];
+  let coachBubbleAnswerEl = null;
+
+  function initCoachThinkingBubble(bubble) {
+    if (!bubble) return;
+    bubble.classList.add('coach-thinking');
+    bubble.innerHTML = `
+      <div class="thinking-title"><span class="thinking-spinner"></span>${coachT("thinkingStatus")}</div>
+      <div class="thinking-steps"></div>
+      <div class="thinking-answer" style="display:none;"></div>
+    `;
+    coachThinkingSteps = [];
+    coachBubbleAnswerEl = bubble.querySelector('.thinking-answer');
+  }
+
+  function addCoachThinkingStep(text) {
+    const bubble = document.querySelector('.coach-bubble.coach-thinking');
+    if (!bubble) return;
+    const stepsContainer = bubble.querySelector('.thinking-steps');
+    if (!stepsContainer) return;
+
+    const prevSteps = stepsContainer.querySelectorAll('.thinking-step');
+    prevSteps.forEach(s => s.classList.remove('active'));
+
+    const stepEl = document.createElement('div');
+    stepEl.className = 'thinking-step active';
+    stepEl.textContent = text;
+    stepsContainer.appendChild(stepEl);
+    coachThinkingSteps.push(text);
     elements.coachMessages.scrollTop = elements.coachMessages.scrollHeight;
   }
 
+  function appendCoachAnswerDelta(delta) {
+    const bubble = document.querySelector('.coach-bubble.coach-thinking');
+    if (!bubble || !coachBubbleAnswerEl) return;
+    coachBubbleAnswerEl.style.display = 'block';
+    coachBubbleAnswerEl.textContent = (coachBubbleAnswerEl.textContent || '') + delta;
+    elements.coachMessages.scrollTop = elements.coachMessages.scrollHeight;
+  }
+
+  function finalizeCoachAnswer(bubble, finalText) {
+    if (!bubble) return;
+    bubble.classList.remove('coach-thinking');
+    bubble.innerHTML = escapeHtml(finalText).replace(/\n/g, '<br>');
+    bubble.classList.add('finished');
+    addMessageActions(bubble, finalText);
+    coachThinkingSteps = [];
+    coachBubbleAnswerEl = null;
+  }
+
+  function renderCoachStreamingBubble(bubble, steps, answer) {
+    if (!bubble) return;
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
   async function readCoachStream(response, pendingBubble) {
-    const reader = response.body?.getReader();
+    initCoachThinkingBubble(pendingBubble);
+
+    if (!response || !response.body) {
+      try {
+        if (response && typeof response.json === 'function') {
+          const data = await response.json().catch(() => ({}));
+          return data.answer || coachT("noAnswer");
+        }
+      } catch (e) {}
+      return coachT("noAnswer");
+    }
+
+    let reader;
+    try {
+      reader = response.body.getReader();
+    } catch (e) {
+      return coachT("noAnswer");
+    }
     if (!reader) {
-      const data = await response.json().catch(() => ({}));
-      return data.answer || "";
+      return coachT("noAnswer");
     }
 
     const decoder = new TextDecoder("utf-8");
@@ -3572,6 +4354,7 @@ ${footworkText || "暂无步伐评分数据"}
     let queuedAnswer = "";
     const steps = [];
     let typeTimer = null;
+    let lastStepCount = 0;
 
     const startTyping = () => {
       if (typeTimer) return;
@@ -3581,20 +4364,31 @@ ${footworkText || "暂无步伐评分数据"}
           typeTimer = null;
           return;
         }
-        const take = Math.min(3, queuedAnswer.length);
-        visibleAnswer += queuedAnswer.slice(0, take);
+        const take = Math.min(2, queuedAnswer.length);
+        const chunk = queuedAnswer.slice(0, take);
+        visibleAnswer += chunk;
         queuedAnswer = queuedAnswer.slice(take);
-        renderCoachStreamingBubble(pendingBubble, steps, visibleAnswer);
-      }, 28);
+        const displayText = visibleAnswer;
+        if (coachBubbleAnswerEl) {
+          coachBubbleAnswerEl.style.display = 'block';
+          coachBubbleAnswerEl.textContent = displayText;
+          elements.coachMessages.scrollTop = elements.coachMessages.scrollHeight;
+        }
+      }, 32);
     };
 
     const flushTyping = async () => {
       while (queuedAnswer) {
-        const take = Math.min(8, queuedAnswer.length);
-        visibleAnswer += queuedAnswer.slice(0, take);
+        const take = Math.min(6, queuedAnswer.length);
+        const chunk = queuedAnswer.slice(0, take);
+        visibleAnswer += chunk;
         queuedAnswer = queuedAnswer.slice(take);
-        renderCoachStreamingBubble(pendingBubble, steps, visibleAnswer);
-        await new Promise((resolve) => window.setTimeout(resolve, 10));
+        if (coachBubbleAnswerEl) {
+          coachBubbleAnswerEl.style.display = 'block';
+          coachBubbleAnswerEl.textContent = visibleAnswer;
+          elements.coachMessages.scrollTop = elements.coachMessages.scrollHeight;
+        }
+        await new Promise((resolve) => window.setTimeout(resolve, 12));
       }
       if (typeTimer) {
         window.clearInterval(typeTimer);
@@ -3605,7 +4399,10 @@ ${footworkText || "暂无步伐评分数据"}
     const handleEvent = (event, data) => {
       if (event === "status" && data.text) {
         steps.push(data.text);
-        renderCoachStreamingBubble(pendingBubble, steps, visibleAnswer);
+        if (steps.length > lastStepCount) {
+          addCoachThinkingStep(data.text);
+          lastStepCount = steps.length;
+        }
       } else if (event === "delta" && data.text) {
         answer += data.text;
         queuedAnswer += data.text;
@@ -3647,15 +4444,19 @@ ${footworkText || "暂无步伐评分数据"}
     state.coachHistory.push({ role: "user", content: question });
     if (elements.coachQuestion) elements.coachQuestion.value = "";
 
-    const pending = appendCoachMessage("assistant", `${coachT("thinkingStatus")}\n· ${coachT("firstStatus")}`);
+    const pending = appendCoachMessage("assistant", "");
     const pendingBubble = pending?.querySelector(".coach-bubble");
     setCoachBusy(true);
 
     try {
       await ensureBackendReady();
+      const headers = { "Content-Type": "application/json" };
+      if (state.authToken) {
+        headers["Authorization"] = `Bearer ${state.authToken}`;
+      }
       const response = await fetch(apiUrl("/api/coach/chat/stream"), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: headers,
         body: JSON.stringify({
           provider: elements.coachProvider?.value || "qwen",
           language: getCoachLang(),
@@ -3671,11 +4472,11 @@ ${footworkText || "暂无步伐评分数据"}
         throw new Error(data.detail || `HTTP ${response.status}`);
       }
       const answer = await readCoachStream(response, pendingBubble) || coachT("noAnswer");
-      if (pendingBubble) pendingBubble.textContent = answer;
+      finalizeCoachAnswer(pendingBubble, answer);
       state.coachHistory.push({ role: "assistant", content: answer });
     } catch (error) {
       const message = `${coachT("unavailable")}${formatFetchError(error)}`;
-      if (pendingBubble) pendingBubble.textContent = message;
+      finalizeCoachAnswer(pendingBubble, message);
       state.coachHistory.push({ role: "assistant", content: message });
     } finally {
       setCoachBusy(false);
@@ -3692,11 +4493,18 @@ ${footworkText || "暂无步伐评分数据"}
       showAuthModal("login");
       return;
     }
+    if (!state.videoFile) {
+      showUploadHint("请先点击这里上传视频，再开始分析");
+      return;
+    }
     if (!state.precheckPassed && state.precheckResult && state.precheckResult.overall === "fail") {
       showUploadHint("视频预检未通过，请重新拍摄后上传，或点击\"继续分析\"强制分析");
       return;
     }
-    await runBackendAnalysis();
+    state.targetBbox = null;
+    state.playerSelectedBox = null;
+    showPlayerSelectModal();
+    await detectPlayersForSelection();
   });
   }
 
@@ -3707,7 +4515,14 @@ ${footworkText || "暂无步伐评分数据"}
         showAuthModal("login");
         return;
       }
-      await runBackendAnalysis();
+      if (!state.videoFile) {
+        showUploadHint("请先上传视频");
+        return;
+      }
+      state.targetBbox = null;
+      state.playerSelectedBox = null;
+      showPlayerSelectModal();
+      await detectPlayersForSelection();
     });
   }
 
@@ -3830,6 +4645,10 @@ ${footworkText || "暂无步伐评分数据"}
     state.coachHistory = [];
     state.shotEvents = [];
     state.footworkTrace = [];
+    state._cachedCleanedTrace = null;
+    state._cachedTraceVersion = 0;
+    state._cachedHeatmap = null;
+    state._cachedHeatmapVersion = 0;
     state.radarData = [0, 0, 0, 0, 0, 0];
     state.precheckPassed = false;
     state.precheckResult = null;
@@ -3917,6 +4736,29 @@ ${footworkText || "暂无步伐评分数据"}
   if (elements.btnExport) {
   elements.btnExport.addEventListener("click", () => {
     exportTrainingReport();
+  });
+  }
+
+  if (elements.btnCopyReport) {
+  elements.btnCopyReport.addEventListener("click", async () => {
+    if (!state.analysisReport) {
+      showToast("请先完成一次视频分析，再复制报告", "error");
+      return;
+    }
+    const reportText = buildMarkdownReport();
+    try {
+      await navigator.clipboard.writeText(reportText);
+      const originalText = elements.btnCopyReport.innerHTML;
+      elements.btnCopyReport.classList.add('copied');
+      elements.btnCopyReport.innerHTML = "✓ 已复制";
+      showToast("报告已复制到剪贴板", "success");
+      setTimeout(() => {
+        elements.btnCopyReport.classList.remove('copied');
+        elements.btnCopyReport.innerHTML = originalText;
+      }, 2000);
+    } catch (e) {
+      showToast("复制失败，请手动选择文本复制", "error");
+    }
   });
   }
 
@@ -4545,6 +5387,54 @@ ${footworkText || "暂无步伐评分数据"}
     elements.btnCopyBindCode.addEventListener("click", copyBindCode);
   }
 
+  // Help Guide Modal functions
+  function showHelpModal() {
+    if (elements.helpModal) {
+      elements.helpModal.hidden = false;
+      document.body.style.overflow = "hidden";
+    }
+  }
+
+  function hideHelpModal() {
+    if (elements.helpModal) {
+      elements.helpModal.hidden = true;
+      document.body.style.overflow = "";
+    }
+  }
+
+  if (elements.btnHelp) {
+    elements.btnHelp.addEventListener("click", showHelpModal);
+  }
+  if (elements.btnCloseHelpModal) {
+    elements.btnCloseHelpModal.addEventListener("click", hideHelpModal);
+  }
+  if (elements.helpModal) {
+    elements.helpModal.addEventListener("click", (e) => {
+      if (e.target === elements.helpModal) hideHelpModal();
+    });
+  }
+
+  if (elements.btnClosePlayerSelect) {
+    elements.btnClosePlayerSelect.addEventListener("click", () => {
+      if (!state.detecting) {
+        hidePlayerSelectModal();
+      }
+    });
+  }
+  if (elements.btnConfirmPlayerSelect) {
+    elements.btnConfirmPlayerSelect.addEventListener("click", confirmPlayerSelection);
+  }
+  if (elements.btnSkipPlayerSelect) {
+    elements.btnSkipPlayerSelect.addEventListener("click", skipPlayerSelection);
+  }
+  if (elements.playerSelectModal) {
+    elements.playerSelectModal.addEventListener("click", (e) => {
+      if (e.target === elements.playerSelectModal && !state.detecting) {
+        hidePlayerSelectModal();
+      }
+    });
+  }
+
   // Restore auth from localStorage
   try {
     const savedToken = localStorage.getItem("badminton_token");
@@ -4565,6 +5455,9 @@ ${footworkText || "暂无步伐评分数据"}
   // Ensure all modals are hidden initially
   if (elements.authModal) elements.authModal.hidden = true;
   if (elements.profileModal) elements.profileModal.hidden = true;
+  if (elements.bindWechatModal) elements.bindWechatModal.hidden = true;
+  if (elements.helpModal) elements.helpModal.hidden = true;
+  if (elements.playerSelectModal) elements.playerSelectModal.hidden = true;
   if (elements.userDropdown) elements.userDropdown.hidden = true;
 
   updateAuthUI();
@@ -4581,9 +5474,28 @@ ${footworkText || "暂无步伐评分数据"}
       if (elements.profileModal && !elements.profileModal.hidden) {
         hideProfileModal();
       }
+      if (elements.bindWechatModal && !elements.bindWechatModal.hidden) {
+        hideBindWechatModal();
+      }
+      if (elements.helpModal && !elements.helpModal.hidden) {
+        hideHelpModal();
+      }
+      if (elements.playerSelectModal && !elements.playerSelectModal.hidden && !state.detecting) {
+        hidePlayerSelectModal();
+      }
       if (elements.userDropdown && !elements.userDropdown.hidden) {
         elements.userDropdown.hidden = true;
       }
+    }
+  });
+
+  let playerSelectResizeTimer = null;
+  window.addEventListener("resize", () => {
+    if (elements.playerSelectModal && !elements.playerSelectModal.hidden && state.playerDetectResult) {
+      if (playerSelectResizeTimer) clearTimeout(playerSelectResizeTimer);
+      playerSelectResizeTimer = setTimeout(() => {
+        renderPlayerFrame(state.playerSelectCurrentFrame);
+      }, 100);
     }
   });
 
@@ -4683,13 +5595,25 @@ ${footworkText || "暂无步伐评分数据"}
   async function loadHistoryList() {
     if (!window.location.protocol.startsWith("http")) return;
     try {
-      const resp = await fetch(`/api/history?limit=50&language=${getCoachLang()}`);
-      if (!resp.ok) throw new Error("Failed to load history");
-      const data = await resp.json();
+      if (!state.authToken) {
+        renderHistoryList([]);
+        drawTrendChart([]);
+        return;
+      }
+      const data = await authApi(`/api/history?limit=50&language=${getCoachLang()}`);
       renderHistoryList(data.items || []);
       drawTrendChart(data.items || []);
     } catch (err) {
       console.error("Load history failed:", err);
+      if (err.message.includes("401") || err.message.includes("未登录")) {
+        state.authToken = null;
+        state.user = null;
+        localStorage.removeItem("badminton_token");
+        localStorage.removeItem("badminton_user");
+        updateAuthUI();
+      }
+      renderHistoryList([]);
+      drawTrendChart([]);
     }
   }
 

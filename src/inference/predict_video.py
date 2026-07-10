@@ -197,6 +197,11 @@ def extract_pose_and_frames_from_video(
     print(f"[INFO] YOLO pose inference device={yolo_device}, half={yolo_half}, frames={len(frames)}, batch_size={batch_size}, sample_stride={sample_stride}")
     sequences = []
     previous_center = None
+    previous_bbox = None
+    target_side = None
+    if target_bbox is not None:
+        ny = (target_bbox[1] + target_bbox[3]) / 2.0
+        target_side = "far" if ny < 0.5 else "near"
     frame_counter = 0
     for start in range(0, len(frames), batch_size):
         try:
@@ -210,12 +215,14 @@ def extract_pose_and_frames_from_video(
         except Exception:
             results = model(frames[start : start + batch_size], verbose=False, conf=conf_threshold)
         for result in results:
-            keypoints, previous_center = result_to_keypoints(
+            keypoints, previous_center, previous_bbox = result_to_keypoints(
                 result,
                 target_player=target_player,
                 target_point=target_point,
                 target_roi=target_roi,
                 target_bbox=target_bbox,
+                previous_bbox=previous_bbox,
+                target_side=target_side,
                 previous_center=previous_center if target_bbox is not None or frame_counter >= 8 else None,
             )
             sequences.append(keypoints)
@@ -278,7 +285,7 @@ def normalized_bbox_to_pixels(target_bbox, frame_w, frame_h):
     return np.asarray([x1, y1, x2, y2], dtype=np.float32)
 
 
-def select_person_index(result, target_player="near", previous_center=None, target_point=None, target_roi=None, target_bbox=None):
+def select_person_index(result, target_player="near", previous_center=None, target_point=None, target_roi=None, target_bbox=None, previous_bbox=None, target_side=None):
     if result.keypoints is None or len(result.keypoints) == 0:
         return None
 
@@ -322,25 +329,76 @@ def select_person_index(result, target_player="near", previous_center=None, targ
 
     if mode in {"manual_box", "bbox", "首帧目标框"} and target_bbox is not None:
         target_box = normalized_bbox_to_pixels(target_bbox, frame_w, frame_h)
-        target_center = np.asarray(
-            [(target_box[0] + target_box[2]) / 2.0, (target_box[1] + target_box[3]) / 2.0],
-            dtype=np.float32,
-        )
-        target_dist = np.linalg.norm(anchors - target_center, axis=1) / frame_diag
+        target_center_nx = (target_bbox[0] + target_bbox[2]) / 2.0
+        target_center_ny = (target_bbox[1] + target_bbox[3]) / 2.0
+
+        if previous_bbox is not None:
+            ref_box = previous_bbox
+            ref_center = np.asarray(
+                [(ref_box[0] + ref_box[2]) / 2.0, (ref_box[1] + ref_box[3]) / 2.0],
+                dtype=np.float32,
+            )
+            pos_dist = np.linalg.norm(anchors - ref_center, axis=1) / frame_diag
+        else:
+            ref_box = target_box
+            ref_center = np.asarray(
+                [(target_box[0] + target_box[2]) / 2.0, (target_box[1] + target_box[3]) / 2.0],
+                dtype=np.float32,
+            )
+            pos_dist = np.linalg.norm(anchors - ref_center, axis=1) / frame_diag
+
         if boxes_xyxy is not None:
             ious = np.asarray(
                 [
-                    bbox_iou(boxes_xyxy[idx], target_box) if idx < len(boxes_xyxy) else 0.0
+                    bbox_iou(boxes_xyxy[idx], ref_box) if idx < len(boxes_xyxy) else 0.0
                     for idx in range(len(anchors))
                 ],
                 dtype=np.float32,
             )
         else:
             ious = np.zeros(len(anchors), dtype=np.float32)
-        if previous_center is not None:
-            scores = 0.72 * continuity + 0.20 * target_dist + 0.70 * roi_penalty - 0.10 * ious - 0.04 * area_norm
+
+        if previous_bbox is not None:
+            prev_area = float((previous_bbox[2] - previous_bbox[0]) * (previous_bbox[3] - previous_bbox[1]))
+            prev_area_norm = prev_area / max(float(np.max(areas)), 1.0)
+            expected_area = max(prev_area_norm, 0.01)
+            area_diff = np.abs(area_norm - expected_area)
         else:
-            scores = target_dist + 0.80 * roi_penalty - 0.35 * ious - 0.05 * area_norm - 0.03 * box_conf
+            init_area = float((target_box[2] - target_box[0]) * (target_box[3] - target_box[1]))
+            init_area_norm = init_area / (frame_w * frame_h)
+            max_area = float(np.max(areas)) / (frame_w * frame_h) if frame_w * frame_h > 0 else 1.0
+            init_ratio = init_area_norm / max(max_area, 0.001)
+            area_diff = np.abs(area_norm - init_ratio)
+
+        side_penalty = np.zeros(len(anchors), dtype=np.float32)
+        if target_side == "far":
+            far_threshold = target_center_ny + 0.12
+            side_penalty = np.where(anchor_y > far_threshold, 2.0, 0.0).astype(np.float32)
+            mid_threshold = target_center_ny + 0.05
+            soft_penalty = np.clip((anchor_y - mid_threshold) / 0.15, 0.0, 1.0)
+            side_penalty = np.maximum(side_penalty, soft_penalty * 0.5)
+        elif target_side == "near":
+            near_threshold = target_center_ny - 0.12
+            side_penalty = np.where(anchor_y < near_threshold, 2.0, 0.0).astype(np.float32)
+            mid_threshold = target_center_ny - 0.05
+            soft_penalty = np.clip((mid_threshold - anchor_y) / 0.15, 0.0, 1.0)
+            side_penalty = np.maximum(side_penalty, soft_penalty * 0.5)
+
+        if previous_center is not None:
+            scores = (0.40 * continuity
+                      + 0.35 * pos_dist
+                      + 0.80 * roi_penalty
+                      + 1.50 * side_penalty
+                      + 0.30 * area_diff
+                      - 0.25 * ious
+                      - 0.02 * box_conf)
+        else:
+            scores = (pos_dist
+                      + 0.80 * roi_penalty
+                      + 2.00 * side_penalty
+                      + 0.40 * area_diff
+                      - 0.60 * ious
+                      - 0.03 * box_conf)
         return int(np.argmin(scores))
 
     if mode in {"custom", "target", "自定义目标点"} and target_point is not None:
@@ -368,7 +426,7 @@ def select_person_index(result, target_player="near", previous_center=None, targ
     return int(np.argmin(scores))
 
 
-def result_to_keypoints(result, target_player="near", previous_center=None, target_point=None, target_roi=None, target_bbox=None):
+def result_to_keypoints(result, target_player="near", previous_center=None, target_point=None, target_roi=None, target_bbox=None, previous_bbox=None, target_side=None):
     best_idx = select_person_index(
         result,
         target_player=target_player,
@@ -376,14 +434,20 @@ def result_to_keypoints(result, target_player="near", previous_center=None, targ
         target_point=target_point,
         target_roi=target_roi,
         target_bbox=target_bbox,
+        previous_bbox=previous_bbox,
+        target_side=target_side,
     )
     if best_idx is None:
-        return np.zeros((17, 3), dtype=np.float32), previous_center
+        return np.zeros((17, 3), dtype=np.float32), previous_center, None
 
     xy = result.keypoints.xy[best_idx].cpu().numpy()
     conf = result.keypoints.conf[best_idx].cpu().numpy()
     center = person_anchor(xy, conf)
-    return np.concatenate([xy, conf[:, None]], axis=1).astype(np.float32), center
+    boxes_xyxy = result.boxes.xyxy.cpu().numpy() if result.boxes is not None and len(result.boxes) > 0 else None
+    selected_bbox = None
+    if boxes_xyxy is not None and best_idx < len(boxes_xyxy):
+        selected_bbox = boxes_xyxy[best_idx].astype(np.float32)
+    return np.concatenate([xy, conf[:, None]], axis=1).astype(np.float32), center, selected_bbox
 
 
 def predict_probabilities(model, checkpoint, pose_seq, device):

@@ -1,6 +1,7 @@
-// 真机预览/调试时，请把 API_BASE 改成你电脑的局域网 IP，例如 'http://192.168.1.5:8000'
-// 电脑和手机必须连接同一个 WiFi；后端服务需要监听 0.0.0.0:8000
-const API_BASE = 'http://10.236.186.180:8000';
+// 公网体验地址（cpolar内网穿透）- 任何人任何网络都能访问
+const API_BASE = 'https://16456551.r18.vip.cpolar.cn';
+// 局域网调试地址（手机和电脑连同一WiFi时使用）
+// const API_BASE = 'http://10.236.186.180:8000';
 
 App({
   globalData: {

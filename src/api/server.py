@@ -21,11 +21,12 @@ import time
 from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
+from typing import Optional
 
 import cv2
 import numpy as np
 import torch
-from fastapi import Body, FastAPI, File, Form, Header, HTTPException, UploadFile
+from fastapi import Body, Depends, FastAPI, File, Form, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -71,6 +72,7 @@ from llm_coach import (  # noqa: E402
 )
 
 from auth import router as auth_router  # noqa: E402
+from auth import get_current_user  # noqa: E402
 
 
 UPLOAD_DIR = ROOT / "outputs" / "api_uploads"
@@ -295,6 +297,7 @@ def init_db():
     conn.execute(
         """CREATE TABLE IF NOT EXISTS history (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
             created_at TEXT NOT NULL,
             video_name TEXT,
             duration_seconds REAL,
@@ -307,7 +310,16 @@ def init_db():
         )"""
     )
     conn.commit()
-    # Backfill avg_quality_score and dominant_action for older records that stored null scores
+
+    try:
+        cols = [r[1] for r in conn.execute("PRAGMA table_info(history)").fetchall()]
+        if "user_id" not in cols:
+            conn.execute("ALTER TABLE history ADD COLUMN user_id INTEGER")
+            conn.commit()
+            print("[DB] Added user_id column to history table")
+    except Exception as e:
+        print(f"[WARN] Failed to migrate user_id column: {e}")
+
     rows = conn.execute(
         "SELECT id, report_json FROM history WHERE avg_quality_score IS NULL OR dominant_action IS NULL"
     ).fetchall()
@@ -339,7 +351,7 @@ def init_db():
     conn.close()
 
 
-def save_history(video_name, report, annotated_video_url=None, annotated_preview_url=None):
+def save_history(video_name, report, annotated_video_url=None, annotated_preview_url=None, user_id=None):
     init_db()
     conn = sqlite3.connect(str(DB_PATH))
     shots = report.get("shot_events", []) or []
@@ -358,10 +370,11 @@ def save_history(video_name, report, annotated_video_url=None, annotated_preview
     dominant = max(action_counts, key=action_counts.get) if action_counts else None
     conn.execute(
         """INSERT INTO history
-           (created_at, video_name, duration_seconds, total_shots, avg_quality_score,
+           (user_id, created_at, video_name, duration_seconds, total_shots, avg_quality_score,
             dominant_action, report_json, annotated_video_url, annotated_preview_url)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         (
+            user_id,
             datetime.now().isoformat(),
             video_name,
             report.get("video_metadata", {}).get("duration_seconds")
@@ -379,25 +392,39 @@ def save_history(video_name, report, annotated_video_url=None, annotated_preview
     conn.close()
 
 
-def get_history_list(limit=50):
+def get_history_list(user_id=None, limit=50):
     init_db()
     conn = sqlite3.connect(str(DB_PATH))
     conn.row_factory = sqlite3.Row
-    rows = conn.execute(
-        """SELECT id, created_at, video_name, duration_seconds, total_shots,
-                  avg_quality_score, dominant_action, annotated_video_url, annotated_preview_url
-           FROM history ORDER BY id DESC LIMIT ?""",
-        (limit,),
-    ).fetchall()
+    if user_id is not None:
+        rows = conn.execute(
+            """SELECT id, created_at, video_name, duration_seconds, total_shots,
+                      avg_quality_score, dominant_action, annotated_video_url, annotated_preview_url
+               FROM history WHERE user_id = ? ORDER BY id DESC LIMIT ?""",
+            (user_id, limit,),
+        ).fetchall()
+    else:
+        rows = conn.execute(
+            """SELECT id, created_at, video_name, duration_seconds, total_shots,
+                      avg_quality_score, dominant_action, annotated_video_url, annotated_preview_url
+               FROM history ORDER BY id DESC LIMIT ?""",
+            (limit,),
+        ).fetchall()
     conn.close()
     return [dict(r) for r in rows]
 
 
-def get_history_detail(session_id):
+def get_history_detail(session_id, user_id=None):
     init_db()
     conn = sqlite3.connect(str(DB_PATH))
     conn.row_factory = sqlite3.Row
-    row = conn.execute("SELECT * FROM history WHERE id = ?", (session_id,)).fetchone()
+    if user_id is not None:
+        row = conn.execute(
+            "SELECT * FROM history WHERE id = ? AND user_id = ?",
+            (session_id, user_id),
+        ).fetchone()
+    else:
+        row = conn.execute("SELECT * FROM history WHERE id = ?", (session_id,)).fetchone()
     conn.close()
     if not row:
         return None
@@ -406,10 +433,16 @@ def get_history_detail(session_id):
     return result
 
 
-def delete_history(session_id):
+def delete_history(session_id, user_id=None):
     init_db()
     conn = sqlite3.connect(str(DB_PATH))
-    conn.execute("DELETE FROM history WHERE id = ?", (session_id,))
+    if user_id is not None:
+        conn.execute(
+            "DELETE FROM history WHERE id = ? AND user_id = ?",
+            (session_id, user_id),
+        )
+    else:
+        conn.execute("DELETE FROM history WHERE id = ?", (session_id,))
     conn.commit()
     conn.close()
 
@@ -865,71 +898,112 @@ def read_video_metadata(video_path):
     }
 
 
-def build_footwork_trace(pose_seq, sampled_indices=None, frame_size=None, conf_threshold=0.3, max_points=360, fps=None, court_corners=None):
-    centers = filter_footwork_jumps(footwork_centers(pose_seq, conf_threshold=conf_threshold))
-    valid = [(idx, center) for idx, center in enumerate(centers) if center is not None]
-    if len(valid) < 2:
-        return []
+def build_footwork_trace(pose_seq, sampled_indices=None, frame_size=None, conf_threshold=0.3, max_points=720, fps=None, court_corners=None):
+    centers_raw = footwork_centers(pose_seq, conf_threshold=conf_threshold)
+    centers_filtered = filter_footwork_jumps(centers_raw)
 
-    points = np.asarray([center for _, center in valid], dtype=np.float32)
-    if frame_size and frame_size.get("width") and frame_size.get("height"):
-        scale = np.asarray([max(float(frame_size["width"]), 1.0), max(float(frame_size["height"]), 1.0)], dtype=np.float32)
-        normalized_points = np.clip(points / scale, 0.0, 1.0)
-        if court_corners:
-            source = np.asarray(
-                [
-                    [court_corners["top_left"][0], court_corners["top_left"][1]],
-                    [court_corners["top_right"][0], court_corners["top_right"][1]],
-                    [court_corners["bottom_left"][0], court_corners["bottom_left"][1]],
-                    [court_corners["bottom_right"][0], court_corners["bottom_right"][1]],
-                ],
-                dtype=np.float32,
-            )
-            destination = np.asarray([[0.0, 0.0], [1.0, 0.0], [0.0, 1.0], [1.0, 1.0]], dtype=np.float32)
-            matrix = cv2.getPerspectiveTransform(source, destination)
-            mapped = cv2.perspectiveTransform(normalized_points.reshape(-1, 1, 2).astype(np.float32), matrix)
-            normalized_points = np.clip(mapped.reshape(-1, 2), 0.0, 1.0)
-    else:
-        mins = np.min(points, axis=0)
-        maxs = np.max(points, axis=0)
-        normalized_points = np.clip((points - mins) / np.maximum(maxs - mins, 1.0), 0.0, 1.0)
-
-    filtered = []
-    filtered_indices = []
-    previous = None
-    for (idx, _), point in zip(valid, normalized_points):
-        if previous is not None and float(np.linalg.norm(point - previous)) > 0.18:
+    frame_indices = []
+    points_list = []
+    for seq_idx, center in enumerate(centers_filtered):
+        if center is None:
             continue
-        filtered.append(point)
-        filtered_indices.append(idx)
-        previous = point
+        if sampled_indices and seq_idx < len(sampled_indices):
+            real_frame = int(sampled_indices[seq_idx])
+        else:
+            real_frame = int(seq_idx)
+        frame_indices.append(real_frame)
+        points_list.append(center)
 
-    if len(filtered) < 2:
+    if len(points_list) < 3:
         return []
 
-    smoothed = np.asarray(filtered, dtype=np.float32)
-    if len(smoothed) >= 5:
-        smooth_copy = smoothed.copy()
-        for i in range(2, len(smoothed) - 2):
-            smooth_copy[i] = np.mean(smoothed[i - 2 : i + 3], axis=0)
-        smoothed = smooth_copy
-
-    step = max(1, int(np.ceil(len(smoothed) / max_points)))
-    sampled_lookup = list(sampled_indices) if sampled_indices is not None else None
+    points = np.asarray(points_list, dtype=np.float32)
+    frame_indices = np.asarray(frame_indices, dtype=np.int32)
     fps_val = float(fps) if fps is not None else 30.0
 
-    trace = []
-    for idx, norm in zip(filtered_indices[::step], smoothed[::step]):
-        frame = int(sampled_lookup[idx]) if sampled_lookup and idx < len(sampled_lookup) else int(idx)
-        trace.append(
-            {
-                "frame": frame,
-                "pose_index": int(idx),
-                "x": round(float(norm[0]), 4),
-                "y": round(float(norm[1]), 4),
-                "time_sec": round(float(frame) / max(fps_val, 1.0), 3),
-            }
+    if court_corners:
+        if frame_size and frame_size.get("width") and frame_size.get("height"):
+            scale = np.asarray([max(float(frame_size["width"]), 1.0), max(float(frame_size["height"]), 1.0)], dtype=np.float32)
+            normalized_points = np.clip(points / scale, 0.0, 1.0)
+        else:
+            normalized_points = np.clip(points / max(np.max(points), 1.0), 0.0, 1.0)
+        source = np.asarray(
+            [
+                [court_corners["top_left"][0], court_corners["top_left"][1]],
+                [court_corners["top_right"][0], court_corners["top_right"][1]],
+                [court_corners["bottom_left"][0], court_corners["bottom_left"][1]],
+                [court_corners["bottom_right"][0], court_corners["bottom_right"][1]],
+            ],
+            dtype=np.float32,
         )
+        destination = np.asarray([[0.0, 0.0], [1.0, 0.0], [0.0, 1.0], [1.0, 1.0]], dtype=np.float32)
+        matrix = cv2.getPerspectiveTransform(source, destination)
+        mapped = cv2.perspectiveTransform(normalized_points.reshape(-1, 1, 2).astype(np.float32), matrix)
+        normalized_points = np.clip(mapped.reshape(-1, 2), 0.0, 1.0)
+    else:
+        if frame_size and frame_size.get("width") and frame_size.get("height"):
+            scale = np.asarray([max(float(frame_size["width"]), 1.0), max(float(frame_size["height"]), 1.0)], dtype=np.float32)
+            points_scaled = points / scale
+            mins = np.percentile(points_scaled, 2, axis=0)
+            maxs = np.percentile(points_scaled, 98, axis=0)
+            span = maxs - mins
+            span = np.where(span < 0.1, np.array([0.4, 0.6]), span)
+            margin = span * 0.2
+            mins_adj = np.maximum(mins - margin, 0.0)
+            maxs_adj = np.minimum(maxs + margin, 1.0)
+            normalized_points = np.clip((points_scaled - mins_adj) / (maxs_adj - mins_adj), 0.0, 1.0)
+        else:
+            mins = np.percentile(points, 2, axis=0)
+            maxs = np.percentile(points, 98, axis=0)
+            span = maxs - mins
+            span = np.where(span < 30, np.array([200, 200]), span)
+            margin = span * 0.2
+            mins_adj = mins - margin
+            maxs_adj = maxs + margin
+            normalized_points = np.clip((points - mins_adj) / (maxs_adj - mins_adj), 0.0, 1.0)
+
+    smoothed = normalized_points.copy()
+    if len(smoothed) >= 7:
+        kernel = np.array([0.06, 0.12, 0.2, 0.24, 0.2, 0.12, 0.06], dtype=np.float32)
+        kernel = kernel / kernel.sum()
+        for _ in range(3):
+            temp = smoothed.copy()
+            for i in range(3, len(smoothed) - 3):
+                window = smoothed[i-3:i+4]
+                temp[i] = np.average(window, axis=0, weights=kernel)
+            smoothed = temp
+    elif len(smoothed) >= 5:
+        for _ in range(3):
+            temp = smoothed.copy()
+            for i in range(2, len(smoothed) - 2):
+                temp[i] = np.mean(smoothed[i-2:i+3], axis=0)
+            smoothed = temp
+
+    times_sec = frame_indices.astype(np.float64) / max(fps_val, 1.0)
+
+    if len(smoothed) > max_points:
+        target_times = np.linspace(times_sec[0], times_sec[-1], max_points)
+        resampled_x = np.interp(target_times, times_sec, smoothed[:, 0])
+        resampled_y = np.interp(target_times, times_sec, smoothed[:, 1])
+        resampled_frames = np.interp(target_times, times_sec, frame_indices)
+        trace = []
+        for t, fx, fy, fr in zip(target_times, resampled_x, resampled_y, resampled_frames):
+            trace.append({
+                "frame": int(round(fr)),
+                "x": round(float(np.clip(fx, 0.0, 1.0)), 4),
+                "y": round(float(np.clip(fy, 0.0, 1.0)), 4),
+                "time_sec": round(float(t), 3),
+            })
+    else:
+        trace = []
+        for fr, fx, fy, t in zip(frame_indices, smoothed[:, 0], smoothed[:, 1], times_sec):
+            trace.append({
+                "frame": int(fr),
+                "x": round(float(np.clip(fx, 0.0, 1.0)), 4),
+                "y": round(float(np.clip(fy, 0.0, 1.0)), 4),
+                "time_sec": round(float(t), 3),
+            })
+
     return trace
 
 
@@ -1135,9 +1209,9 @@ async def api_precheck(video: UploadFile = File(...)):
 
 
 @app.get("/api/history")
-def api_history_list(limit: int = 50, language: str = "zh"):
+def api_history_list(limit: int = 50, language: str = "zh", user: dict = Depends(get_current_user)):
     lang = language if language in {"zh", "en", "ja", "ko", "id"} else "zh"
-    items = get_history_list(limit=min(limit, 200))
+    items = get_history_list(user_id=user["id"], limit=min(limit, 200))
     for item in items:
         item["created_at_display"] = item["created_at"].replace("T", " ")[:19] if item.get("created_at") else ""
         if item.get("dominant_action"):
@@ -1146,9 +1220,9 @@ def api_history_list(limit: int = 50, language: str = "zh"):
 
 
 @app.get("/api/history/{session_id}")
-def api_history_detail(session_id: int, language: str = "zh"):
+def api_history_detail(session_id: int, language: str = "zh", user: dict = Depends(get_current_user)):
     lang = language if language in {"zh", "en", "ja", "ko", "id"} else "zh"
-    detail = get_history_detail(session_id)
+    detail = get_history_detail(session_id, user_id=user["id"])
     if not detail:
         raise HTTPException(status_code=404, detail="Session not found")
     detail["created_at_display"] = detail["created_at"].replace("T", " ")[:19] if detail.get("created_at") else ""
@@ -1160,8 +1234,8 @@ def api_history_detail(session_id: int, language: str = "zh"):
 
 
 @app.delete("/api/history/{session_id}")
-def api_history_delete(session_id: int):
-    delete_history(session_id)
+def api_history_delete(session_id: int, user: dict = Depends(get_current_user)):
+    delete_history(session_id, user_id=user["id"])
     return {"ok": True}
 
 
@@ -1381,13 +1455,185 @@ def extract_video_frame(video: UploadFile = File(...), time_sec: float = Form(1.
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
+def nms_boxes(boxes, iou_threshold=0.5):
+    if len(boxes) == 0:
+        return []
+    boxes_arr = np.array([[b["x1"], b["y1"], b["x2"], b["y2"]] for b in boxes], dtype=np.float32)
+    scores = np.array([b.get("confidence", 0.5) for b in boxes], dtype=np.float32)
+    areas = (boxes_arr[:, 2] - boxes_arr[:, 0]) * (boxes_arr[:, 3] - boxes_arr[:, 1])
+    order = scores.argsort()[::-1]
+    keep = []
+    while order.size > 0:
+        i = order[0]
+        keep.append(i)
+        xx1 = np.maximum(boxes_arr[i, 0], boxes_arr[order[1:], 0])
+        yy1 = np.maximum(boxes_arr[i, 1], boxes_arr[order[1:], 1])
+        xx2 = np.minimum(boxes_arr[i, 2], boxes_arr[order[1:], 2])
+        yy2 = np.minimum(boxes_arr[i, 3], boxes_arr[order[1:], 3])
+        w = np.maximum(0.0, xx2 - xx1)
+        h = np.maximum(0.0, yy2 - yy1)
+        inter = w * h
+        ovr = inter / (areas[i] + areas[order[1:]] - inter)
+        inds = np.where(ovr <= iou_threshold)[0]
+        order = order[inds + 1]
+    return [boxes[i] for i in keep]
+
+
+def remove_nested_boxes(boxes, area_overlap_threshold=0.85):
+    if len(boxes) <= 1:
+        return boxes
+    result = []
+    for i, box_a in enumerate(boxes):
+        is_nested = False
+        ax1, ay1, ax2, ay2 = box_a["x1"], box_a["y1"], box_a["x2"], box_a["y2"]
+        area_a = (ax2 - ax1) * (ay2 - ay1)
+        for j, box_b in enumerate(boxes):
+            if i == j:
+                continue
+            bx1, by1, bx2, by2 = box_b["x1"], box_b["y1"], box_b["x2"], box_b["y2"]
+            area_b = (bx2 - bx1) * (by2 - by1)
+            if area_b <= area_a:
+                continue
+            ix1 = max(ax1, bx1)
+            iy1 = max(ay1, by1)
+            ix2 = min(ax2, bx2)
+            iy2 = min(ay2, by2)
+            iw = max(0, ix2 - ix1)
+            ih = max(0, iy2 - iy1)
+            intersection = iw * ih
+            if intersection / max(area_a, 1e-6) > area_overlap_threshold:
+                is_nested = True
+                break
+        if not is_nested:
+            result.append(box_a)
+    return result if result else boxes
+
+
+@app.post("/api/detect-players")
+async def api_detect_players(video: UploadFile = File(...), conf_threshold: float = Form(0.25)):
+    import base64
+    video_path = save_upload(video)
+    try:
+        cap = cv2.VideoCapture(str(video_path))
+        if not cap.isOpened():
+            raise HTTPException(status_code=400, detail="无法打开视频文件")
+
+        fps = float(cap.get(cv2.CAP_PROP_FPS) or 30.0)
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0)
+        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH) or 0)
+        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT) or 0)
+        duration = total_frames / fps if fps > 0 and total_frames > 0 else 0
+
+        sample_times = [0.0, 0.5, 1.5, 2.5, 4.0]
+        sample_frames = []
+        for t in sample_times:
+            if duration > 0 and t > duration - 0.1:
+                continue
+            sample_frames.append(t)
+        if not sample_frames:
+            sample_frames = [0.0]
+
+        model = get_yolo_model(str(DEFAULT_POSE_MODEL))
+        frames_data = []
+        all_boxes = []
+
+        for time_sec in sample_frames:
+            cap.set(cv2.CAP_PROP_POS_MSEC, time_sec * 1000.0)
+            ret, frame = cap.read()
+            if not ret:
+                frame_idx = min(total_frames - 1, max(0, int(time_sec * fps))) if total_frames > 0 else 0
+                cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
+                ret, frame = cap.read()
+            if not ret or frame is None:
+                continue
+
+            fh, fw = frame.shape[:2]
+            results = model(frame, conf=conf_threshold, verbose=False)
+            persons = []
+            for r in results:
+                if r.boxes is None:
+                    continue
+                for box in r.boxes:
+                    if int(box.cls[0]) == 0:
+                        x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
+                        conf = float(box.conf[0].cpu().numpy())
+                        area = (x2 - x1) * (y2 - y1)
+                        frame_area = fw * fh if fw * fh > 0 else 1
+                        area_ratio = area / frame_area
+                        persons.append({
+                            "x1": float(x1 / fw),
+                            "y1": float(y1 / fh),
+                            "x2": float(x2 / fw),
+                            "y2": float(y2 / fh),
+                            "confidence": conf,
+                            "area_ratio": float(area_ratio),
+                        })
+
+            persons = remove_nested_boxes(persons, area_overlap_threshold=0.85)
+            persons = nms_boxes(persons, iou_threshold=0.5)
+            persons.sort(key=lambda b: b.get("area_ratio", 0), reverse=True)
+
+            ok, encoded = cv2.imencode(".jpg", frame, [int(cv2.IMWRITE_JPEG_QUALITY), 85])
+            img_b64 = base64.b64encode(encoded.tobytes()).decode("utf-8") if ok else None
+
+            frames_data.append({
+                "time_sec": round(time_sec, 2),
+                "width": fw,
+                "height": fh,
+                "image_base64": img_b64,
+                "persons": persons[:10],
+            })
+            for p in persons:
+                p["frame_time"] = round(time_sec, 2)
+                all_boxes.append(p)
+
+        cap.release()
+
+        if not frames_data:
+            raise HTTPException(status_code=422, detail="无法提取视频帧")
+
+        best_frame_idx = 0
+        best_count = -1
+        for i, fd in enumerate(frames_data):
+            score = len(fd["persons"]) * 10 + (1.0 if fd["time_sec"] < 1.0 else 0.5)
+            if score > best_count:
+                best_count = score
+                best_frame_idx = i
+
+        return {
+            "ok": True,
+            "video_width": width,
+            "video_height": height,
+            "duration": round(duration, 2),
+            "fps": round(fps, 1),
+            "frames": frames_data,
+            "recommended_frame_idx": best_frame_idx,
+            "total_persons_detected": len(all_boxes),
+        }
+    except HTTPException:
+        raise
+    except Exception as exc:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"球员检测失败: {exc}") from exc
+
+
 @app.post("/api/analyze")
-def analyze_video(video: UploadFile = File(...), config: str = Form("{}")):
+def analyze_video(video: UploadFile = File(...), config: str = Form("{}"), authorization: Optional[str] = Header(None)):
     cfg = parse_config(config)
     if not DEFAULT_CHECKPOINT.exists():
         raise HTTPException(status_code=500, detail=f"Classifier checkpoint not found: {DEFAULT_CHECKPOINT}")
     if not DEFAULT_POSE_MODEL.exists():
         raise HTTPException(status_code=500, detail=f"Pose model not found: {DEFAULT_POSE_MODEL}")
+
+    current_user = None
+    if authorization:
+        try:
+            from auth import get_user_by_token
+            current_user = get_user_by_token(authorization)
+        except Exception:
+            current_user = None
+    user_id = current_user["id"] if current_user else None
 
     import queue
     import threading
@@ -1397,7 +1643,7 @@ def analyze_video(video: UploadFile = File(...), config: str = Form("{}")):
     def worker():
         try:
             video_path = progress_q.path
-            _do_analyze(video_path, video, cfg, progress_q)
+            _do_analyze(video_path, video, cfg, progress_q, user_id=user_id)
         except Exception as exc:
             import traceback
             traceback.print_exc()
@@ -1445,7 +1691,7 @@ def analyze_video(video: UploadFile = File(...), config: str = Form("{}")):
     })
 
 
-def _do_analyze(video_path, video, cfg, q):
+def _do_analyze(video_path, video, cfg, q, user_id=None):
     def emit(percent, message):
         try:
             q.put({"event": "progress", "percent": int(percent), "message": message})
@@ -1659,6 +1905,7 @@ def _do_analyze(video_path, video, cfg, q):
             report=frontend_report,
             annotated_video_url=frontend_report.get("annotated_video_url"),
             annotated_preview_url=frontend_report.get("annotated_preview_url"),
+            user_id=user_id,
         )
     except Exception as hist_exc:
         print(f"[WARN] Failed to save history: {hist_exc}")

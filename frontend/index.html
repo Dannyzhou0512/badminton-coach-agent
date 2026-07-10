@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title data-i18n="pageTitle">羽动智练 — 羽毛球智能训练系统</title>
-  <link rel="stylesheet" href="./styles.css?v=20260707-auth-fix1" />
+  <link rel="stylesheet" href="./styles.css?v=20260709-playerselect" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -77,6 +77,10 @@
         <h1 id="topbarTitle" data-i18n="navTraining">训练检测</h1>
       </div>
       <div class="topbar-right">
+        <button class="btn-help" id="btnHelp" title="使用指南">
+          <span>📖</span>
+          <span class="btn-help-text" data-i18n="helpGuide">使用指南</span>
+        </button>
         <button class="btn-login" id="btnLogin" data-i18n="btnLogin">登录 / 注册</button>
         <div class="user-menu" id="userMenu" hidden>
           <button class="user-avatar-btn" id="btnUserAvatar">
@@ -126,14 +130,11 @@
         <!-- ====== Panel: Training ====== -->
         <div class="tab-panel active" id="panel-training">
 
-          <p class="section-kicker">Real-time Detection</p>
-          <h2 class="section-title" data-i18n="trainingTitle">实时训练检测</h2>
-          <p class="section-desc" data-i18n="trainingDesc">上传或录制羽毛球训练视频，AI 将实时检测动作、追踪球轨迹并评估姿势。</p>
           <div class="notice-card" data-i18n="trainingNotice">
             当前页面已接入后端分析流程：上传视频后先进行视频质量预检，再调用 /api/analyze 生成标注视频、动作结果和训练报告。
           </div>
 
-          <div class="shooting-guide" id="shootingGuide">
+          <div class="shooting-guide collapsed" id="shootingGuide">
             <div class="guide-header">
               <span class="guide-icon">📸</span>
               <h3 data-i18n="shootingGuideTitle">拍摄建议</h3>
@@ -207,12 +208,11 @@
           </div>
 
           <!-- Controls -->
-          <div class="panel">
-            <div class="flex justify-between items-center gap-2 mb-3">
+          <div class="panel controls-panel">
+            <div class="flex justify-between items-center gap-2">
               <div>
-                <p class="section-kicker">Controls</p>
-                <h3 style="font-size:16px; font-weight:700; color:var(--ink);" data-i18n="detectControls">检测控制</h3>
-                <p class="section-desc" style="margin-top:6px;" data-i18n="detectControlsDesc">系统已内置推荐分析配置，会根据客户电脑环境自动使用 GPU 或 CPU。</p>
+                <h3 style="font-size:14px; font-weight:700; color:var(--ink); margin:0;" data-i18n="detectControls">检测控制</h3>
+                <p class="section-desc" style="margin:4px 0 0; font-size:12px;" data-i18n="detectControlsDesc">系统已内置推荐分析配置，会根据客户电脑环境自动使用 GPU 或 CPU。</p>
               </div>
               <div class="flex gap-1">
                 <button class="btn btn-primary" id="btnStart" data-i18n="btnStart">开始检测</button>
@@ -223,24 +223,28 @@
           </div>
 
           <!-- Canvas / Media Preview -->
-          <div class="grid-2">
-            <div>
-              <p class="section-kicker mb-1">Annotated Review</p>
+          <div class="grid-2 media-grid">
+            <div class="media-panel">
+              <div class="media-panel-head">
+                <h4>🎬 Annotated Review</h4>
+                <div class="video-actions-inline" id="videoActions" hidden>
+                  <span id="videoStatusText" class="video-status-inline"></span>
+                  <a id="downloadVideoLink" class="link-button" href="#" download data-i18n="downloadVideo">下载视频</a>
+                </div>
+              </div>
               <div class="canvas-wrap" id="frameCanvasWrap">
                 <canvas id="frameCanvas" width="640" height="480"></canvas>
                 <video id="analysisVideo" class="analysis-video" controls playsinline preload="auto" hidden></video>
               </div>
-              <div class="video-actions" id="videoActions" hidden>
-                <span id="videoStatusText" data-i18n="videoReady">标注视频已生成，可在页面中播放。</span>
-                <a id="downloadVideoLink" class="link-button" href="#" download data-i18n="downloadVideo">下载视频</a>
-              </div>
-              <div class="empty-media mt-1" id="emptyMedia">
+              <div class="empty-media" id="emptyMedia">
                 <span data-i18n="dropUpload">点击上传视频或将视频拖到这里</span>
               </div>
               <input id="videoUploadInput" class="hidden-file-input" type="file" accept="video/mp4,video/quicktime,video/x-msvideo,video/x-matroska,video/mpeg" />
             </div>
-            <div>
-              <p class="section-kicker mb-1">Footwork Map</p>
+            <div class="media-panel">
+              <div class="media-panel-head">
+                <h4>🏸 Footwork Map</h4>
+              </div>
               <div class="court-preview">
                 <canvas id="courtCanvas" width="480" height="528"></canvas>
               </div>
@@ -388,7 +392,10 @@
                 <p class="section-kicker">Score Summary</p>
                 <h3 style="font-size:16px; font-weight:700; color:var(--ink);" data-i18n="scoreSummary">训练评分概览</h3>
               </div>
-              <button class="btn btn-primary btn-sm" id="btnExport" data-i18n="btnExport">导出报告</button>
+              <div style="display:flex; gap:8px;">
+                <button class="btn btn-secondary btn-sm" id="btnCopyReport">📋 复制报告</button>
+                <button class="btn btn-primary btn-sm" id="btnExport" data-i18n="btnExport">导出报告</button>
+              </div>
             </div>
             <div class="score-items">
               <div class="score-item">
@@ -755,6 +762,206 @@
   </div>
 </div>
 
+<!-- Help Guide Modal -->
+<div class="modal-overlay" id="helpModal" hidden>
+  <div class="modal-content help-modal">
+    <button class="modal-close" id="btnCloseHelpModal">×</button>
+    <h2 class="modal-title help-modal-title">
+      <span style="font-size:22px; margin-right:8px;">📖</span>
+      <span data-i18n="helpTitle">羽动智练 · 使用指南</span>
+    </h2>
+    <div class="help-content" id="helpContent">
+      <div class="help-section">
+        <h3 class="help-section-title">🚀 <span data-i18n="helpQuickStart">快速上手（4步开始分析）</span></h3>
+        <ol class="help-steps">
+          <li><strong data-i18n="helpStep1Title">上传视频</strong> — <span data-i18n="helpStep1Desc">点击页面中间的上传区域，选择羽毛球训练视频（支持MP4/MOV/AVI/MKV格式）</span></li>
+          <li><strong data-i18n="helpStep2Title">选择球员</strong> — <span data-i18n="helpStep2Desc">上传后系统会自动检测画面中的球员并弹出选择窗口，点击你想追踪分析的球员方框（支持选择近端或远端球员），选中后框会变绿，点击「确认选择」即可</span></li>
+          <li><strong data-i18n="helpStep3Title">等待分析</strong> — <span data-i18n="helpStep3Desc">系统将自动进行姿态识别、动作分类、击球检测和步伐追踪，进度条会实时显示分析进度</span></li>
+          <li><strong data-i18n="helpStep4Title">查看报告</strong> — <span data-i18n="helpStep4Desc">分析完成后可查看标注视频、步伐热力图、逐拍时间轴和训练报告，也可向AI教练提问</span></li>
+        </ol>
+      </div>
+
+      <div class="help-section">
+        <h3 class="help-section-title">📹 <span data-i18n="helpVideoTips">拍摄建议（获得最佳分析效果）</span></h3>
+        <div class="help-tips-grid">
+          <div class="help-tip">
+            <div class="help-tip-icon">📱</div>
+            <div class="help-tip-text"><strong data-i18n="helpTip1Title">横屏拍摄</strong><br><span data-i18n="helpTip1Desc">横屏拍摄画面更稳定，人物更完整</span></div>
+          </div>
+          <div class="help-tip">
+            <div class="help-tip-icon">📏</div>
+            <div class="help-tip-text"><strong data-i18n="helpTip2Title">拍摄距离</strong><br><span data-i18n="helpTip2Desc">距离场地边线3-5米，确保全身在画面中</span></div>
+          </div>
+          <div class="help-tip">
+            <div class="help-tip-icon">📐</div>
+            <div class="help-tip-text"><strong data-i18n="helpTip3Title">拍摄角度</strong><br><span data-i18n="helpTip3Desc">站在场地侧面，与球网平行拍摄</span></div>
+          </div>
+          <div class="help-tip">
+            <div class="help-tip-icon">💡</div>
+            <div class="help-tip-text"><strong data-i18n="helpTip4Title">光线充足</strong><br><span data-i18n="helpTip4Desc">确保场地光线明亮，避免逆光拍摄</span></div>
+          </div>
+          <div class="help-tip">
+            <div class="help-tip-icon">🎥</div>
+            <div class="help-tip-text"><strong data-i18n="helpTip5Title">画面稳定</strong><br><span data-i18n="helpTip5Desc">使用支架固定手机，避免手持晃动</span></div>
+          </div>
+          <div class="help-tip">
+            <div class="help-tip-icon">⏱️</div>
+            <div class="help-tip-text"><strong data-i18n="helpTip6Title">时长建议</strong><br><span data-i18n="helpTip6Desc">10秒-3分钟片段，包含完整击球动作</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="help-section">
+        <h3 class="help-section-title">🏸 <span data-i18n="helpFeatures">功能说明</span></h3>
+        <div class="help-features">
+          <div class="help-feature">
+            <div class="help-feature-icon">👆</div>
+            <div>
+              <strong data-i18n="helpFeat0Title">球员选择</strong>
+              <p data-i18n="helpFeat0Desc">上传视频后自动检测画面中的所有球员，点击即可选择要追踪的目标，支持选择近端或远端球员，多帧采样确保选到最清晰的画面</p>
+            </div>
+          </div>
+          <div class="help-feature">
+            <div class="help-feature-icon">🎬</div>
+            <div>
+              <strong data-i18n="helpFeat1Title">标注视频</strong>
+              <p data-i18n="helpFeat1Desc">在视频上实时绘制骨骼关键点、动作标签和击球标记</p>
+            </div>
+          </div>
+          <div class="help-feature">
+            <div class="help-feature-icon">🗺️</div>
+            <div>
+              <strong data-i18n="helpFeat2Title">步伐热力图</strong>
+              <p data-i18n="helpFeat2Desc">追踪球员在球场上的移动轨迹，展示高频活动区域</p>
+            </div>
+          </div>
+          <div class="help-feature">
+            <div class="help-feature-icon">📊</div>
+            <div>
+              <strong data-i18n="helpFeat3Title">逐拍时间轴</strong>
+              <p data-i18n="helpFeat3Desc">记录每次击球的时间、动作类型、置信度和质量评分</p>
+            </div>
+          </div>
+          <div class="help-feature">
+            <div class="help-feature-icon">📋</div>
+            <div>
+              <strong data-i18n="helpFeat4Title">训练报告</strong>
+              <p data-i18n="helpFeat4Desc">统计数据、技术亮点、问题分析、改进建议和训练计划</p>
+            </div>
+          </div>
+          <div class="help-feature">
+            <div class="help-feature-icon">🤖</div>
+            <div>
+              <strong data-i18n="helpFeat5Title">AI教练</strong>
+              <p data-i18n="helpFeat5Desc">基于AI大模型的智能教练，可针对你的问题进行个性化解答</p>
+            </div>
+          </div>
+          <div class="help-feature">
+            <div class="help-feature-icon">💾</div>
+            <div>
+              <strong data-i18n="helpFeat6Title">历史记录</strong>
+              <p data-i18n="helpFeat6Desc">所有分析记录自动保存，可随时回看并追踪进步趋势</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="help-section">
+        <h3 class="help-section-title">❓ <span data-i18n="helpFaq">常见问题</span></h3>
+        <div class="help-faq">
+          <details>
+            <summary data-i18n="helpFaq0Q">如何选择远端球员进行分析？</summary>
+            <p data-i18n="helpFaq0A">上传视频后系统会自动弹出球员选择窗口，画面中检测到的每个人物都会被方框标出。直接点击你想分析的远端球员（画面上方/对面场地的球员），选中后框会变成绿色，然后点击「确认选择并开始分析」即可。系统会持续追踪你选择的球员，不会跳到近端。你还可以切换顶部的「帧1/帧2...」标签，在不同时间点的画面中选择球员最清晰的一帧。如果不想手动选择，可以点击「自动选择(近侧)」使用默认模式。</p>
+          </details>
+          <details>
+            <summary data-i18n="helpFaq1Q">为什么分析速度很慢？</summary>
+            <p data-i18n="helpFaq1A">分析速度取决于硬件配置。使用NVIDIA GPU（需安装CUDA版PyTorch）可大幅提速（RTX 4070约1-2分钟/视频），CPU模式需要5-10分钟。视频越长分析越慢，建议使用1分钟以内的片段。</p>
+          </details>
+          <details>
+            <summary data-i18n="helpFaq2Q">支持哪些视频格式？</summary>
+            <p data-i18n="helpFaq2A">支持 MP4、MOV、AVI、MKV、MPEG 等常见格式。推荐使用MP4格式（H.264编码），兼容性最好。</p>
+          </details>
+          <details>
+            <summary data-i18n="helpFaq3Q">视频文件大小有限制吗？</summary>
+            <p data-i18n="helpFaq3A">支持最大500MB的视频文件。建议视频时长控制在3分钟以内以获得最佳体验。</p>
+          </details>
+          <details>
+            <summary data-i18n="helpFaq4Q">为什么识别不准？</summary>
+            <p data-i18n="helpFaq4A">识别精度受视频质量影响较大。请确保：① 光线充足 ② 全身在画面中 ③ 画面稳定不晃动 ④ 侧面角度拍摄。逆光、远距离、快速移动都可能影响精度。比赛远景视频请确保球员足够清晰，避免过远拍摄导致人物过小。</p>
+          </details>
+          <details>
+            <summary data-i18n="helpFaq5Q">AI教练为什么不能用？</summary>
+            <p data-i18n="helpFaq5A">AI教练功能需要配置通义千问（DashScope）或智谱AI的API Key。请在系统设置中填写API Key，或联系管理员配置。核心分析功能不依赖AI教练，可以正常使用。</p>
+          </details>
+          <details>
+            <summary data-i18n="helpFaq6Q">分析后的视频和报告如何下载？</summary>
+            <p data-i18n="helpFaq6A">分析完成后，标注视频下方会出现「下载视频」按钮。训练报告和AI教练回复可使用各自的复制/下载按钮保存，也可以使用浏览器的打印功能（Ctrl+P）保存为PDF。</p>
+          </details>
+          <details>
+            <summary data-i18n="helpFaq7Q">球员选择窗口没有弹出怎么办？</summary>
+            <p data-i18n="helpFaq7A">如果上传视频后没有弹出球员选择窗口，请尝试按 Ctrl+F5 强制刷新页面（清除浏览器缓存）后重新上传。确保您使用的是最新版本的页面。</p>
+          </details>
+        </div>
+      </div>
+
+      <div class="help-footer">
+        <p>🏸 <span data-i18n="helpFooter">羽动智练 — AI羽毛球智能训练助手 v1.0</span></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Player Selection Modal -->
+<div class="modal-overlay player-select-overlay" id="playerSelectModal" hidden>
+  <div class="modal-content player-select-modal">
+    <button class="modal-close" id="btnClosePlayerSelect">×</button>
+    <h2 class="modal-title player-select-title">
+      <span style="font-size:22px; margin-right:8px;">🏸</span>
+      <span data-i18n="playerSelectTitle">选择要追踪的球员</span>
+    </h2>
+    <p class="player-select-hint" data-i18n="playerSelectHint">请在画面中点击你要分析的球员（支持选择近端或远端球员）</p>
+    
+    <div class="player-select-container">
+      <div class="player-select-frame-wrapper" id="playerFrameWrapper">
+        <img id="playerSelectImage" class="player-select-image" alt="Video frame" />
+        <div class="player-select-boxes" id="playerSelectBoxes"></div>
+        <div class="player-select-loading" id="playerSelectLoading">
+          <div class="player-loading-spinner"></div>
+          <span data-i18n="playerDetecting">正在检测球员...</span>
+        </div>
+      </div>
+      
+      <div class="player-select-sidebar">
+        <div class="player-frame-tabs" id="playerFrameTabs"></div>
+        <div class="player-select-info">
+          <div class="player-info-item">
+            <span class="player-info-label" data-i18n="playerDetectedCount">检测到球员:</span>
+            <span class="player-info-value" id="playerCountValue">0</span>
+          </div>
+          <div class="player-info-item" id="selectedPlayerInfo" style="display:none;">
+            <span class="player-info-label" data-i18n="playerSelected">已选择:</span>
+            <span class="player-info-value player-selected-indicator" id="selectedPlayerLabel"></span>
+          </div>
+        </div>
+        <div class="player-select-tips">
+          <p class="tips-title">💡 <span data-i18n="playerSelectTips">提示</span></p>
+          <ul>
+            <li data-i18n="playerTip1">点击画面中的球员框进行选择</li>
+            <li data-i18n="playerTip2">可以切换不同时间点的帧选择清晰的画面</li>
+            <li data-i18n="playerTip3">绿色框为当前选中的球员</li>
+            <li data-i18n="playerTip4">如果只有一个球员也可以手动选择确认</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    
+    <div class="player-select-actions">
+      <button type="button" class="btn btn-secondary" id="btnSkipPlayerSelect" data-i18n="playerAutoSelect">自动选择(近侧)</button>
+      <button type="button" class="btn btn-primary" id="btnConfirmPlayerSelect" data-i18n="playerConfirmSelect" disabled>确认选择并开始分析</button>
+    </div>
+  </div>
+</div>
+
 <!-- Onboarding Tour -->
 <div class="tour-overlay" id="tourOverlay" hidden>
   <div class="tour-highlight" id="tourHighlight"></div>
@@ -769,6 +976,6 @@
   </div>
 </div>
 
-<script src="./app.js?v=20260707-tour"></script>
+<script src="./app.js?v=20260709-playerselect-v2"></script>
 </body>
 </html>
